@@ -79,7 +79,7 @@ func load_and_print(filename string) error {
 func main() {
 	// print_from_memory()
 
-	err := load_and_print("warriors/dwarf_88.red")
+	err := load_and_print("warriors/dwarf_88.rc")
 	if err != nil {
 		fmt.Println(err)
 	}
