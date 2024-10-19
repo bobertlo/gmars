@@ -72,7 +72,11 @@ func (w *Warrior) ThreadCount() Address {
 func (w *Warrior) LoadCode() string {
 	out := ""
 
-	if w.sim == nil || !w.sim.legacy {
+	if len(w.data.Code) == 0 {
+		return ""
+	}
+
+	if w.sim == nil || (w.sim != nil && !w.sim.legacy) {
 		out += "       ORG      START\n"
 	}
 	for i, inst := range w.data.Code {
@@ -102,5 +106,10 @@ func (w *Warrior) LoadCode() string {
 }
 
 func (w *Warrior) LoadCodePMARS() string {
-	return fmt.Sprintf("Program \"%s\" (length %d) by \"%s\"\n\n%s\n", w.Name(), w.Length(), w.Author(), w.LoadCode())
+	header := fmt.Sprintf("Program \"%s\" (length %d) by \"%s\"\n\n", w.Name(), w.Length(), w.Author())
+
+	if len(w.data.Code) > 0 {
+		return header + w.LoadCode() + "\n"
+	}
+	return header
 }
