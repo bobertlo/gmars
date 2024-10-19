@@ -142,6 +142,8 @@ func (s *MARS) exec(PC Address, pq *processQueue) {
 		return
 	case MOV:
 		s.mov(IR, IRA, (PC+WPB)%s.coreSize, PC, pq)
+	case ADD:
+		s.add(IR, RPA, (PC+WPB)%s.coreSize, PC, pq)
 	case JMP:
 		pq.Push(RPA)
 	}
