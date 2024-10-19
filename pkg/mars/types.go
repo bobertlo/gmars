@@ -49,8 +49,10 @@ const (
 	A OpMode = iota
 	B
 	AB
-	I
+	BA
 	F
+	X
+	I
 )
 
 func (om OpMode) String() string {
@@ -61,8 +63,12 @@ func (om OpMode) String() string {
 		return "B"
 	case AB:
 		return "AB"
+	case BA:
+		return "BA"
 	case F:
 		return "F"
+	case X:
+		return "X"
 	case I:
 		return "I"
 	}
