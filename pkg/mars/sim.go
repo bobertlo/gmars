@@ -2,7 +2,7 @@ package mars
 
 import "fmt"
 
-type MARS struct {
+type Simulator struct {
 	m          Address
 	maxProcs   Address
 	maxCycles  Address
@@ -15,8 +15,8 @@ type MARS struct {
 	// state    WarriorState
 }
 
-func NewMARS(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legacy bool) *MARS {
-	sim := &MARS{
+func NewSimulator(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legacy bool) *Simulator {
+	sim := &Simulator{
 		m:          coreSize,
 		maxProcs:   maxProcs,
 		maxCycles:  maxCycles,
@@ -28,14 +28,14 @@ func NewMARS(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legac
 	return sim
 }
 
-func (s *MARS) addressSigned(a Address) int {
+func (s *Simulator) addressSigned(a Address) int {
 	if a > (s.m / 2) {
 		return -(int(s.m) - int(a))
 	}
 	return int(a)
 }
 
-func (s *MARS) AddWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
+func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
 	w := &Warrior{
 		data: data.Copy(),
 		sim:  s,
@@ -51,7 +51,7 @@ func (s *MARS) AddWarrior(data *WarriorData, startOffset Address) (*Warrior, err
 	return w, nil
 }
 
-func (s *MARS) step() {
+func (s *Simulator) run_turn() {
 	for _, warrior := range s.warriors {
 		if warrior.state != ALIVE {
 			continue
@@ -68,7 +68,7 @@ func (s *MARS) step() {
 
 }
 
-func (s *MARS) readFold(pointer Address) Address {
+func (s *Simulator) readFold(pointer Address) Address {
 	res := pointer % s.readLimit
 	if res < (s.readLimit / 2) {
 		res += (s.m - s.readLimit)
@@ -76,7 +76,7 @@ func (s *MARS) readFold(pointer Address) Address {
 	return res
 }
 
-func (s *MARS) writeFold(pointer Address) Address {
+func (s *Simulator) writeFold(pointer Address) Address {
 	res := pointer % s.writeLimit
 	if res < (s.writeLimit / 2) {
 		res += (s.m - s.writeLimit)
@@ -84,7 +84,7 @@ func (s *MARS) writeFold(pointer Address) Address {
 	return res
 }
 
-func (s *MARS) exec(PC Address, pq *processQueue) {
+func (s *Simulator) exec(PC Address, pq *processQueue) {
 	IR := s.mem[PC]
 
 	// read and write limit folded pointers for A, B

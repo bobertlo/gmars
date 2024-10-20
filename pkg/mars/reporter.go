@@ -20,44 +20,44 @@ type Reporter interface {
 	WarriorTerminate(wi int)
 }
 
-type DebugReporter struct {
-	s    MARS
+type debugReporter struct {
+	s    Simulator
 	turn int
 }
 
-func NewDebugReporter(s MARS) Reporter {
-	return &DebugReporter{s: s}
+func NewDebugReporter(s Simulator) Reporter {
+	return &debugReporter{s: s}
 }
 
-func (r *DebugReporter) AddressRead(wi int, a Address) {
+func (r *debugReporter) AddressRead(wi int, a Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: %05d read\n", wi, a)
 }
 
-func (r *DebugReporter) AddressWrite(wi int, a Address) {
+func (r *debugReporter) AddressWrite(wi int, a Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: %05d write\n", wi, a)
 }
 
-func (r *DebugReporter) AddressIncrement(wi int, a Address) {
+func (r *debugReporter) AddressIncrement(wi int, a Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
 }
 
-func (r *DebugReporter) AddressDecrement(wi int, a Address) {
+func (r *debugReporter) AddressDecrement(wi int, a Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
 }
 
-func (r *DebugReporter) TaskTerminate(wi int, a Address) {
+func (r *debugReporter) TaskTerminate(wi int, a Address) {
 
 }
 
-func (r *DebugReporter) TurnStart(n int) {}
+func (r *debugReporter) TurnStart(n int) {}
 
-func (r *DebugReporter) ResetMars() {
+func (r *debugReporter) ResetMars() {
 	fmt.Fprintf(os.Stderr, "MARS reset")
 }
 
-func (r *DebugReporter) WarriorAdd(wi int, name, author string) {}
+func (r *debugReporter) WarriorAdd(wi int, name, author string) {}
 
-func (r *DebugReporter) WarriorSpawn(wi int, origin, entry Address) {}
-func (r *DebugReporter) WarriorTaskPop(wi int, pc Address)          {}
-func (r *DebugReporter) WarriorTaskPush(wi int, pc Address)         {}
-func (r *DebugReporter) WarriorTerminate(wi int)                    {}
+func (r *debugReporter) WarriorSpawn(wi int, origin, entry Address) {}
+func (r *debugReporter) WarriorTaskPop(wi int, pc Address)          {}
+func (r *debugReporter) WarriorTaskPush(wi int, pc Address)         {}
+func (r *debugReporter) WarriorTerminate(wi int)                    {}

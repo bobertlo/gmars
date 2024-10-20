@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func print_from_memory() {
-	sim := mars.NewMARS(8000, 8000, 80000, 8000, 8000, true)
+	sim := mars.NewSimulator(8000, 8000, 80000, 8000, 8000, true)
 
 	code := []mars.Instruction{
 		{
@@ -49,7 +50,7 @@ func print_from_memory() {
 		Start:  0,
 	}
 
-	warrior, err := sim.AddWarrior(wdata, 0)
+	warrior, err := sim.SpawnWarrior(wdata, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +66,7 @@ func load_and_print(filename string) error {
 	}
 	defer f.Close()
 
-	sim := mars.NewMARS(8000, 8000, 80000, 8000, 8000, true)
+	sim := mars.NewSimulator(8000, 8000, 80000, 8000, 8000, true)
 	warrior, err := sim.LoadWarrior(f)
 	if err != nil {
 		return err
@@ -79,8 +80,19 @@ func load_and_print(filename string) error {
 func main() {
 	// print_from_memory()
 
-	err := load_and_print("warriors/dwarf_88.rc")
-	if err != nil {
-		fmt.Println(err)
+	eight := flag.Bool("8", false, "Enforce ICWS'88 rules")
+	brief := flag.Bool("b", false, "Brief mode (no source listings)")
+	flag.Parse()
+
+	if !*eight {
+		fmt.Println("94 not implemented")
+		os.Exit(1)
+	}
+
+	if !*brief {
+		err := load_and_print("warriors/dwarf_88.rc")
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

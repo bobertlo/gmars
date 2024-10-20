@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (m *MARS) LoadWarrior(reader io.Reader) (*Warrior, error) {
+func (m *Simulator) LoadWarrior(reader io.Reader) (*Warrior, error) {
 	data := &WarriorData{
 		Name:     "Unknown",
 		Author:   "Anonymous",

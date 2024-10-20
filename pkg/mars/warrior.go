@@ -34,7 +34,7 @@ func (w *WarriorData) Copy() *WarriorData {
 // Warrior is a manifestation WarriorData in a Simulator
 type Warrior struct {
 	data  *WarriorData
-	sim   *MARS
+	sim   *Simulator
 	index int
 	pq    *processQueue
 	// pspace []Instruction

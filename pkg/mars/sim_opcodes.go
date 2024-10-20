@@ -1,6 +1,6 @@
 package mars
 
-func (s *MARS) mov(IR, IRA Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, pq *processQueue) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = IRA.A
@@ -22,7 +22,7 @@ func (s *MARS) mov(IR, IRA Instruction, WAB, PC Address, pq *processQueue) {
 	pq.Push((PC + 1) % s.m)
 }
 
-func (s *MARS) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + IRA.A) % s.m
@@ -44,7 +44,7 @@ func (s *MARS) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) 
 	pq.Push((PC + 1) % s.m)
 }
 
-func (s *MARS) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + (s.m - IRA.A)) % s.m
@@ -66,7 +66,7 @@ func (s *MARS) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) 
 	pq.Push((PC + 1) % s.m)
 }
 
-func (s *MARS) mul(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A * IRA.A) % s.m
