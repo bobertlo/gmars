@@ -82,6 +82,7 @@ func main() {
 
 	eight := flag.Bool("8", false, "Enforce ICWS'88 rules")
 	brief := flag.Bool("b", false, "Brief mode (no source listings)")
+	flag.Int("s", 8000, "Size of core")
 	flag.Parse()
 
 	if !*eight {

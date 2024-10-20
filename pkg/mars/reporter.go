@@ -12,6 +12,7 @@ type Reporter interface {
 	AddressDecrement(wi int, a Address)
 	TaskTerminate(wi int, a Address)
 	TurnStart(n int)
+	InitMars()
 	ResetMars()
 	WarriorAdd(wi int, name, author string)
 	WarriorSpawn(wi int, origin, entry Address)
@@ -46,18 +47,34 @@ func (r *debugReporter) AddressDecrement(wi int, a Address) {
 }
 
 func (r *debugReporter) TaskTerminate(wi int, a Address) {
-
+	fmt.Fprintf(os.Stderr, "w%02d: %05d TERMINATE\n", wi, a)
 }
 
-func (r *debugReporter) TurnStart(n int) {}
+func (r *debugReporter) TurnStart(n int) {
+	fmt.Fprintf(os.Stderr, "TURN %05d\n", n)
+}
 
 func (r *debugReporter) ResetMars() {
-	fmt.Fprintf(os.Stderr, "MARS reset")
+	fmt.Fprintf(os.Stderr, "MARS reset\n")
 }
 
-func (r *debugReporter) WarriorAdd(wi int, name, author string) {}
+func (r *debugReporter) InitMars() {
+	fmt.Fprintf(os.Stderr, "MARS reset\n")
+}
 
-func (r *debugReporter) WarriorSpawn(wi int, origin, entry Address) {}
-func (r *debugReporter) WarriorTaskPop(wi int, pc Address)          {}
-func (r *debugReporter) WarriorTaskPush(wi int, pc Address)         {}
-func (r *debugReporter) WarriorTerminate(wi int)                    {}
+func (r *debugReporter) WarriorAdd(wi int, name, author string) {
+	fmt.Fprintf(os.Stderr, "w%02d: ADD '%s' by '%s'\n", wi, name, author)
+}
+
+func (r *debugReporter) WarriorSpawn(wi int, origin, entry Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: SPAWN %05d START %05d\n", wi, origin, entry)
+}
+func (r *debugReporter) WarriorTaskPop(wi int, pc Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: EXEC %05d\n", wi, pc)
+}
+func (r *debugReporter) WarriorTaskPush(wi int, pc Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: PUSH %05d\n", wi, pc)
+}
+func (r *debugReporter) WarriorTerminate(wi int) {
+	fmt.Fprintf(os.Stderr, "w%02d: TERMINATE\n", wi)
+}
