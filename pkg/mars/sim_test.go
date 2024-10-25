@@ -143,6 +143,16 @@ func TestDwarf(t *testing.T) {
 		require.Equal(t, w.pq.Len(), Address(1))
 	}
 
+	require.Equal(t, Instruction{
+		Op:     DAT,
+		OpMode: F,
+		AMode:  IMMEDIATE,
+		A:      0,
+		BMode:  IMMEDIATE,
+		B:      8,
+	},
+		sim.mem[11])
+
 	n, _ := w.pq.Pop()
 	require.Equal(t, 2, int(n))
 }
