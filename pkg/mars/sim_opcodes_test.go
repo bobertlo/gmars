@@ -738,3 +738,332 @@ func TestSubX(t *testing.T) {
 		B:     3,
 	}, sim.mem[2])
 }
+
+func TestMulA(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: A,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     15,
+		BMode: IMMEDIATE,
+		B:     6,
+	}, sim.mem[2])
+}
+
+func TestMulB(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: B,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     5,
+		BMode: IMMEDIATE,
+		B:     24,
+	}, sim.mem[2])
+}
+
+func TestMulAB(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: AB,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     5,
+		BMode: IMMEDIATE,
+		B:     18,
+	}, sim.mem[2])
+}
+
+func TestMulBA(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: BA,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     20,
+		BMode: IMMEDIATE,
+		B:     6,
+	}, sim.mem[2])
+}
+
+func TestMulI(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: I,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     15,
+		BMode: IMMEDIATE,
+		B:     24,
+	}, sim.mem[2])
+}
+
+func TestMulF(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: F,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     15,
+		BMode: IMMEDIATE,
+		B:     24,
+	}, sim.mem[2])
+}
+
+func TestMulX(t *testing.T) {
+	sim := makeSim88()
+
+	data := &WarriorData{
+		Name:   "test",
+		Author: "test",
+		Code: []Instruction{
+			{
+				Op:     MUL,
+				OpMode: X,
+				AMode:  DIRECT,
+				A:      1,
+				BMode:  DIRECT,
+				B:      2,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     3,
+				BMode: IMMEDIATE,
+				B:     4,
+			},
+			{
+				Op:    DAT,
+				AMode: IMMEDIATE,
+				A:     5,
+				BMode: IMMEDIATE,
+				B:     6,
+			},
+		},
+	}
+	w, _ := sim.SpawnWarrior(data, 0)
+	sim.run_turn()
+
+	require.True(t, w.Alive())
+	n, _ := w.pq.Pop()
+	require.Equal(t, n, Address(1))
+
+	require.Equal(t, Instruction{
+		Op:    DAT,
+		AMode: IMMEDIATE,
+		A:     20,
+		BMode: IMMEDIATE,
+		B:     18,
+	}, sim.mem[2])
+}

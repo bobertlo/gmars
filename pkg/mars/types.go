@@ -20,6 +20,7 @@ const (
 	MOV
 	ADD
 	SUB
+	MUL
 	JMP
 	JMZ
 	JMN
@@ -39,6 +40,8 @@ func (o OpCode) String() string {
 		return "ADD"
 	case SUB:
 		return "SUB"
+	case MUL:
+		return "MUL"
 	case JMP:
 		return "JMP"
 	}
