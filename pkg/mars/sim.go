@@ -100,7 +100,9 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	// instructions referenced by A, B
 	var IRA, IRB Instruction
 
-	if IR.AMode != IMMEDIATE {
+	if IR.AMode == IMMEDIATE {
+		IRA = IR
+	} else {
 		RPA = s.readFold(IR.A)
 		WPA = s.writeFold(IR.A)
 
@@ -112,10 +114,13 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 			RPA = s.readFold(RPA + s.mem[(PC+RPA)%s.m].B)
 			WPA = s.writeFold(WPA + s.mem[(PC+WPA)%s.m].B)
 		}
+		IRA = s.mem[(PC+RPA)%s.m]
 	}
-	IRA = s.mem[(PC+RPA)%s.m]
 
-	if IR.BMode != IMMEDIATE {
+	if IR.BMode == IMMEDIATE {
+		IRB = IR
+
+	} else {
 		RPB = s.readFold(IR.B)
 		WPB = s.writeFold(IR.B)
 
