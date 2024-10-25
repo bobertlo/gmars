@@ -142,6 +142,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.mov(IR, IRA, (WPB+PC)%s.m, PC, pq)
 	case ADD:
 		s.add(IR, IRA, IRB, (WPB+PC)%s.m, PC, pq)
+	case SUB:
+		s.sub(IR, IRA, IRB, (WPB+PC)%s.m, PC, pq)
 	case JMP:
 		pq.Push((PC + RPA) % s.m)
 	}
