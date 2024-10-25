@@ -29,9 +29,9 @@ func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 	case B:
 		s.mem[WAB].B = (IRB.B + IRA.B) % s.m
 	case AB:
-		s.mem[WAB].B = (IRB.A + IRA.B) % s.m
+		s.mem[WAB].B = (IRB.B + IRA.A) % s.m
 	case BA:
-		s.mem[WAB].A = (IRB.B + IRA.A) % s.m
+		s.mem[WAB].A = (IRB.A + IRA.B) % s.m
 	case I:
 		fallthrough
 	case F:
@@ -51,9 +51,9 @@ func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 	case B:
 		s.mem[WAB].B = (IRB.B + (s.m - IRA.B)) % s.m
 	case AB:
-		s.mem[WAB].B = (IRB.A + (s.m - IRA.B)) % s.m
+		s.mem[WAB].B = (IRB.B + (s.m - IRA.A)) % s.m
 	case BA:
-		s.mem[WAB].A = (IRB.B + (s.m - IRA.A)) % s.m
+		s.mem[WAB].A = (IRB.A + (s.m - IRA.B)) % s.m
 	case I:
 		fallthrough
 	case F:

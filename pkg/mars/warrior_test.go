@@ -40,7 +40,9 @@ func makeDwarfData() *WarriorData {
 				Op:     DAT,
 				OpMode: F,
 				AMode:  IMMEDIATE,
+				A:      0,
 				BMode:  IMMEDIATE,
+				B:      0,
 			},
 		}}
 }

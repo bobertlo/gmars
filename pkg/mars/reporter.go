@@ -22,11 +22,11 @@ type Reporter interface {
 }
 
 type debugReporter struct {
-	s    Simulator
+	s    *Simulator
 	turn int
 }
 
-func NewDebugReporter(s Simulator) Reporter {
+func NewDebugReporter(s *Simulator) Reporter {
 	return &debugReporter{s: s}
 }
 

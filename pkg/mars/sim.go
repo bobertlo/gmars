@@ -1,7 +1,5 @@
 package mars
 
-import "fmt"
-
 type Simulator struct {
 	m          Address
 	maxProcs   Address
@@ -11,7 +9,8 @@ type Simulator struct {
 	mem        []Instruction
 	legacy     bool
 
-	warriors []*Warrior
+	warriors  []*Warrior
+	reporters []Reporter
 	// state    WarriorState
 }
 
@@ -36,6 +35,7 @@ func (s *Simulator) addressSigned(a Address) int {
 }
 
 func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
+
 	w := &Warrior{
 		data: data.Copy(),
 		sim:  s,
@@ -47,11 +47,18 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 
 	s.warriors = append(s.warriors, w)
 	w.index = len(s.warriors)
+	w.pq = NewProcessQueue(s.maxProcs)
+	w.pq.Push(startOffset + Address(data.Start))
+	w.state = ALIVE
+
+	for _, r := range s.reporters {
+		r.WarriorSpawn(len(s.warriors), startOffset, startOffset+Address(w.data.Start))
+	}
 
 	return w, nil
 }
 
-func (s *Simulator) run_turn() {
+func (s *Simulator) run_turn() error {
 	for _, warrior := range s.warriors {
 		if warrior.state != ALIVE {
 			continue
@@ -65,7 +72,7 @@ func (s *Simulator) run_turn() {
 
 		s.exec(pc, warrior.pq)
 	}
-
+	return nil
 }
 
 func (s *Simulator) readFold(pointer Address) Address {
@@ -97,10 +104,6 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		RPA = s.readFold(IR.A)
 		WPA = s.writeFold(IR.A)
 
-		if IR.AMode == DIRECT {
-			RPA = s.readFold(RPA + s.mem[(PC+RPA)%s.m].A)
-			WPA = s.writeFold(WPA + s.mem[(PC+WPA)%s.m].A)
-		}
 		if IR.AMode == B_INDIRECT || IR.AMode == B_DECREMENT {
 			if IR.AMode == B_DECREMENT {
 				dptr := (PC + WPA) % s.m
@@ -116,10 +119,6 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		RPB = s.readFold(IR.B)
 		WPB = s.writeFold(IR.B)
 
-		if IR.BMode == DIRECT {
-			RPB = s.readFold(RPB + s.mem[(PC+RPB)%s.m].A)
-			WPB = s.writeFold(WPB + s.mem[(PC+WPB)%s.m].A)
-		}
 		if IR.BMode == B_INDIRECT || IR.BMode == B_DECREMENT {
 			if IR.BMode == B_DECREMENT {
 				dptr := (PC + WPB) % s.m
@@ -132,11 +131,6 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	}
 	IRB = s.mem[(PC+RPB)%s.m]
 
-	if IR.BMode != IMMEDIATE {
-		RPB = s.readFold(IR.B)
-		WPB = s.writeFold(IR.B)
-	}
-
 	switch IR.Op {
 	case DAT:
 		return
@@ -145,8 +139,6 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	case ADD:
 		s.add(IR, IRA, IRB, (WPB+PC)%s.m, PC, pq)
 	case JMP:
-		pq.Push(RPA)
+		pq.Push((PC + RPA) % s.m)
 	}
-
-	fmt.Println(IRB)
 }
