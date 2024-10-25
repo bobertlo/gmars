@@ -132,9 +132,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 			RPB = s.readFold(RPB + s.mem[(PC+RPB)%s.m].B)
 			WPB = s.writeFold(WPB + s.mem[(PC+WPB)%s.m].B)
 		}
-
+		IRB = s.mem[(PC+RPB)%s.m]
 	}
-	IRB = s.mem[(PC+RPB)%s.m]
 
 	switch IR.Op {
 	case DAT:
