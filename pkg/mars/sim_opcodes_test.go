@@ -392,6 +392,54 @@ func TestSub(t *testing.T) {
 	runTests(t, "sub", tests)
 }
 
+func TestMUL(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:    []string{"mul.a $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.a $1, $2", "dat.f #3, #4", "dat.f #15, #6"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.b $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.b $1, $2", "dat.f #3, #4", "dat.f #5, #24"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.ab $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.ab $1, $2", "dat.f #3, #4", "dat.f #5, #18"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.ba $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.ba $1, $2", "dat.f #3, #4", "dat.f #20, #6"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.f $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.f $1, $2", "dat.f #3, #4", "dat.f #15, #24"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.x $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.x $1, $2", "dat.f #3, #4", "dat.f #20, #18"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mul.i $1, $2", "dat.f #3, #4", "dat.f #5, #6"},
+			output:   []string{"mul.i $1, $2", "dat.f #3, #4", "dat.f #15, #24"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+	}
+	runTests(t, "mul", tests)
+}
+
 func TestJMP(t *testing.T) {
 	tests := []redcodeTest{
 		{
