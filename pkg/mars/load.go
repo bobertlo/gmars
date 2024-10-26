@@ -15,6 +15,10 @@ func getOpCode(op string) (OpCode, error) {
 		return MOV, nil
 	case "add":
 		return ADD, nil
+	case "sub":
+		return SUB, nil
+	case "mul":
+		return MUL, nil
 	case "jmp":
 		return JMP, nil
 	default:
