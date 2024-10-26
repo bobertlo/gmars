@@ -149,3 +149,42 @@ func (s *Simulator) jmn(IR, IRB Instruction, RPA, PC Address, pq *processQueue) 
 		}
 	}
 }
+
+func (s *Simulator) djn(IR, IRB Instruction, RPA, WAB, PC Address, pq *processQueue) {
+	switch IR.OpMode {
+	case A:
+		fallthrough
+	case BA:
+		s.mem[WAB].A = (s.mem[WAB].A + s.m - 1) % s.m
+		IRB.A -= 1
+		if IRB.A != 0 {
+			pq.Push(RPA)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case B:
+		fallthrough
+	case AB:
+		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
+		IRB.B -= 1
+		if IRB.B != 0 {
+			pq.Push(RPA)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case F:
+		fallthrough
+	case X:
+		fallthrough
+	case I:
+		s.mem[WAB].A = (s.mem[WAB].A + s.m - 1) % s.m
+		IRB.A -= 1
+		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
+		IRB.B -= 1
+		if IRB.B != 0 || IRB.A != 0 {
+			pq.Push(RPA)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	}
+}

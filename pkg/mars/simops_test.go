@@ -707,6 +707,84 @@ func TestJMN(t *testing.T) {
 	runTests(t, "jmn", tests)
 }
 
+func TestDNJ(t *testing.T) {
+	tests := []redcodeTest{
+		// positive cases all modes
+		{
+			input:  []string{"djn.a $2, $1", "dat.f $0, $1"},
+			output: []string{"djn.a $2, $1", "dat.f $-1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.ba $2, $1", "dat.f $0, $1"},
+			output: []string{"djn.ba $2, $1", "dat.f $-1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.b $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.b $2, $1", "dat.f $1, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.ab $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.ab $2, $1", "dat.f $1, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.f $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.f $2, $1", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.x $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.x $2, $1", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"djn.i $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.i $2, $1", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		// negative
+		{
+			input:  []string{"djn.a $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.a $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.ba $2, $1", "dat.f $1, $0"},
+			output: []string{"djn.ba $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.b $2, $1", "dat.f $0, $1"},
+			output: []string{"djn.b $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.ab $2, $1", "dat.f $0, $1"},
+			output: []string{"djn.ab $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.f $2, $1", "dat.f $1, $1"},
+			output: []string{"djn.f $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.x $2, $1", "dat.f $1, $1"},
+			output: []string{"djn.x $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"djn.i $2, $1", "dat.f $1, $1"},
+			output: []string{"djn.i $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "djn", tests)
+}
+
 func TestSPL(t *testing.T) {
 	tests := []redcodeTest{
 		{

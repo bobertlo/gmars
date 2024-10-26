@@ -25,6 +25,8 @@ func getOpCode(op string) (OpCode, error) {
 		return JMZ, nil
 	case "jmn":
 		return JMN, nil
+	case "djn":
+		return DJN, nil
 	case "spl":
 		return SPL, nil
 	default:
