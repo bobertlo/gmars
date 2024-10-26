@@ -130,7 +130,7 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 		for j, expected := range expectedOutput {
 			assert.Equal(t, expected, sim.mem[j], fmt.Sprintf("%s test %d address %d", set_name, i, j))
 		}
-		assert.Equal(t, test.pq, w.pq.Values())
+		assert.Equal(t, test.pq, w.pq.Values(), fmt.Sprintf("%s test %d", set_name, i))
 	}
 
 }
@@ -390,4 +390,158 @@ func TestSub(t *testing.T) {
 		},
 	}
 	runTests(t, "sub", tests)
+}
+
+func TestJMP(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:  []string{"jmp.a $2, $0"},
+			output: []string{"jmp.a $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.b $2, $0"},
+			output: []string{"jmp.b $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.ab $2, $0"},
+			output: []string{"jmp.ab $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.ba $2, $0"},
+			output: []string{"jmp.ba $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.f $2, $0"},
+			output: []string{"jmp.f $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.x $2, $0"},
+			output: []string{"jmp.x $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmp.i $2, $0"},
+			output: []string{"jmp.i $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+	}
+	runTests(t, "jmp", tests)
+}
+
+func TestJMZ(t *testing.T) {
+	tests := []redcodeTest{
+		// postive cases all modes
+		{
+			input:  []string{"jmz.a $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.a $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.ba $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.ba $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.b $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.b $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.ab $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.ab $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.f $2, $1", "dat.f $0, $0"},
+			output: []string{"jmz.f $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.x $2, $1", "dat.f $0, $0"},
+			output: []string{"jmz.x $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmz.i $2, $1", "dat.f $0, $0"},
+			output: []string{"jmz.i $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		// negative cases all modes
+		{
+			input:  []string{"jmz.a $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.a $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.ba $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.ba $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.a $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.a $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.b $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.b $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.ab $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.ab $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.f $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.f $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.f $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.f $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.f $2, $1", "dat.f $1, $1"},
+			output: []string{"jmz.f $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.x $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.x $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.x $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.x $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.x $2, $1", "dat.f $1, $1"},
+			output: []string{"jmz.x $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.i $2, $1", "dat.f $0, $1"},
+			output: []string{"jmz.i $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.i $2, $1", "dat.f $1, $0"},
+			output: []string{"jmz.i $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmz.i $2, $1", "dat.f $1, $1"},
+			output: []string{"jmz.i $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "jmz", tests)
 }
