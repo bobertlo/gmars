@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type opcodeTest struct {
+type redcodeTest struct {
 	input     []string
 	output    []string
 	coresize  Address
@@ -84,7 +84,7 @@ func parseTestInstruction(t *testing.T, input string, M int) Instruction {
 	return Instruction{Op: op, OpMode: opMode, AMode: amode, A: a, BMode: bmode, B: b}
 }
 
-func runTests(t *testing.T, set_name string, tests []opcodeTest) {
+func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 	for i, test := range tests {
 		coresize := test.coresize
 		if coresize == 0 {
@@ -134,7 +134,7 @@ func runTests(t *testing.T, set_name string, tests []opcodeTest) {
 }
 
 func TestDat(t *testing.T) {
-	tests := []opcodeTest{
+	tests := []redcodeTest{
 		{
 			input:  []string{"dat.f $0, $0"},
 			output: []string{"dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
@@ -160,7 +160,7 @@ func TestDat(t *testing.T) {
 }
 
 func TestMov(t *testing.T) {
-	tests := []opcodeTest{
+	tests := []redcodeTest{
 		// immediate a
 		{
 			input:  []string{"mov.i #0, $1"},
@@ -219,7 +219,7 @@ func TestMov(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	tests := []opcodeTest{
+	tests := []redcodeTest{
 		// immidiate a
 		{
 			input:  []string{"add.a #2, $1"},
