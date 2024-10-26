@@ -1,10 +1,12 @@
 package mars
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -125,10 +127,10 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 			sim.run_turn()
 		}
 
-		for i, expected := range expectedOutput {
-			require.Equal(t, expected, sim.mem[i])
+		for j, expected := range expectedOutput {
+			assert.Equal(t, expected, sim.mem[j], fmt.Sprintf("%s test %d address %d", set_name, i, j))
 		}
-		require.Equal(t, test.pq, w.pq.Values())
+		assert.Equal(t, test.pq, w.pq.Values())
 	}
 
 }
