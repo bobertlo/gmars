@@ -593,3 +593,116 @@ func TestJMZ(t *testing.T) {
 	}
 	runTests(t, "jmz", tests)
 }
+
+func TestJMN(t *testing.T) {
+	tests := []redcodeTest{
+		// positive cases all modes
+		{
+			input:  []string{"jmn.a $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.a $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.ba $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.ba $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.b $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.b $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.ab $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.ab $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.f $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.f $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.f $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.f $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.f $2, $1", "dat.f $1, $1"},
+			output: []string{"jmn.f $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.x $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.x $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.x $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.x $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.x $2, $1", "dat.f $1, $1"},
+			output: []string{"jmn.x $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.i $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.i $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.i $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.i $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"jmn.i $2, $1", "dat.f $1, $1"},
+			output: []string{"jmn.i $2, $1", "dat.f $1, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		// negative cases all modes
+		{
+			input:  []string{"jmn.a $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.a $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.ba $2, $1", "dat.f $0, $1"},
+			output: []string{"jmn.ba $2, $1", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.b $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.b $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.b $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.b $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.ab $2, $1", "dat.f $1, $0"},
+			output: []string{"jmn.ab $2, $1", "dat.f $1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.f $2, $1", "dat.f $0, $0"},
+			output: []string{"jmn.f $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.x $2, $1", "dat.f $0, $0"},
+			output: []string{"jmn.x $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"jmn.i $2, $1", "dat.f $0, $0"},
+			output: []string{"jmn.i $2, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "jmn", tests)
+}

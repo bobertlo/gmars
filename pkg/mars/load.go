@@ -23,6 +23,8 @@ func getOpCode(op string) (OpCode, error) {
 		return JMP, nil
 	case "jmz":
 		return JMZ, nil
+	case "jmn":
+		return JMN, nil
 	default:
 		return 0, fmt.Errorf("invalid opcode '%s'", op)
 	}
