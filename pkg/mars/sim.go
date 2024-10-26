@@ -152,5 +152,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.jmz(IR, IRB, RPA, PC, pq)
 	case JMN:
 		s.jmn(IR, IRB, RPA, PC, pq)
+	case SPL:
+		pq.Push((PC + 1) % s.m)
+		pq.Push(RPA)
 	}
 }

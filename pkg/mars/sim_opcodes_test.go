@@ -706,3 +706,34 @@ func TestJMN(t *testing.T) {
 	}
 	runTests(t, "jmn", tests)
 }
+
+func TestSPL(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:  []string{"spl.b $0, $0"},
+			output: []string{"spl.b $0, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1, 0},
+		},
+		{
+			input:  []string{"spl.b $0, $1"},
+			output: []string{"spl.b $0, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1, 0},
+		},
+		{
+			input:  []string{"spl.b <0, $1"},
+			output: []string{"spl.b <0, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1, 0},
+		},
+		{
+			input:  []string{"spl.b <1, $0"},
+			output: []string{"spl.b <1, $0", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1, 0},
+		},
+		{
+			input:  []string{"spl.b <0, $0"},
+			output: []string{"spl.b <0, $-1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1, 3},
+		},
+	}
+	runTests(t, "spl", tests)
+}
