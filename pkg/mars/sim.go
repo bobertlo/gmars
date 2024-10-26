@@ -112,7 +112,7 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 				s.mem[dptr].B = (s.mem[dptr].B + s.m - 1) % s.m
 			}
 			RPA = s.readFold(RPA + s.mem[(PC+RPA)%s.m].B)
-			WPA = s.writeFold(WPA + s.mem[(PC+WPA)%s.m].B)
+			// WPA = s.writeFold(WPA + s.mem[(PC+WPA)%s.m].B)
 		}
 		IRA = s.mem[(PC+RPA)%s.m]
 	}

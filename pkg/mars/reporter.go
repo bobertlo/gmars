@@ -22,8 +22,7 @@ type Reporter interface {
 }
 
 type debugReporter struct {
-	s    *Simulator
-	turn int
+	s *Simulator
 }
 
 func NewDebugReporter(s *Simulator) Reporter {

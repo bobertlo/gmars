@@ -120,7 +120,7 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 		}
 
 		sim := NewSimulator(coresize, processes, 1, coresize, coresize, false)
-		w, err := sim.SpawnWarrior(&WarriorData{Code: code}, 0)
+		w, err := sim.SpawnWarrior(&WarriorData{Code: code}, test.start)
 		require.NoError(t, err)
 
 		for i := 0; i < turns; i++ {
