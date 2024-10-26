@@ -49,11 +49,11 @@ func (o OpCode) String() string {
 }
 
 const (
-	A OpMode = iota
+	F OpMode = iota
+	A
 	B
 	AB
 	BA
-	F
 	X
 	I
 )
@@ -79,8 +79,8 @@ func (om OpMode) String() string {
 }
 
 const (
-	IMMEDIATE AddressMode = iota
-	DIRECT
+	DIRECT AddressMode = iota
+	IMMEDIATE
 	B_INDIRECT
 	B_DECREMENT
 )

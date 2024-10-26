@@ -7,6 +7,40 @@ import (
 	"strings"
 )
 
+func getOpCode(op string) (OpCode, error) {
+	switch strings.ToLower(op) {
+	case "dat":
+		return DAT, nil
+	case "mov":
+		return MOV, nil
+	case "add":
+		return ADD, nil
+	default:
+		return 0, fmt.Errorf("invalid opcode '%s'", op)
+	}
+}
+
+func getOpMode(opMode string) (OpMode, error) {
+	switch strings.ToLower(opMode) {
+	case "a":
+		return A, nil
+	case "b":
+		return B, nil
+	case "ab":
+		return AB, nil
+	case "ba":
+		return BA, nil
+	case "i":
+		return I, nil
+	case "f":
+		return F, nil
+	case "x":
+		return X, nil
+	default:
+		return 0, fmt.Errorf("invalid op mode: '%s'", opMode)
+	}
+}
+
 func (m *Simulator) LoadWarrior(reader io.Reader) (*Warrior, error) {
 	data := &WarriorData{
 		Name:     "Unknown",
