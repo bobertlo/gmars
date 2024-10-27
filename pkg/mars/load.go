@@ -59,6 +59,50 @@ func getOpMode(opMode string) (OpMode, error) {
 	}
 }
 
+func parse88LoadFile(reader io.Reader, simConfig SimulatorConfig) (WarriorData, error) {
+	data := WarriorData{
+		Name:     "Unknown",
+		Author:   "Anonymous",
+		Strategy: "",
+		Code:     make([]Instruction, 0),
+		Start:    0,
+	}
+
+	lineNum := 0
+	breader := bufio.NewReader(reader)
+	for {
+		raw_line, err := breader.ReadString('\n')
+		if err != nil {
+			break
+		}
+		lineNum++
+
+		if len(raw_line) == 0 {
+			continue
+		}
+
+		// handle metadata comments
+		if raw_line[0] == ';' {
+			lower := strings.ToLower(raw_line)
+			if strings.HasPrefix(lower, ";name") {
+				data.Name = strings.TrimSpace(raw_line[5:])
+			} else if strings.HasPrefix(lower, ";author") {
+				data.Author = strings.TrimSpace(raw_line[7:])
+			} else if strings.HasPrefix(lower, ";strategy") {
+				data.Strategy += raw_line[10:]
+			}
+		}
+	}
+	return data, nil
+}
+
+func ParseLoadFile(reader io.Reader, simConfig SimulatorConfig) (WarriorData, error) {
+	if simConfig.Mode != ICWS88 {
+		return WarriorData{}, fmt.Errorf("not implemented")
+	}
+	return parse88LoadFile(reader, simConfig)
+}
+
 func (m *Simulator) LoadWarrior(reader io.Reader) (*Warrior, error) {
 	data := &WarriorData{
 		Name:     "Unknown",
