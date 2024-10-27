@@ -153,6 +153,11 @@ func getOpModeAndValidate88(Op OpCode, AMode AddressMode, BMode AddressMode) (Op
 		if BMode == IMMEDIATE {
 			return 0, fmt.Errorf("invalid b mode '#' for op 'slt'")
 		}
+		if AMode == IMMEDIATE {
+			return AB, nil
+		} else {
+			return B, nil
+		}
 	case ADD:
 		fallthrough
 	case SUB:
@@ -195,6 +200,8 @@ func parse88LoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 	lineNum := 0
 	breader := bufio.NewReader(reader)
 	for {
+		// empty lines and last lines without newlines seem to be missed
+		// should something else be used? or are these not worth handling?
 		raw_line, err := breader.ReadString('\n')
 		if err != nil {
 			break
@@ -224,11 +231,11 @@ func parse88LoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 			lower = strings.Split(lower, ";")[0]
 		}
 
-		// remove commas, since whitespace is required
-		lower = strings.ReplaceAll(lower, ",", " ")
+		// remove comma before counting fields
+		nocomma := strings.ReplaceAll(lower, ",", " ")
 
 		// split into fields based on whitespace
-		fields := strings.Fields(lower)
+		fields := strings.Fields(nocomma)
 
 		// valid instructions need exactly 5 fields
 		// only other option is "END" pseudo opcode with 0 or 1 arguments
@@ -259,6 +266,11 @@ func parse88LoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 
 			data.Start = int(val)
 			break
+		}
+
+		// comma is ignored, but required
+		if !strings.Contains(lower, ",") {
+			return WarriorData{}, fmt.Errorf("line %d: missing comma", lineNum)
 		}
 
 		// attempt to parse the 5 fields as an instruction and append to code
