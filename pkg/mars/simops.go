@@ -188,3 +188,52 @@ func (s *Simulator) djn(IR, IRB Instruction, RPA, WAB, PC Address, pq *processQu
 		}
 	}
 }
+
+func (s *Simulator) cmp(IR, IRA, IRB Instruction, PC Address, pq *processQueue) {
+	switch IR.OpMode {
+	case A:
+		if IRA.A == IRB.A {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case B:
+		if IRA.B == IRB.B {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case AB:
+		if IRA.A == IRB.B {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case BA:
+		if IRA.B == IRB.A {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case F:
+		if IRA.A == IRB.A && IRA.B == IRB.B {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case X:
+		if IRA.A == IRB.B && IRA.B == IRB.A {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	case I:
+		if IRA.Op == IRB.Op && IRA.OpMode == IRB.OpMode &&
+			IRA.AMode == IRB.AMode && IRA.A == IRB.A &&
+			IRA.BMode == IRB.BMode && IRA.B == IRB.B {
+			pq.Push((PC + 2) % s.m)
+		} else {
+			pq.Push((PC + 1) % s.m)
+		}
+	}
+}
