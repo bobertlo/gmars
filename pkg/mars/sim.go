@@ -158,6 +158,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.djn(IR, IRB, RPA, WAB, PC, pq)
 	case CMP:
 		s.cmp(IR, IRA, IRB, PC, pq)
+	case SLT:
+		s.slt(IR, IRA, IRB, PC, pq)
 	case SPL:
 		pq.Push((PC + 1) % s.m)
 		pq.Push(RPA)

@@ -903,6 +903,99 @@ func TestCMP(t *testing.T) {
 	runTests(t, "cmp", tests)
 }
 
+func TestSLT(t *testing.T) {
+	tests := []redcodeTest{
+		// positive cases for all modes
+		{
+			input:  []string{"slt.a $1, $2", "dat.f $1, $2", "dat.f $2, $1"},
+			output: []string{"slt.a $1, $2", "dat.f $1, $2", "dat.f $2, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.b $1, $2", "dat.f $2, $1", "dat.f $1, $2"},
+			output: []string{"slt.b $1, $2", "dat.f $2, $1", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.ab $1, $2", "dat.f $1, $2", "dat.f $1, $2"},
+			output: []string{"slt.ab $1, $2", "dat.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.ba $1, $2", "dat.f $2, $1", "dat.f $2, $1"},
+			output: []string{"slt.ba $1, $2", "dat.f $2, $1", "dat.f $2, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.f $1, $2", "dat.f $0, $2", "dat.f $1, $3"},
+			output: []string{"slt.f $1, $2", "dat.f $0, $2", "dat.f $1, $3", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.i $1, $2", "dat.f $0, $2", "dat.f $1, $3"},
+			output: []string{"slt.i $1, $2", "dat.f $0, $2", "dat.f $1, $3", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"slt.x $1, $2", "dat.f $0, $2", "dat.f $3, $1"},
+			output: []string{"slt.x $1, $2", "dat.f $0, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		// negative cases for all modes
+		{
+			input:  []string{"slt.a $1, $2", "dat.f $1, $2", "dat.f $1, $3"},
+			output: []string{"slt.a $1, $2", "dat.f $1, $2", "dat.f $1, $3", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.b $1, $2", "dat.f $2, $1", "dat.f $3, $0"},
+			output: []string{"slt.b $1, $2", "dat.f $2, $1", "dat.f $3, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"slt.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.ba $1, $2", "dat.f $1, $3", "dat.f $2, $1"},
+			output: []string{"slt.ba $1, $2", "dat.f $1, $3", "dat.f $2, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.f $1, $2", "dat.f $1, $2", "dat.f $2, $2"},
+			output: []string{"slt.f $1, $2", "dat.f $1, $2", "dat.f $2, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.f $1, $2", "dat.f $2, $1", "dat.f $2, $2"},
+			output: []string{"slt.f $1, $2", "dat.f $2, $1", "dat.f $2, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.i $1, $2", "dat.f $1, $2", "dat.f $2, $2"},
+			output: []string{"slt.i $1, $2", "dat.f $1, $2", "dat.f $2, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.i $1, $2", "dat.f $2, $1", "dat.f $2, $2"},
+			output: []string{"slt.i $1, $2", "dat.f $2, $1", "dat.f $2, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.x $1, $2", "dat.f $1, $1", "dat.f $1, $2"},
+			output: []string{"slt.x $1, $2", "dat.f $1, $1", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"slt.x $1, $2", "dat.f $1, $1", "dat.f $2, $1"},
+			output: []string{"slt.x $1, $2", "dat.f $1, $1", "dat.f $2, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "slt", tests)
+}
+
 func TestSPL(t *testing.T) {
 	tests := []redcodeTest{
 		{
