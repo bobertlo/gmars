@@ -162,7 +162,7 @@ func getOpModeAndValidate88(Op OpCode, AMode AddressMode, BMode AddressMode) (Op
 		fallthrough
 	case SUB:
 		// ADD and SUB:
-		//
+		// AB if #A, F otherwise, no #B allowed
 		if BMode == IMMEDIATE {
 			return 0, fmt.Errorf("invalid b mode '#' for op '%s'", Op)
 		}
