@@ -14,16 +14,55 @@ type Simulator struct {
 	// state    WarriorState
 }
 
-func NewSimulator(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legacy bool) *Simulator {
-	sim := &Simulator{
-		m:          coreSize,
-		maxProcs:   maxProcs,
-		maxCycles:  maxCycles,
-		readLimit:  readLimit,
-		writeLimit: writeLimit,
-		legacy:     legacy,
+type SimulatorConfig struct {
+	Mode       SimulatorMode
+	CoreSize   Address
+	Processes  Address
+	Cycles     Address
+	ReadLimit  Address
+	WriteLimit Address
+	Length     Address
+	Distance   Address
+}
+
+func StandardConfig() SimulatorConfig {
+	return SimulatorConfig{
+		Mode:       ICWS88,
+		CoreSize:   8000,
+		Processes:  8000,
+		Cycles:     80000,
+		ReadLimit:  8000,
+		WriteLimit: 8000,
+		Length:     100,
+		Distance:   100,
 	}
-	sim.mem = make([]Instruction, coreSize)
+}
+
+func BasicConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
+	out := SimulatorConfig{
+		Mode:       mode,
+		CoreSize:   coreSize,
+		Processes:  processes,
+		Cycles:     cycles,
+		ReadLimit:  coreSize,
+		WriteLimit: coreSize,
+		Length:     length,
+		Distance:   length,
+	}
+	return out
+}
+
+// func NewSimulator(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legacy bool) *Simulator {
+func NewSimulator(config SimulatorConfig) *Simulator {
+	sim := &Simulator{
+		m:          Address(config.CoreSize),
+		maxProcs:   Address(config.Processes),
+		maxCycles:  Address(config.Cycles),
+		readLimit:  Address(config.ReadLimit),
+		writeLimit: Address(config.WriteLimit),
+		legacy:     config.Mode == ICWS88,
+	}
+	sim.mem = make([]Instruction, sim.m)
 	return sim
 }
 
@@ -58,7 +97,9 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 	return w, nil
 }
 
-func (s *Simulator) run_turn() error {
+func (s *Simulator) run_turn() int {
+	nAlive := 0
+
 	for _, warrior := range s.warriors {
 		if warrior.state != ALIVE {
 			continue
@@ -71,8 +112,12 @@ func (s *Simulator) run_turn() error {
 		}
 
 		s.exec(pc, warrior.pq)
+		if warrior.pq.Len() > 0 {
+			nAlive++
+		}
 	}
-	return nil
+
+	return nAlive
 }
 
 func (s *Simulator) readFold(pointer Address) Address {

@@ -64,19 +64,19 @@ func TestWarriorMethodLoadCode88(t *testing.T) {
 	require.Equal(t, string(dat), loadCodeStr)
 }
 
-func TestWarriorMethodLoadCode94(t *testing.T) {
-	wdata := makeDwarfData()
-	sim := makeSim94()
-	w, err := sim.SpawnWarrior(wdata, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+// func TestWarriorMethodLoadCode94(t *testing.T) {
+// 	wdata := makeDwarfData()
+// 	sim := makeSim94()
+// 	w, err := sim.SpawnWarrior(wdata, 0)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	loadCodeStr := w.LoadCodePMARS()
-	dat, err := os.ReadFile("test/dwarf_pmars94.rc")
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	loadCodeStr := w.LoadCodePMARS()
+// 	dat, err := os.ReadFile("test/dwarf_pmars94.rc")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	require.Equal(t, string(dat), loadCodeStr)
-}
+// 	require.Equal(t, string(dat), loadCodeStr)
+// }

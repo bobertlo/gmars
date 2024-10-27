@@ -6,6 +6,14 @@ type OpCode uint8
 type OpMode uint8
 type AddressMode uint8
 
+type SimulatorMode uint8
+
+const (
+	ICWS88 SimulatorMode = iota
+	// NOP94
+	// ICWS94
+)
+
 type Instruction struct {
 	Op     OpCode
 	OpMode OpMode

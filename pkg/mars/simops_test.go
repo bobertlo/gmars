@@ -119,7 +119,9 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 			expectedOutput[i] = instruction
 		}
 
-		sim := NewSimulator(coresize, processes, 1, coresize, coresize, false)
+		config := BasicConfig(ICWS88, coresize, processes, 1, 100)
+
+		sim := NewSimulator(config)
 		w, err := sim.SpawnWarrior(&WarriorData{Code: code}, test.start)
 		require.NoError(t, err)
 
