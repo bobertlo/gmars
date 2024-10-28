@@ -12,6 +12,8 @@ type Simulator struct {
 	warriors  []*Warrior
 	reporters []Reporter
 	// state    WarriorState
+
+	cycleCount Address
 }
 
 type SimulatorConfig struct {
@@ -97,7 +99,9 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 	return w, nil
 }
 
-func (s *Simulator) run_turn() int {
+// RunTurn runs a cycle, executing each living warrior and returns
+// the number of living warriors at the end of the cycle
+func (s *Simulator) RunCycle() int {
 	nAlive := 0
 
 	for _, warrior := range s.warriors {
@@ -116,6 +120,8 @@ func (s *Simulator) run_turn() int {
 			nAlive++
 		}
 	}
+
+	s.cycleCount++
 
 	return nAlive
 }
@@ -209,4 +215,34 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		pq.Push((PC + 1) % s.m)
 		pq.Push(RPA)
 	}
+}
+
+// Run runs the simulator until the max cycles are reached, one warrior
+// remains in a battle with more than one warrior, or the only warrior
+// dies in a single warrior battle
+func (s *Simulator) Run() []bool {
+	nWarriors := len(s.warriors)
+
+	// if no warriors are loaded, return nil
+	if nWarriors == 0 {
+		return nil
+	}
+
+	// run until simulation
+	for s.cycleCount < s.maxCycles {
+		aliveCount := s.RunCycle()
+
+		if nWarriors == 1 && aliveCount == 0 {
+			break
+		} else if aliveCount == 1 {
+			break
+		}
+	}
+
+	// collect and return results
+	result := make([]bool, nWarriors)
+	for i, warrior := range s.warriors {
+		result[i] = warrior.Alive()
+	}
+	return result
 }

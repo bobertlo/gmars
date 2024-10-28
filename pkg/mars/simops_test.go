@@ -126,7 +126,7 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 		require.NoError(t, err)
 
 		for i := 0; i < turns; i++ {
-			sim.run_turn()
+			sim.RunCycle()
 		}
 
 		for j, expected := range expectedOutput {
