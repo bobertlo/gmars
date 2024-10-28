@@ -37,7 +37,7 @@ func (q *processQueue) Pop() (Address, error) {
 		return 0, fmt.Errorf("pull from empty queue")
 	}
 	val := q.queue[q.start]
-	q.start++
+	q.start = (q.start + 1) % q.size
 	q.length--
 	return val, nil
 }

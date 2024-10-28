@@ -1,7 +1,10 @@
 package mars
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func makeSim88() *Simulator {
@@ -44,4 +47,42 @@ func TestDwarf(t *testing.T) {
 		},
 	}
 	runTests(t, "dwarf", tests)
+}
+
+func TestRunImp(t *testing.T) {
+	reader := strings.NewReader(imp88)
+	config := StandardConfig()
+	impdata, err := ParseLoadFile(reader, config)
+	require.NoError(t, err)
+
+	sim := NewSimulator(config)
+	w, err := sim.SpawnWarrior(&impdata, 0)
+	require.NoError(t, err)
+
+	state := sim.Run()
+	require.Equal(t, 1, len(state))
+	require.True(t, state[0])
+	require.True(t, w.Alive())
+	require.Equal(t, Address(80000), sim.CycleCount())
+}
+
+func TestRunTwoImps(t *testing.T) {
+	reader := strings.NewReader(imp88)
+	config := StandardConfig()
+	impdata, err := ParseLoadFile(reader, config)
+	require.NoError(t, err)
+
+	sim := NewSimulator(config)
+	w, err := sim.SpawnWarrior(&impdata, 0)
+	require.NoError(t, err)
+	w2, err := sim.SpawnWarrior(&impdata, 200)
+	require.NoError(t, err)
+
+	state := sim.Run()
+	require.Equal(t, 2, len(state))
+	require.True(t, state[0])
+	require.True(t, state[1])
+	require.True(t, w.Alive())
+	require.True(t, w2.Alive())
+	require.Equal(t, Address(80000), sim.CycleCount())
 }

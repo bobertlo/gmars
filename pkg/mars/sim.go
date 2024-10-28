@@ -68,6 +68,10 @@ func NewSimulator(config SimulatorConfig) *Simulator {
 	return sim
 }
 
+func (s *Simulator) CycleCount() Address {
+	return s.cycleCount
+}
+
 func (s *Simulator) addressSigned(a Address) int {
 	if a > (s.m / 2) {
 		return -(int(s.m) - int(a))
@@ -234,7 +238,7 @@ func (s *Simulator) Run() []bool {
 
 		if nWarriors == 1 && aliveCount == 0 {
 			break
-		} else if aliveCount == 1 {
+		} else if nWarriors > 1 && aliveCount == 1 {
 			break
 		}
 	}
