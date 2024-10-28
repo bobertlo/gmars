@@ -122,6 +122,8 @@ func (s *Simulator) RunCycle() int {
 		s.exec(pc, warrior.pq)
 		if warrior.pq.Len() > 0 {
 			nAlive++
+		} else {
+			warrior.state = DEAD
 		}
 	}
 
