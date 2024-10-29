@@ -30,6 +30,7 @@ const (
 	SUB
 	MUL
 	DIV
+	MOD
 	JMP
 	JMZ
 	JMN

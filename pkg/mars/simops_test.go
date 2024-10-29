@@ -557,6 +557,120 @@ func TestDIV(t *testing.T) {
 	runTests(t, "div", tests)
 }
 
+func TestMOD(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:    []string{"mod.a $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.a $1, $2", "dat.f #3, #4", "dat.f #1, #15"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.a $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			output:   []string{"mod.a $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.b $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.b $1, $2", "dat.f #3, #4", "dat.f #10, #3"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.b $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			output:   []string{"mod.b $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.ab $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.ab $1, $2", "dat.f #3, #4", "dat.f #10, #0"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.ab $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			output:   []string{"mod.ab $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.ba $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.ba $1, $2", "dat.f #3, #4", "dat.f #2, #15"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.ba $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			output:   []string{"mod.ba $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.f $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.f $1, $2", "dat.f #3, #4", "dat.f #1, #3"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.f $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			output:   []string{"mod.f $1, $2", "dat.f #3, #0", "dat.f #1, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.f $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			output:   []string{"mod.f $1, $2", "dat.f #0, #4", "dat.f #10, #3"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.i $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.i $1, $2", "dat.f #3, #4", "dat.f #1, #3"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.i $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			output:   []string{"mod.i $1, $2", "dat.f #3, #0", "dat.f #1, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.i $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			output:   []string{"mod.i $1, $2", "dat.f #0, #4", "dat.f #10, #3"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"mod.x $1, $2", "dat.f #3, #4", "dat.f #10, #15"},
+			output:   []string{"mod.x $1, $2", "dat.f #3, #4", "dat.f #2, #0"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.x $1, $2", "dat.f #3, #0", "dat.f #10, #15"},
+			output:   []string{"mod.x $1, $2", "dat.f #3, #0", "dat.f #10, #0"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"mod.x $1, $2", "dat.f #0, #4", "dat.f #10, #15"},
+			output:   []string{"mod.x $1, $2", "dat.f #0, #4", "dat.f #2, #15"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+	}
+	runTests(t, "mod", tests)
+}
+
 func TestJMP(t *testing.T) {
 	tests := []redcodeTest{
 		{

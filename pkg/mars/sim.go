@@ -208,6 +208,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.mul(IR, IRA, IRB, WAB, PC, pq)
 	case DIV:
 		s.div(IR, IRA, IRB, WAB, PC, pq)
+	case MOD:
+		s.mod(IR, IRA, IRB, WAB, PC, pq)
 	case JMP:
 		pq.Push(RAB)
 	case JMZ:
