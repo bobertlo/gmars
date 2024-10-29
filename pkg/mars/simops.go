@@ -88,6 +88,58 @@ func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 	pq.Push((PC + 1) % s.m)
 }
 
+func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+	switch IR.OpMode {
+	case A:
+		if IRA.A != 0 {
+			s.mem[WAB].A = IRB.A / IRA.A
+		} else {
+			return
+		}
+	case B:
+		if IRA.B != 0 {
+			s.mem[WAB].B = IRB.B / IRA.B
+		} else {
+			return
+		}
+	case AB:
+		if IRA.A != 0 {
+			s.mem[WAB].B = IRB.B / IRA.A
+		} else {
+			return
+		}
+	case BA:
+		if IRA.B != 0 {
+			s.mem[WAB].A = IRB.A / IRA.B
+		} else {
+			return
+		}
+	case F:
+		fallthrough
+	case I:
+		if IRA.A != 0 {
+			s.mem[WAB].A = IRB.A / IRA.A
+		}
+		if IRA.B != 0 {
+			s.mem[WAB].B = IRB.B / IRA.B
+		}
+		if IRA.A == 0 || IRA.B == 0 {
+			return
+		}
+	case X:
+		if IRA.A != 0 {
+			s.mem[WAB].B = IRB.B / IRA.A
+		}
+		if IRA.B != 0 {
+			s.mem[WAB].A = IRB.A / IRA.B
+		}
+		if IRA.A == 0 || IRA.B == 0 {
+			return
+		}
+	}
+	pq.Push((PC + 1) % s.m)
+}
+
 func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, pq *processQueue) {
 	switch IR.OpMode {
 	case A:

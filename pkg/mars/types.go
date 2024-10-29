@@ -29,6 +29,7 @@ const (
 	ADD
 	SUB
 	MUL
+	DIV
 	JMP
 	JMZ
 	JMN

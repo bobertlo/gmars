@@ -443,6 +443,120 @@ func TestMUL(t *testing.T) {
 	runTests(t, "mul", tests)
 }
 
+func TestDIV(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:    []string{"div.a $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.a $1, $2", "dat.f #2, #3", "dat.f #3, #12"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.a $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			output:   []string{"div.a $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.b $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.b $1, $2", "dat.f #2, #3", "dat.f #6, #4"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.b $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			output:   []string{"div.b $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.ab $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.ab $1, $2", "dat.f #2, #3", "dat.f #6, #6"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.ab $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			output:   []string{"div.ab $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.ba $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.ba $1, $2", "dat.f #2, #3", "dat.f #2, #12"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.ba $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			output:   []string{"div.ba $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.f $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.f $1, $2", "dat.f #2, #3", "dat.f #3, #4"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.f $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			output:   []string{"div.f $1, $2", "dat.f #0, #3", "dat.f #6, #4"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.f $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			output:   []string{"div.f $1, $2", "dat.f #2, #0", "dat.f #3, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.i $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.i $1, $2", "dat.f #2, #3", "dat.f #3, #4"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.i $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			output:   []string{"div.i $1, $2", "dat.f #0, #3", "dat.f #6, #4"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.i $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			output:   []string{"div.i $1, $2", "dat.f #2, #0", "dat.f #3, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+
+		{
+			input:    []string{"div.x $1, $2", "dat.f #2, #3", "dat.f #6, #12"},
+			output:   []string{"div.x $1, $2", "dat.f #2, #3", "dat.f #2, #6"},
+			pq:       []Address{1},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.x $1, $2", "dat.f #0, #3", "dat.f #6, #12"},
+			output:   []string{"div.x $1, $2", "dat.f #0, #3", "dat.f #2, #12"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+		{
+			input:    []string{"div.x $1, $2", "dat.f #2, #0", "dat.f #6, #12"},
+			output:   []string{"div.x $1, $2", "dat.f #2, #0", "dat.f #6, #6"},
+			pq:       []Address{},
+			coresize: 256,
+		},
+	}
+	runTests(t, "div", tests)
+}
+
 func TestJMP(t *testing.T) {
 	tests := []redcodeTest{
 		{

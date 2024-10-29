@@ -49,6 +49,8 @@ func getOpCode(op string) (OpCode, error) {
 		return SUB, nil
 	case "mul":
 		return MUL, nil
+	case "div":
+		return DIV, nil
 	case "jmp":
 		return JMP, nil
 	case "jmz":
