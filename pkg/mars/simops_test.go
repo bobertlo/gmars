@@ -1163,6 +1163,124 @@ func TestCMP(t *testing.T) {
 	runTests(t, "cmp", tests)
 }
 
+func TestSEQ(t *testing.T) {
+	tests := []redcodeTest{
+		// positive cases all modes
+		{
+			input:  []string{"seq.a $1, $2", "dat.f $1, $2", "dat.f $1, $4"},
+			output: []string{"seq.a $1, $2", "dat.f $1, $2", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.b $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"seq.b $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"seq.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.ba $1, $2", "dat.f $1, $2", "dat.f $2, $4"},
+			output: []string{"seq.ba $1, $2", "dat.f $1, $2", "dat.f $2, $4", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $1, $2"},
+			output: []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $2, $1"},
+			output: []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $2, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f $1, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f $1, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		// negative cases all modes
+		{
+			input:  []string{"seq.a $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"seq.a $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.b $1, $2", "dat.f $1, $2", "dat.f $1, $4"},
+			output: []string{"seq.b $1, $2", "dat.f $1, $2", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.ab $1, $2", "dat.f $1, $1", "dat.f $1, $4"},
+			output: []string{"seq.ab $1, $2", "dat.f $1, $1", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.ba $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"seq.ba $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $1, $3"},
+			output: []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $1, $3", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"seq.f $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $2, $4"},
+			output: []string{"seq.x $1, $2", "dat.f $1, $2", "dat.f $2, $4", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "add.f $1, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "add.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.a $1, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.a $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f #1, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f #1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f $2, $2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f $2, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f $1, #2", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f $1, #2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"seq.i $1, $2", "dat.f $1, $1", "dat.f $1, $2"},
+			output: []string{"seq.i $1, $2", "dat.f $1, $1", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "seq", tests)
+}
+
 func TestSLT(t *testing.T) {
 	tests := []redcodeTest{
 		// positive cases for all modes
@@ -1292,4 +1410,15 @@ func TestSPL(t *testing.T) {
 		},
 	}
 	runTests(t, "spl", tests)
+}
+
+func TestNOP(t *testing.T) {
+	tests := []redcodeTest{
+		{
+			input:  []string{"nop.b $0, $0"},
+			output: []string{"nop.b $0, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "nop", tests)
 }

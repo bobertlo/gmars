@@ -35,9 +35,11 @@ const (
 	JMZ
 	JMN
 	CMP
+	SEQ
 	SLT
 	DJN
 	SPL
+	NOP
 )
 
 func (o OpCode) String() string {

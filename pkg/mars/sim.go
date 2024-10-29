@@ -219,12 +219,16 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	case DJN:
 		s.djn(IR, IRB, RAB, WAB, PC, pq)
 	case CMP:
+		fallthrough
+	case SEQ:
 		s.cmp(IR, IRA, IRB, PC, pq)
 	case SLT:
 		s.slt(IR, IRA, IRB, PC, pq)
 	case SPL:
 		pq.Push((PC + 1) % s.m)
 		pq.Push(RAB)
+	case NOP:
+		pq.Push((PC + 1) % s.m)
 	}
 }
 
