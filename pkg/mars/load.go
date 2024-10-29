@@ -67,6 +67,8 @@ func getOpCode(op string) (OpCode, error) {
 		return SEQ, nil
 	case "slt":
 		return SLT, nil
+	case "sne":
+		return SNE, nil
 	case "spl":
 		return SPL, nil
 	case "nop":

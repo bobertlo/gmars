@@ -1281,6 +1281,115 @@ func TestSEQ(t *testing.T) {
 	runTests(t, "seq", tests)
 }
 
+func TestSNE(t *testing.T) {
+	tests := []redcodeTest{
+		// positive cases all modes
+		{
+			input:  []string{"sne.a $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"sne.a $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.b $1, $2", "dat.f $1, $2", "dat.f $1, $4"},
+			output: []string{"sne.b $1, $2", "dat.f $1, $2", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.ab $1, $2", "dat.f $1, $2", "dat.f $2, $4"},
+			output: []string{"sne.ab $1, $2", "dat.f $1, $2", "dat.f $2, $4", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.ba $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"sne.ba $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $1, $4"},
+			output: []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $1, $1"},
+			output: []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $1, $1", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $2, $2"},
+			output: []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $2, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "add.f $1, $2", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "add.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "dat.f #1, $2", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "dat.f #1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "dat.f $2, $2", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "dat.f $2, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "dat.f $1, #2", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "dat.f $1, #2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "dat.f $1, $1", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "dat.f $1, $1", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{2},
+		},
+
+		// negative cases all modes
+		{
+			input:  []string{"sne.a $1, $2", "dat.f $1, $2", "dat.f $1, $4"},
+			output: []string{"sne.a $1, $2", "dat.f $1, $2", "dat.f $1, $4", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.b $1, $2", "dat.f $1, $2", "dat.f $3, $2"},
+			output: []string{"sne.b $1, $2", "dat.f $1, $2", "dat.f $3, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1"},
+			output: []string{"sne.ab $1, $2", "dat.f $1, $2", "dat.f $3, $1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.ba $1, $2", "dat.f $1, $2", "dat.f $2, $4"},
+			output: []string{"sne.ba $1, $2", "dat.f $1, $2", "dat.f $2, $4", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $1, #2"},
+			output: []string{"sne.f $1, $2", "dat.f $1, $2", "dat.f $1, #2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $2, #1"},
+			output: []string{"sne.x $1, $2", "dat.f $1, $2", "dat.f $2, #1", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"sne.i $1, $2", "dat.f $1, $2", "dat.f $1, $2"},
+			output: []string{"sne.i $1, $2", "dat.f $1, $2", "dat.f $1, $2", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+	}
+	runTests(t, "seq", tests)
+}
+
 func TestSLT(t *testing.T) {
 	tests := []redcodeTest{
 		// positive cases for all modes

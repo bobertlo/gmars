@@ -224,6 +224,8 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.cmp(IR, IRA, IRB, PC, pq)
 	case SLT:
 		s.slt(IR, IRA, IRB, PC, pq)
+	case SNE:
+		s.sne(IR, IRA, IRB, PC, pq)
 	case SPL:
 		pq.Push((PC + 1) % s.m)
 		pq.Push(RAB)

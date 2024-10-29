@@ -37,6 +37,7 @@ const (
 	CMP
 	SEQ
 	SLT
+	SNE
 	DJN
 	SPL
 	NOP
