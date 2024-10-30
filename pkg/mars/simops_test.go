@@ -32,10 +32,18 @@ func parseTestAddres(t *testing.T, input string, M int) (AddressMode, Address) {
 		mode = IMMEDIATE
 	case '$':
 		mode = DIRECT
+	case '*':
+		mode = A_INDIRECT
 	case '@':
 		mode = B_INDIRECT
+	case '{':
+		mode = A_DECREMENT
+	case '}':
+		mode = A_INCREMENT
 	case '<':
 		mode = B_DECREMENT
+	case '>':
+		mode = B_INCREMENT
 	default:
 		t.Fatalf("invalid address mode: '%s'", input)
 	}
@@ -151,8 +159,38 @@ func TestDat(t *testing.T) {
 			pq:     []Address{},
 		},
 		{
+			input:  []string{"dat.f >0, $0"},
+			output: []string{"dat.f >0, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
+			input:  []string{"dat.f {0, $0"},
+			output: []string{"dat.f {-1, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
+			input:  []string{"dat.f }0, $0"},
+			output: []string{"dat.f }1, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
 			input:  []string{"dat.f $0, <0"},
 			output: []string{"dat.f $0, <-1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
+			input:  []string{"dat.f $0, >0"},
+			output: []string{"dat.f $0, >1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
+			input:  []string{"dat.f $0, {0"},
+			output: []string{"dat.f $-1, {0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{},
+		},
+		{
+			input:  []string{"dat.f $0, }0"},
+			output: []string{"dat.f $1, }0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
 			pq:     []Address{},
 		},
 		{
@@ -160,8 +198,13 @@ func TestDat(t *testing.T) {
 			output: []string{"dat.f $0, <-1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $-1"},
 			pq:     []Address{},
 		},
+		{
+			input:  []string{"dat.f $0, >-1"},
+			output: []string{"dat.f $0, >-1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $1"},
+			pq:     []Address{},
+		},
 	}
-	runTests(t, "mov", tests)
+	runTests(t, "dat", tests)
 }
 
 func TestMov(t *testing.T) {
@@ -217,6 +260,41 @@ func TestMov(t *testing.T) {
 		{
 			input:  []string{"mov.i <1, $3"},
 			output: []string{"mov.i <1, $3", "dat.f $0, $-1", "dat.f $0, $0", "mov.i <1, $3"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i >1, $3", "dat.f $1, $0"},
+			output: []string{"mov.i >1, $3", "dat.f $1, $1", "dat.f $0, $0", "dat.f $1, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i {1, $3", "dat.f $1, $1"},
+			output: []string{"mov.i {1, $3", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $1"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i }1, $3", "dat.f $1, $1", "dat.f $2, $0"},
+			output: []string{"mov.i }1, $3", "dat.f $2, $1", "dat.f $2, $0", "dat.f $2, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i $0, <1", "dat.f $0, $0"},
+			output: []string{"mov.i $0, <1", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i $0, >1", "dat.f $0, $0"},
+			output: []string{"mov.i $0, >1", "mov.i $0, >1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i $0, {1", "dat.f $0, $0"},
+			output: []string{"mov.i $0, {1", "dat.f $-1, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+		},
+		{
+			input:  []string{"mov.i $0, }1", "dat.f $0, $0"},
+			output: []string{"mov.i $0, }1", "mov.i $0, }1", "dat.f $0, $0", "dat.f $0, $0"},
 			pq:     []Address{1},
 		},
 	}

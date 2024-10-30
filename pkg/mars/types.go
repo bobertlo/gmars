@@ -94,8 +94,12 @@ func (om OpMode) String() string {
 const (
 	DIRECT AddressMode = iota
 	IMMEDIATE
+	A_INDIRECT
 	B_INDIRECT
+	A_DECREMENT
 	B_DECREMENT
+	A_INCREMENT
+	B_INCREMENT
 )
 
 func (am AddressMode) String() string {

@@ -157,39 +157,97 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	// instructions referenced by A, B
 	var IRA, IRB Instruction
 
-	if IR.AMode == IMMEDIATE {
-		IRA = IR
-	} else {
+	// pointer to increment after IRA, IRB
+	var PIP Address
+
+	// prepare A indirect references and decrement or save increment pointer
+	if IR.AMode != IMMEDIATE {
 		RPA = s.readFold(IR.A)
 		WPA = s.writeFold(IR.A)
 
-		if IR.AMode == B_INDIRECT || IR.AMode == B_DECREMENT {
+		if IR.AMode == A_INDIRECT || IR.AMode == A_DECREMENT || IR.AMode == A_INCREMENT {
+			if IR.AMode == A_DECREMENT {
+				dptr := (PC + WPA) % s.m
+				s.mem[dptr].A = (s.mem[dptr].A + s.m - 1) % s.m
+			}
+
+			if IR.AMode == A_INCREMENT {
+				PIP = (PC + WPA) % s.m
+			}
+
+			RPA = s.readFold(RPA + s.mem[(PC+RPA)%s.m].A)
+		}
+
+		if IR.AMode == B_INDIRECT || IR.AMode == B_DECREMENT || IR.AMode == B_INCREMENT {
 			if IR.AMode == B_DECREMENT {
 				dptr := (PC + WPA) % s.m
 				s.mem[dptr].B = (s.mem[dptr].B + s.m - 1) % s.m
 			}
+
+			if IR.AMode == B_INCREMENT {
+				PIP = (PC + WPA) % s.m
+			}
+
 			RPA = s.readFold(RPA + s.mem[(PC+RPA)%s.m].B)
 			// WPA = s.writeFold(WPA + s.mem[(PC+WPA)%s.m].B)
 		}
-		IRA = s.mem[(PC+RPA)%s.m]
+
 	}
 
-	if IR.BMode == IMMEDIATE {
-		IRB = IR
+	// assign referenced value to IRA
+	IRA = s.mem[(PC+RPA)%s.m]
 
-	} else {
+	// do post-increments, if needed, after IRA has been assigned
+	if IR.AMode == A_INCREMENT {
+		s.mem[PIP].A = (s.mem[PIP].A + 1) % s.m
+	}
+	if IR.AMode == B_INCREMENT {
+		s.mem[PIP].B = (s.mem[PIP].B + 1) % s.m
+	}
+
+	// prepare A indirect references and decrement or save increment pointer
+	if IR.BMode != IMMEDIATE {
 		RPB = s.readFold(IR.B)
 		WPB = s.writeFold(IR.B)
 
-		if IR.BMode == B_INDIRECT || IR.BMode == B_DECREMENT {
+		if IR.BMode == A_INCREMENT || IR.BMode == A_DECREMENT || IR.BMode == B_INCREMENT {
+			if IR.BMode == A_DECREMENT {
+				dptr := (PC + WPB) % s.m
+				s.mem[dptr].A = (s.mem[dptr].A + s.m - 1) % s.m
+			}
+
+			if IR.BMode == A_INCREMENT {
+				PIP = (PC + WPB) % s.m
+			}
+
+			RPB = s.readFold(RPB + s.mem[(PC+RPB)%s.m].A)
+			WPB = s.writeFold(WPB + s.mem[(PC+WPB)%s.m].A)
+		}
+
+		if IR.BMode == B_INDIRECT || IR.BMode == B_DECREMENT || IR.BMode == B_INCREMENT {
 			if IR.BMode == B_DECREMENT {
 				dptr := (PC + WPB) % s.m
 				s.mem[dptr].B = (s.mem[dptr].B + s.m - 1) % s.m
 			}
+
+			if IR.BMode == B_INCREMENT {
+				PIP = (PC + WPB) % s.m
+			}
+
 			RPB = s.readFold(RPB + s.mem[(PC+RPB)%s.m].B)
 			WPB = s.writeFold(WPB + s.mem[(PC+WPB)%s.m].B)
 		}
-		IRB = s.mem[(PC+RPB)%s.m]
+
+	}
+
+	// assign referenced value to IRB
+	IRB = s.mem[(PC+RPB)%s.m]
+
+	// do post-increments, if needed, after IRB has been assigned
+	if IR.BMode == A_INCREMENT {
+		s.mem[PIP].A = (s.mem[PIP].A + 1) % s.m
+	} else if IR.BMode == B_INCREMENT {
+		s.mem[PIP].B = (s.mem[PIP].B + 1) % s.m
 	}
 
 	WAB := (PC + WPB) % s.m
