@@ -1,5 +1,7 @@
 package mars
 
+import "fmt"
+
 type WarriorIndex uint32
 type Address uint32
 type OpCode uint8
@@ -21,6 +23,23 @@ type Instruction struct {
 	AMode  AddressMode
 	B      Address
 	BMode  AddressMode
+}
+
+func (i Instruction) String() string {
+	return fmt.Sprintf("%s.%-2s %s %5d %s %5d", i.Op, i.OpMode, i.AMode, i.A, i.BMode, i.B)
+}
+
+func signedAddress(a, coresize Address) int {
+	if a > (coresize / 2) {
+		return -(int(coresize) - int(a))
+	}
+	return int(a)
+}
+
+func (i Instruction) NormString(coresize Address) string {
+	anorm := signedAddress(i.A, coresize)
+	bnorm := signedAddress(i.A, coresize)
+	return fmt.Sprintf("%s.%-2s %s %5d %s %5d", i.Op, i.OpMode, i.AMode, anorm, i.BMode, bnorm)
 }
 
 const (

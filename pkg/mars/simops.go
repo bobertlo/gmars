@@ -216,7 +216,7 @@ func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, pq *processQueue) 
 		fallthrough
 	case I:
 		if IRB.A == 0 && IRB.B == 0 {
-			pq.Push(RAB % s.m)
+			pq.Push(RAB)
 		} else {
 			pq.Push((PC + 1) % s.m)
 		}

@@ -85,8 +85,11 @@ func main() {
 	w2tie := 0
 	for i := 0; i < rounds; i++ {
 		sim := mars.NewSimulator(config)
-		w2start := *fixedFlag
+		if *debugFlag {
+			sim.AddReporter(mars.NewDebugReporter(sim))
+		}
 
+		w2start := *fixedFlag
 		if w2start == 0 {
 			minStart := 2 * config.Length
 			maxStart := config.CoreSize - config.Length - 1
@@ -104,9 +107,6 @@ func main() {
 			fmt.Printf("error spawning warrior 2: %n", err)
 		}
 
-		if *debugFlag {
-			sim.AddReporter(mars.NewDebugReporter(sim))
-		}
 		sim.Run()
 
 		if w1.Alive() {

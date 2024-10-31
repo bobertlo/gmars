@@ -21,6 +21,34 @@ type redcodeTest struct {
 	pq        []Address
 }
 
+func TestFold(t *testing.T) {
+	sim := NewSimulator(SimulatorConfig{
+		Mode:       NOP94,
+		CoreSize:   8000,
+		ReadLimit:  8000,
+		WriteLimit: 8000,
+		Length:     100,
+	})
+	for i := Address(0); i < 8000; i += 7 {
+		assert.Equal(t, i, sim.readFold(i))
+		assert.Equal(t, i, sim.writeFold(i))
+	}
+}
+
+func TestFoldLimit(t *testing.T) {
+	sim := NewSimulator(SimulatorConfig{
+		Mode:       NOP94,
+		CoreSize:   8000,
+		ReadLimit:  1000,
+		WriteLimit: 1000,
+		Length:     100,
+	})
+	assert.Equal(t, Address(400), sim.readFold(1400))
+	assert.Equal(t, Address(400), sim.writeFold(1400))
+	assert.Equal(t, Address(8000-400), sim.readFold(8000-1400))
+	assert.Equal(t, Address(8000-400), sim.writeFold(8000-1400))
+}
+
 func parseTestAddres(t *testing.T, input string, M int) (AddressMode, Address) {
 	var mode AddressMode
 	if len(input) == 0 {
@@ -413,6 +441,14 @@ func TestAdd(t *testing.T) {
 			output: []string{"add.x $1, $2", "dat.f #1, #2", "dat.f $2, $1", "dat.f $0, $0"},
 			pq:     []Address{1},
 		},
+		// random
+		{
+			input:    []string{"spl.b #-3044, <3044", "mov.i >-3044, $3045", "add.f $-2, $-1"},
+			output:   []string{"spl.b #-3044, <3044", "mov.i >1912, $6089", "add.f $-2, $-1"},
+			pq:       []Address{3},
+			offset:   2,
+			coresize: 8000,
+		},
 	}
 	runTests(t, "add", tests)
 }
@@ -788,10 +824,35 @@ func TestJMP(t *testing.T) {
 		},
 		// non-zero PC
 		{
-			input:  []string{"dat.f $0, $0", "jmp.i $2, $0"},
-			output: []string{"dat.f $0, $0", "jmp.i $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			input:  []string{"dat.f $0, $0", "jmp.b $2, $0"},
+			output: []string{"dat.f $0, $0", "jmp.b $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
 			pq:     []Address{3},
 			offset: 1,
+		},
+		{
+			input:  []string{"dat.f $0, $0", "jmp.b <1, $0"},
+			output: []string{"dat.f $0, $0", "jmp.b <1, $0", "dat.f $0, $-1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+			offset: 1,
+		},
+		{
+			input:  []string{"dat.f $0, $0", "jmp.b >1, $0"},
+			output: []string{"dat.f $0, $0", "jmp.b >1, $0", "dat.f $0, $1", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2},
+			offset: 1,
+		},
+		{
+			input:  []string{"dat.f $0, $0", "jmp.b >0, $0"},
+			output: []string{"dat.f $0, $0", "jmp.b >0, $1", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{1},
+			offset: 1,
+		},
+		{
+			input:    []string{"dat.f $10, $0", "dat.f $0, $0", "jmp.b *-2, $0"},
+			output:   []string{"dat.f $10, $0", "dat.f $0, $0", "jmp.b *-2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:       []Address{10},
+			offset:   2,
+			coresize: 20,
 		},
 	}
 	runTests(t, "jmp", tests)
@@ -1355,6 +1416,22 @@ func TestSEQ(t *testing.T) {
 			output: []string{"seq.i $1, $2", "dat.f $1, $1", "dat.f $1, $2", "dat.f $0, $0"},
 			pq:     []Address{1},
 		},
+
+		// non-zero pc
+		{
+			input:    []string{"dat.f $0, $0", "seq.i $145, $140"},
+			output:   []string{"dat.f $0, $0", "seq.i $145, $140"},
+			pq:       []Address{3},
+			coresize: 8000,
+			offset:   1,
+		},
+		{
+			input:    []string{"dat.f $1, $1", "seq.i $-1, $140"},
+			output:   []string{"dat.f $1, $1", "seq.i $-1, $140"},
+			pq:       []Address{2},
+			coresize: 8000,
+			offset:   1,
+		},
 	}
 	runTests(t, "seq", tests)
 }
@@ -1590,10 +1667,29 @@ func TestSPL(t *testing.T) {
 		},
 		// non-zero PC
 		{
+			input:  []string{"dat.f $0, $0", "spl.b $0, $0"},
+			output: []string{"dat.f $0, $0", "spl.b $0, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2, 1},
+			offset: 1,
+		},
+		{
 			input:  []string{"dat.f $0, $0", "spl.b $2, $0"},
 			output: []string{"dat.f $0, $0", "spl.b $2, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
 			pq:     []Address{2, 3},
 			offset: 1,
+		},
+		{
+			input:  []string{"dat.f $0, $0", "spl.b $-1, $0"},
+			output: []string{"dat.f $0, $0", "spl.b $-1, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:     []Address{2, 0},
+			offset: 1,
+		},
+		{
+			input:    []string{"dat.f $10, $0", "spl.b *-1, $0"},
+			output:   []string{"dat.f $10, $0", "spl.b *-1, $0", "dat.f $0, $0", "dat.f $0, $0", "dat.f $0, $0"},
+			pq:       []Address{2, 10},
+			offset:   1,
+			coresize: 20,
 		},
 	}
 	runTests(t, "spl", tests)

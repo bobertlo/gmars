@@ -97,7 +97,9 @@ func (s *Simulator) addressSigned(a Address) int {
 }
 
 func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
-
+	for _, r := range s.reporters {
+		r.WarriorSpawn(len(s.warriors), startOffset, startOffset+Address(data.Start))
+	}
 	w := &Warrior{
 		data: data.Copy(),
 		sim:  s,
@@ -113,10 +115,6 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 	w.pq.Push(startOffset + Address(data.Start))
 	w.state = ALIVE
 
-	for _, r := range s.reporters {
-		r.WarriorSpawn(len(s.warriors), startOffset, startOffset+Address(w.data.Start))
-	}
-
 	return w, nil
 }
 
@@ -125,7 +123,11 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 func (s *Simulator) RunCycle() int {
 	nAlive := 0
 
-	for _, warrior := range s.warriors {
+	for _, r := range s.reporters {
+		r.TurnStart(int(s.cycleCount))
+	}
+
+	for i, warrior := range s.warriors {
 		if warrior.state != ALIVE {
 			continue
 		}
@@ -134,6 +136,10 @@ func (s *Simulator) RunCycle() int {
 		if err != nil {
 			warrior.state = DEAD
 			continue
+		}
+
+		for _, r := range s.reporters {
+			r.WarriorTaskPop(i, pc)
 		}
 
 		s.exec(pc, warrior.pq)
@@ -151,7 +157,7 @@ func (s *Simulator) RunCycle() int {
 
 func (s *Simulator) readFold(pointer Address) Address {
 	res := pointer % s.readLimit
-	if res < (s.readLimit / 2) {
+	if res > (s.readLimit / 2) {
 		res += (s.m - s.readLimit)
 	}
 	return res
@@ -159,7 +165,7 @@ func (s *Simulator) readFold(pointer Address) Address {
 
 func (s *Simulator) writeFold(pointer Address) Address {
 	res := pointer % s.writeLimit
-	if res < (s.writeLimit / 2) {
+	if res > (s.writeLimit / 2) {
 		res += (s.m - s.writeLimit)
 	}
 	return res

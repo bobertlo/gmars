@@ -58,7 +58,7 @@ func (r *debugReporter) ResetMars() {
 }
 
 func (r *debugReporter) InitMars() {
-	fmt.Fprintf(os.Stderr, "MARS reset\n")
+	fmt.Fprintf(os.Stderr, "MARS init\n")
 }
 
 func (r *debugReporter) WarriorAdd(wi int, name, author string) {
@@ -69,7 +69,7 @@ func (r *debugReporter) WarriorSpawn(wi int, origin, entry Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: SPAWN %05d START %05d\n", wi, origin, entry)
 }
 func (r *debugReporter) WarriorTaskPop(wi int, pc Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: EXEC %05d\n", wi, pc)
+	fmt.Fprintf(os.Stderr, "w%02d: EXEC %05d %s\n", wi, pc, r.s.mem[pc].NormString(r.s.m))
 }
 func (r *debugReporter) WarriorTaskPush(wi int, pc Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: PUSH %05d\n", wi, pc)
