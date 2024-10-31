@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	// use88 := flag.Bool("-8", false, "Enforce ICWS'88 rules")
+	use88Flag := flag.Bool("8", false, "Enforce ICWS'88 rules")
 	sizeFlag := flag.Int("s", 8000, "Size of core")
 	procFlag := flag.Int("p", 8000, "Max. Processes")
 	cycleFlag := flag.Int("c", 80000, "Cycles until tie")
@@ -24,7 +24,14 @@ func main() {
 	cycles := mars.Address(*cycleFlag)
 	length := mars.Address(*lenFlag)
 
-	config := mars.BasicConfig(mars.ICWS88, coresize, processes, cycles, length)
+	var mode mars.SimulatorMode
+
+	if *use88Flag {
+		mode = mars.ICWS88
+	} else {
+		mode = mars.ICWS94
+	}
+	config := mars.BasicConfig(mode, coresize, processes, cycles, length)
 
 	args := flag.Args()
 

@@ -10,8 +10,8 @@ type SimulatorMode uint8
 
 const (
 	ICWS88 SimulatorMode = iota
-	// NOP94
-	// ICWS94
+	NOP94
+	ICWS94
 )
 
 type Instruction struct {

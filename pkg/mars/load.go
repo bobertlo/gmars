@@ -37,6 +37,25 @@ func getOpCode88(op string) (OpCode, error) {
 	}
 }
 
+func getOp94(op string) (OpCode, OpMode, error) {
+	fields := strings.Split(op, ".")
+	if len(fields) != 2 {
+		return 0, 0, fmt.Errorf("invalid op: '%s'", op)
+	}
+
+	code, err := getOpCode(fields[0])
+	if err != nil {
+		return 0, 0, err
+	}
+
+	opmode, err := getOpMode(fields[1])
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return code, opmode, nil
+}
+
 func getOpCode(op string) (OpCode, error) {
 	switch strings.ToLower(op) {
 	case "dat":
@@ -219,13 +238,7 @@ func getOpModeAndValidate88(Op OpCode, AMode AddressMode, BMode AddressMode) (Op
 	return B, fmt.Errorf("unknown op code: '%s'", Op)
 }
 
-// changes:
-// [x] address modes use all
-// [ ] parseOp => (Op, OpCode)
-// [ ] parse ORG
-// [ ] handle END still?
-// no inference of opcode? or do it to be nice?
-func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
+func parseLoadFile94(reader io.Reader, coresize Address) (WarriorData, error) {
 	data := WarriorData{
 		Name:     "Unknown",
 		Author:   "Anonymous",
@@ -275,22 +288,17 @@ func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 		fields := strings.Fields(nocomma)
 
 		// valid instructions need exactly 5 fields
-		// only other option is "END" pseudo opcode with 0 or 1 arguments
+		// only other option is "ORG" pseudo opcode with exactly 1 arguments
 		if len(fields) != 5 {
 			// empty line
 			if len(fields) == 0 {
 				continue
 			}
 
-			if fields[0] != "end" {
+			if fields[0] != "org" {
 				return WarriorData{}, fmt.Errorf("line %d: invalid op-code '%s'", lineNum, fields[0])
-			} else if len(fields) > 2 {
-				return WarriorData{}, fmt.Errorf("line %d: too many arguments to 'end'", lineNum)
-			}
-
-			// no arguments
-			if len(fields) == 1 {
-				break
+			} else if len(fields) != 2 {
+				return WarriorData{}, fmt.Errorf("line %d: 'org' requires 1 argument", lineNum)
 			}
 
 			val, err := strconv.ParseInt(fields[1], 10, 32)
@@ -302,7 +310,7 @@ func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 			}
 
 			data.Start = int(val)
-			break
+			continue
 		}
 
 		// comma is ignored, but required
@@ -310,8 +318,7 @@ func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 			return WarriorData{}, fmt.Errorf("line %d: missing comma", lineNum)
 		}
 
-		// attempt to parse the 5 fields as an instruction and append to code
-		op, err := getOpCode88(fields[0])
+		op, opmode, err := getOp94(fields[0])
 		if err != nil {
 			return WarriorData{}, fmt.Errorf("line %d: %s", lineNum, err)
 		}
@@ -334,11 +341,6 @@ func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 			return WarriorData{}, fmt.Errorf("line %d: error parsing b field integer: %s", lineNum, err)
 		}
 
-		opmode, err := getOpModeAndValidate88(op, amode, bmode)
-		if err != nil {
-			return WarriorData{}, fmt.Errorf("line %d: %s", lineNum, err)
-		}
-
 		data.Code = append(data.Code, Instruction{
 			Op:     op,
 			OpMode: opmode,
@@ -349,6 +351,10 @@ func parseLoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 		})
 
 	}
+	if data.Start >= len(data.Code) {
+		return WarriorData{}, fmt.Errorf("invalid start position")
+	}
+
 	return data, nil
 }
 
@@ -480,8 +486,8 @@ func parse88LoadFile(reader io.Reader, coresize Address) (WarriorData, error) {
 }
 
 func ParseLoadFile(reader io.Reader, simConfig SimulatorConfig) (WarriorData, error) {
-	if simConfig.Mode != ICWS88 {
-		return WarriorData{}, fmt.Errorf("not implemented")
+	if simConfig.Mode == ICWS88 {
+		return parse88LoadFile(reader, simConfig.CoreSize)
 	}
-	return parse88LoadFile(reader, simConfig.CoreSize)
+	return parseLoadFile94(reader, simConfig.CoreSize)
 }

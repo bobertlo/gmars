@@ -40,6 +40,19 @@ func StandardConfig() SimulatorConfig {
 	}
 }
 
+func Standard94Config() SimulatorConfig {
+	return SimulatorConfig{
+		Mode:       ICWS94,
+		CoreSize:   8000,
+		Processes:  8000,
+		Cycles:     80000,
+		ReadLimit:  8000,
+		WriteLimit: 8000,
+		Length:     100,
+		Distance:   100,
+	}
+}
+
 func BasicConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
 	out := SimulatorConfig{
 		Mode:       mode,
