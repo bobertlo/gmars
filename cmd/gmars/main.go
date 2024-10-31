@@ -17,6 +17,8 @@ func main() {
 	lenFlag := flag.Int("l", 100, "Max. warrior length")
 	fixedFlag := flag.Int("F", 0, "fixed position of warrior #2")
 	roundFlag := flag.Int("r", 1, "Rounds to play")
+	briefFlag := flag.Bool("b", false, "Brief mode (no source listings)")
+	debugFlag := flag.Bool("debug", false, "Dump verbose debug information")
 	flag.Parse()
 
 	coresize := mars.Address(*sizeFlag)
@@ -65,6 +67,16 @@ func main() {
 	}
 	w1file.Close()
 
+	if !*briefFlag {
+		sim := mars.NewSimulator(config)
+		w, _ := sim.SpawnWarrior(&w1data, 0)
+		fmt.Println(w.LoadCodePMARS())
+
+		sim = mars.NewSimulator(config)
+		w, _ = sim.SpawnWarrior(&w2data, 0)
+		fmt.Println(w.LoadCodePMARS())
+	}
+
 	rounds := *roundFlag
 
 	w1win := 0
@@ -92,6 +104,9 @@ func main() {
 			fmt.Printf("error spawning warrior 2: %n", err)
 		}
 
+		if *debugFlag {
+			sim.AddReporter(mars.NewDebugReporter(sim))
+		}
 		sim.Run()
 
 		if w1.Alive() {

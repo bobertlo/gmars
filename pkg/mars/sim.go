@@ -85,6 +85,10 @@ func (s *Simulator) CycleCount() Address {
 	return s.cycleCount
 }
 
+func (s *Simulator) AddReporter(r Reporter) {
+	s.reporters = append(s.reporters, r)
+}
+
 func (s *Simulator) addressSigned(a Address) int {
 	if a > (s.m / 2) {
 		return -(int(s.m) - int(a))

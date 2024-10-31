@@ -55,8 +55,24 @@ func (o OpCode) String() string {
 		return "SUB"
 	case MUL:
 		return "MUL"
+	case CMP:
+		return "CMP"
+	case SEQ:
+		return "SEQ"
+	case SNE:
+		return "SNE"
+	case SLT:
+		return "SLT"
 	case JMP:
 		return "JMP"
+	case JMN:
+		return "JMN"
+	case JMZ:
+		return "JMZ"
+	case DJN:
+		return "DJN"
+	case SPL:
+		return "SPL"
 	}
 	return "___"
 }
@@ -108,10 +124,18 @@ func (am AddressMode) String() string {
 		return "#"
 	case DIRECT:
 		return "$"
+	case A_INDIRECT:
+		return "*"
 	case B_INDIRECT:
 		return "@"
+	case A_DECREMENT:
+		return "{"
 	case B_DECREMENT:
 		return "<"
+	case A_INCREMENT:
+		return "}"
+	case B_INCREMENT:
+		return ">"
 	}
 	return "_"
 }
