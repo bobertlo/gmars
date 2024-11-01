@@ -325,6 +325,14 @@ func TestMov(t *testing.T) {
 			output: []string{"mov.i $0, }1", "mov.i $0, }1", "dat.f $0, $0", "dat.f $0, $0"},
 			pq:     []Address{1},
 		},
+		//random tests
+		{
+			input:    []string{"dat.f $0, $3", "mov.i $1, >-1", "spl.b $0, $0"},
+			output:   []string{"dat.f $0, $4", "mov.i $1, >-1", "spl.b $0, $0", "spl.b $0, $0"},
+			pq:       []Address{2},
+			coresize: 20,
+			offset:   1,
+		},
 	}
 	runTests(t, "mov", tests)
 }
@@ -441,7 +449,7 @@ func TestAdd(t *testing.T) {
 			output: []string{"add.x $1, $2", "dat.f #1, #2", "dat.f $2, $1", "dat.f $0, $0"},
 			pq:     []Address{1},
 		},
-		// random
+		// random tests
 		{
 			input:    []string{"spl.b #-3044, <3044", "mov.i >-3044, $3045", "add.f $-2, $-1"},
 			output:   []string{"spl.b #-3044, <3044", "mov.i >1912, $6089", "add.f $-2, $-1"},

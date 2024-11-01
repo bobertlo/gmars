@@ -38,7 +38,7 @@ func signedAddress(a, coresize Address) int {
 
 func (i Instruction) NormString(coresize Address) string {
 	anorm := signedAddress(i.A, coresize)
-	bnorm := signedAddress(i.A, coresize)
+	bnorm := signedAddress(i.B, coresize)
 	return fmt.Sprintf("%s.%-2s %s %5d %s %5d", i.Op, i.OpMode, i.AMode, anorm, i.BMode, bnorm)
 }
 

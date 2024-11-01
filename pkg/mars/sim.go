@@ -228,12 +228,12 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 		s.mem[PIP].B = (s.mem[PIP].B + 1) % s.m
 	}
 
-	// prepare A indirect references and decrement or save increment pointer
+	// prepare B indirect references and decrement or save increment pointer
 	if IR.BMode != IMMEDIATE {
 		RPB = s.readFold(IR.B)
 		WPB = s.writeFold(IR.B)
 
-		if IR.BMode == A_INCREMENT || IR.BMode == A_DECREMENT || IR.BMode == B_INCREMENT {
+		if IR.BMode == A_INDIRECT || IR.BMode == A_DECREMENT || IR.BMode == A_INCREMENT {
 			if IR.BMode == A_DECREMENT {
 				dptr := (PC + WPB) % s.m
 				s.mem[dptr].A = (s.mem[dptr].A + s.m - 1) % s.m
