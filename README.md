@@ -43,7 +43,7 @@ applications for educational and analytical purposes.
 > detected and I am searching for the issue.
 
 To test for errors I used the 88 and 94nop hills from
-[https://asdflkj.net/COREWAR/koenigstuhl.html](Koenigstuhl) and ran battles with
+[Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html) and ran battles with
 fixed starting positions to compare the output to pMARS and other
 implementations.
 
