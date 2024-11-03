@@ -1,7 +1,8 @@
-# gMARS (Go Memory Array Redcode Simulator)
+# gMARS
 
 gMARS is an implementation of a Memory Array Redcode Simulator (MARS) written in
-Go. The MARS simulator is used to play the game Core War
+Go. The MARS simulator is used to play the game Core War, in which two or more
+virus-like programs fight against each other in core memory.
 
 For more information about Core War see:
 
@@ -10,7 +11,7 @@ For more information about Core War see:
 - [http://www.koth.org/](koth.org): A King of the Hill server with ongoing
    competitive matches, information, and links.
 
-## gMARS Project Status
+## Project Status
 
 This project is still a work in progress, but the core simulator is functional,
 tested, and mostly bug free. gMARS does include a CLI client, but is implemented
@@ -53,7 +54,3 @@ results matched.
 The '94 hill has 1037 and all warriors had results matching pMARS except for
 one. I am working on finding the bug there, but also working on new features at
 the same time.
-
-## Usage Information
-
-A CLI client is
