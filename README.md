@@ -9,7 +9,9 @@ information about Core War see:
    tutorials, history, and links.
 - [KOTH.org](http://www.koth.org/): A King of the Hill server with ongoing
    competitive matches, information, and links.
-- [Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html): An infinite hill that collects most warriors with known source code and calculates their rankings.
+- [Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html): An 'infinite
+   hill' site that collects warriors and publishes their rankings and source
+   code.
 
 ## Project Status
 
