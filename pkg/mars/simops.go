@@ -1,6 +1,6 @@
 package mars
 
-func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = IRA.A
@@ -19,10 +19,10 @@ func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, pq *processQueue) 
 	case I:
 		s.mem[WAB] = IRA
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + IRA.A) % s.m
@@ -41,10 +41,10 @@ func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 		s.mem[WAB].A = (IRB.A + IRA.B) % s.m
 		s.mem[WAB].B = (IRB.B + IRA.A) % s.m
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + (s.m - IRA.A)) % s.m
@@ -63,10 +63,10 @@ func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 		s.mem[WAB].A = (IRB.A + (s.m - IRA.B)) % s.m
 		s.mem[WAB].B = (IRB.B + (s.m - IRA.A)) % s.m
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A * IRA.A) % s.m
@@ -85,33 +85,37 @@ func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 		s.mem[WAB].A = (IRB.A * IRA.B) % s.m
 		s.mem[WAB].B = (IRB.B * IRA.A) % s.m
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != 0 {
 			s.mem[WAB].A = IRB.A / IRA.A
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case B:
 		if IRA.B != 0 {
 			s.mem[WAB].B = IRB.B / IRA.B
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case AB:
 		if IRA.A != 0 {
 			s.mem[WAB].B = IRB.B / IRA.A
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case BA:
 		if IRA.B != 0 {
 			s.mem[WAB].A = IRB.A / IRA.B
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case F:
@@ -124,6 +128,7 @@ func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 			s.mem[WAB].B = IRB.B / IRA.B
 		}
 		if IRA.A == 0 || IRA.B == 0 {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case X:
@@ -134,36 +139,41 @@ func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 			s.mem[WAB].A = IRB.A / IRA.B
 		}
 		if IRA.A == 0 || IRA.B == 0 {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != 0 {
 			s.mem[WAB].A = IRB.A % IRA.A
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case B:
 		if IRA.B != 0 {
 			s.mem[WAB].B = IRB.B % IRA.B
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case AB:
 		if IRA.A != 0 {
 			s.mem[WAB].B = IRB.B % IRA.A
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case BA:
 		if IRA.B != 0 {
 			s.mem[WAB].A = IRB.A % IRA.B
 		} else {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case F:
@@ -176,6 +186,7 @@ func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 			s.mem[WAB].B = IRB.B % IRA.B
 		}
 		if IRA.A == 0 || IRA.B == 0 {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	case X:
@@ -186,29 +197,30 @@ func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, pq *processQu
 			s.mem[WAB].A = IRB.A % IRA.B
 		}
 		if IRA.A == 0 || IRA.B == 0 {
+			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
 	}
-	pq.Push((PC + 1) % s.m)
+	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, pq *processQueue) {
+func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
 	case BA:
 		if IRB.A == 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		fallthrough
 	case AB:
 		if IRB.B == 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		fallthrough
@@ -216,30 +228,30 @@ func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, pq *processQueue) 
 		fallthrough
 	case I:
 		if IRB.A == 0 && IRB.B == 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }
 
-func (s *Simulator) jmn(IR, IRB Instruction, RAB, PC Address, pq *processQueue) {
+func (s *Simulator) jmn(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
 	case BA:
 		if IRB.A != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		fallthrough
 	case AB:
 		if IRB.B != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		fallthrough
@@ -247,14 +259,14 @@ func (s *Simulator) jmn(IR, IRB Instruction, RAB, PC Address, pq *processQueue) 
 		fallthrough
 	case I:
 		if IRB.A != 0 || IRB.B != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }
 
-func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, pq *processQueue) {
+func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
@@ -262,9 +274,9 @@ func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, pq *processQu
 		s.mem[WAB].A = (s.mem[WAB].A + s.m - 1) % s.m
 		IRB.A -= 1
 		if IRB.A != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		fallthrough
@@ -272,9 +284,9 @@ func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, pq *processQu
 		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
 		IRB.B -= 1
 		if IRB.B != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		fallthrough
@@ -286,151 +298,151 @@ func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, pq *processQu
 		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
 		IRB.B -= 1
 		if IRB.B != 0 || IRB.A != 0 {
-			pq.Push(RAB)
+			w.pq.Push(RAB)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }
 
-func (s *Simulator) cmp(IR, IRA, IRB Instruction, PC Address, pq *processQueue) {
+func (s *Simulator) cmp(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A == IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		if IRA.B == IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case AB:
 		if IRA.A == IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case BA:
 		if IRA.B == IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		if IRA.A == IRB.A && IRA.B == IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case X:
 		if IRA.A == IRB.B && IRA.B == IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case I:
 		if IRA.Op == IRB.Op && IRA.OpMode == IRB.OpMode &&
 			IRA.AMode == IRB.AMode && IRA.A == IRB.A &&
 			IRA.BMode == IRB.BMode && IRA.B == IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }
 
-func (s *Simulator) sne(IR, IRA, IRB Instruction, PC Address, pq *processQueue) {
+func (s *Simulator) sne(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		if IRA.B != IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case AB:
 		if IRA.A != IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case BA:
 		if IRA.B != IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		if IRA.A != IRB.A || IRA.B != IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case X:
 		if IRA.A != IRB.B || IRA.B != IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case I:
 		if IRA.Op != IRB.Op || IRA.OpMode != IRB.OpMode ||
 			IRA.AMode != IRB.AMode || IRA.A != IRB.A ||
 			IRA.BMode != IRB.BMode || IRA.B != IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }
 
-func (s *Simulator) slt(IR, IRA, IRB Instruction, PC Address, pq *processQueue) {
+func (s *Simulator) slt(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A < IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case B:
 		if IRA.B < IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case AB:
 		if IRA.A < IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case BA:
 		if IRA.B < IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	case F:
 		fallthrough
 	case I:
 		if IRA.A < IRB.A && IRA.B < IRB.B {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 
 	case X:
 		if IRA.A < IRB.B && IRA.B < IRB.A {
-			pq.Push((PC + 2) % s.m)
+			w.pq.Push((PC + 2) % s.m)
 		} else {
-			pq.Push((PC + 1) % s.m)
+			w.pq.Push((PC + 1) % s.m)
 		}
 	}
 }

@@ -97,6 +97,12 @@ func (s *Simulator) AddReporter(r Reporter) {
 	s.reporters = append(s.reporters, r)
 }
 
+func (s *Simulator) Report(report Report) {
+	for _, r := range s.reporters {
+		r.Report(report)
+	}
+}
+
 func (s *Simulator) addressSigned(a Address) int {
 	if a > (s.m / 2) {
 		return -(int(s.m) - int(a))
@@ -105,9 +111,7 @@ func (s *Simulator) addressSigned(a Address) int {
 }
 
 func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
-	for _, r := range s.reporters {
-		r.WarriorSpawn(len(s.warriors), startOffset, startOffset+Address(data.Start))
-	}
+
 	w := &Warrior{
 		data: data.Copy(),
 		sim:  s,
@@ -117,11 +121,13 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 		s.mem[(startOffset+i)%s.m] = w.data.Code[i]
 	}
 
-	s.warriors = append(s.warriors, w)
 	w.index = len(s.warriors)
+	s.warriors = append(s.warriors, w)
 	w.pq = NewProcessQueue(s.maxProcs)
 	w.pq.Push(startOffset + Address(data.Start))
 	w.state = ALIVE
+
+	s.Report(Report{Type: WarriorSpawn, WarriorIndex: w.index, Address: startOffset})
 
 	return w, nil
 }
@@ -131,9 +137,7 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 func (s *Simulator) RunCycle() int {
 	nAlive := 0
 
-	for _, r := range s.reporters {
-		r.CycleStart(int(s.cycleCount))
-	}
+	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
 
 	for i, warrior := range s.warriors {
 		if warrior.state != ALIVE {
@@ -141,28 +145,26 @@ func (s *Simulator) RunCycle() int {
 		}
 
 		pc, err := warrior.pq.Pop()
+		s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
+
 		if err != nil {
+			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
 			warrior.state = DEAD
 			continue
 		}
 
-		for _, r := range s.reporters {
-			r.WarriorTaskPop(i, pc)
-		}
+		s.exec(pc, warrior)
 
-		s.exec(pc, warrior.pq)
 		if warrior.pq.Len() > 0 {
 			nAlive++
 		} else {
+			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
 			warrior.state = DEAD
 		}
 	}
 
+	s.Report(Report{Type: CycleEnd, Cycle: int(s.cycleCount)})
 	s.cycleCount++
-
-	for _, r := range s.reporters {
-		r.CycleEnd(int(s.cycleCount))
-	}
 
 	return nAlive
 }
@@ -183,7 +185,7 @@ func (s *Simulator) writeFold(pointer Address) Address {
 	return res
 }
 
-func (s *Simulator) exec(PC Address, pq *processQueue) {
+func (s *Simulator) exec(PC Address, w *Warrior) {
 	IR := s.mem[PC]
 
 	// read and write limit folded pointers for A, B
@@ -204,6 +206,7 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 			if IR.AMode == A_DECREMENT {
 				dptr := (PC + WPA) % s.m
 				s.mem[dptr].A = (s.mem[dptr].A + s.m - 1) % s.m
+				s.Report(Report{Type: WarriorDecrement, WarriorIndex: w.index, Address: dptr})
 			}
 
 			if IR.AMode == A_INCREMENT {
@@ -219,6 +222,7 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 			if IR.AMode == B_DECREMENT {
 				dptr := (PC + WPA) % s.m
 				s.mem[dptr].B = (s.mem[dptr].B + s.m - 1) % s.m
+				s.Report(Report{Type: WarriorDecrement, WarriorIndex: w.index, Address: dptr})
 			}
 
 			if IR.AMode == B_INCREMENT {
@@ -284,8 +288,10 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 	// do post-increments, if needed, after IRB has been assigned
 	if IR.BMode == A_INCREMENT {
 		s.mem[PIP].A = (s.mem[PIP].A + 1) % s.m
+		s.Report(Report{Type: WarriorIncrement, WarriorIndex: w.index, Address: PIP})
 	} else if IR.BMode == B_INCREMENT {
 		s.mem[PIP].B = (s.mem[PIP].B + 1) % s.m
+		s.Report(Report{Type: WarriorIncrement, WarriorIndex: w.index, Address: PIP})
 	}
 
 	WAB := (PC + WPB) % s.m
@@ -293,40 +299,54 @@ func (s *Simulator) exec(PC Address, pq *processQueue) {
 
 	switch IR.Op {
 	case DAT:
+		s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 		return
 	case MOV:
-		s.mov(IR, IRA, WAB, PC, pq)
+		s.mov(IR, IRA, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case ADD:
-		s.add(IR, IRA, IRB, WAB, PC, pq)
+		s.add(IR, IRA, IRB, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case SUB:
-		s.sub(IR, IRA, IRB, WAB, PC, pq)
+		s.sub(IR, IRA, IRB, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case MUL:
-		s.mul(IR, IRA, IRB, WAB, PC, pq)
+		s.mul(IR, IRA, IRB, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case DIV:
-		s.div(IR, IRA, IRB, WAB, PC, pq)
+		s.div(IR, IRA, IRB, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case MOD:
-		s.mod(IR, IRA, IRB, WAB, PC, pq)
+		s.mod(IR, IRA, IRB, WAB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: WAB})
 	case JMP:
-		pq.Push(RAB)
+		w.pq.Push(RAB)
 	case JMZ:
-		s.jmz(IR, IRB, RAB, PC, pq)
+		s.jmz(IR, IRB, RAB, PC, w)
 	case JMN:
-		s.jmn(IR, IRB, RAB, PC, pq)
+		s.jmn(IR, IRB, RAB, PC, w)
 	case DJN:
-		s.djn(IR, IRB, RAB, WAB, PC, pq)
+		s.djn(IR, IRB, RAB, WAB, PC, w)
+		s.Report(Report{Type: WarriorDecrement, WarriorIndex: w.index, Address: WAB})
 	case CMP:
 		fallthrough
 	case SEQ:
-		s.cmp(IR, IRA, IRB, PC, pq)
+		s.cmp(IR, IRA, IRB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SLT:
-		s.slt(IR, IRA, IRB, PC, pq)
+		s.slt(IR, IRA, IRB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SNE:
-		s.sne(IR, IRA, IRB, PC, pq)
+		s.sne(IR, IRA, IRB, PC, w)
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SPL:
-		pq.Push((PC + 1) % s.m)
-		pq.Push(RAB)
+		w.pq.Push((PC + 1) % s.m)
+		w.pq.Push(RAB)
 	case NOP:
-		pq.Push((PC + 1) % s.m)
+		w.pq.Push((PC + 1) % s.m)
 	}
 }
 
