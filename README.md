@@ -2,11 +2,10 @@
 
 gMARS is an implementation of a Memory Array Redcode Simulator (MARS) written in
 Go. The MARS simulator is used to play the game Core War, in which two or more
-virus-like programs fight against each other in core memory.
+virus-like programs fight against each other in core memory. For more
+information about Core War see:
 
-For more information about Core War see:
-
-- [corewar.co.uk](https://corewar.co.uk/): John Metcalf's Core War Site
+- [corewar.co.uk](https://corewar.co.uk/): John Metcalf's Core War Site with
    tutorials, history, and links.
 - [KOTH.org](http://www.koth.org/): A King of the Hill server with ongoing
    competitive matches, information, and links.
