@@ -39,13 +39,15 @@ applications for educational and analytical purposes.
 
 ## Testing Status / Known Bugs
 
-TL;DR: One warrior out of 1695 tested has divergent behavior from pMARS
-detected.
+> TL;DR: One warrior out of 1695 tested has divergent behavior from pMARS
+> detected and I am searching for the issue.
 
 To test for errors I used the 88 and 94nop hills from
 [https://asdflkj.net/COREWAR/koenigstuhl.html](Koenigstuhl) and ran battles with
 fixed starting positions to compare the output to pMARS and other
 implementations.
+
+### Results
 
 The '88 hill has 658 warriors and all tested combinations / starting position
 results matched.
