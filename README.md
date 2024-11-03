@@ -6,9 +6,9 @@ virus-like programs fight against each other in core memory.
 
 For more information about Core War see:
 
-- [https://corewar.co.uk/](corewar.co.uk): John Metcalf's Core War Site
+- [corewar.co.uk](https://corewar.co.uk/): John Metcalf's Core War Site
    tutorials, history, and links.
-- [http://www.koth.org/](koth.org): A King of the Hill server with ongoing
+- [KOTH.org](http://www.koth.org/): A King of the Hill server with ongoing
    competitive matches, information, and links.
 
 ## Project Status
