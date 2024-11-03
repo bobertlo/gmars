@@ -132,7 +132,7 @@ func (s *Simulator) RunCycle() int {
 	nAlive := 0
 
 	for _, r := range s.reporters {
-		r.TurnStart(int(s.cycleCount))
+		r.CycleStart(int(s.cycleCount))
 	}
 
 	for i, warrior := range s.warriors {
@@ -159,6 +159,10 @@ func (s *Simulator) RunCycle() int {
 	}
 
 	s.cycleCount++
+
+	for _, r := range s.reporters {
+		r.CycleEnd(int(s.cycleCount))
+	}
 
 	return nAlive
 }

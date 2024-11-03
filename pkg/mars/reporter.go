@@ -6,19 +6,18 @@ import (
 )
 
 type Reporter interface {
-	AddressRead(wi int, a Address)
-	AddressWrite(wi int, a Address)
-	AddressIncrement(wi int, a Address)
-	AddressDecrement(wi int, a Address)
-	TaskTerminate(wi int, a Address)
-	TurnStart(n int)
-	InitMars()
-	ResetMars()
+	CycleStart(n int)
+	CycleEnd(n int)
 	WarriorAdd(wi int, name, author string)
 	WarriorSpawn(wi int, origin, entry Address)
 	WarriorTaskPop(wi int, pc Address)
 	WarriorTaskPush(wi int, pc Address)
+	WarriorTaskTerminate(wi int, a Address)
 	WarriorTerminate(wi int)
+	WarriorRead(wi int, a Address)
+	WarriorWrite(wi int, a Address)
+	WarriorDecrement(wi int, a Address)
+	WarriorIncrement(wi int, a Address)
 }
 
 type debugReporter struct {
@@ -29,36 +28,12 @@ func NewDebugReporter(s *Simulator) Reporter {
 	return &debugReporter{s: s}
 }
 
-func (r *debugReporter) AddressRead(wi int, a Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: %05d read\n", wi, a)
-}
-
-func (r *debugReporter) AddressWrite(wi int, a Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: %05d write\n", wi, a)
-}
-
-func (r *debugReporter) AddressIncrement(wi int, a Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
-}
-
-func (r *debugReporter) AddressDecrement(wi int, a Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
-}
-
-func (r *debugReporter) TaskTerminate(wi int, a Address) {
-	fmt.Fprintf(os.Stderr, "w%02d: %05d TERMINATE\n", wi, a)
-}
-
-func (r *debugReporter) TurnStart(n int) {
+func (r *debugReporter) CycleStart(n int) {
 	fmt.Fprintf(os.Stderr, "TURN %05d\n", n)
 }
 
-func (r *debugReporter) ResetMars() {
-	fmt.Fprintf(os.Stderr, "MARS reset\n")
-}
-
-func (r *debugReporter) InitMars() {
-	fmt.Fprintf(os.Stderr, "MARS init\n")
+func (r *debugReporter) CycleEnd(n int) {
+	fmt.Fprintf(os.Stderr, "TURN %05d\n", n)
 }
 
 func (r *debugReporter) WarriorAdd(wi int, name, author string) {
@@ -68,12 +43,35 @@ func (r *debugReporter) WarriorAdd(wi int, name, author string) {
 func (r *debugReporter) WarriorSpawn(wi int, origin, entry Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: SPAWN %05d START %05d\n", wi, origin, entry)
 }
+
 func (r *debugReporter) WarriorTaskPop(wi int, pc Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: EXEC %05d %s\n", wi, pc, r.s.mem[pc].NormString(r.s.m))
 }
+
 func (r *debugReporter) WarriorTaskPush(wi int, pc Address) {
 	fmt.Fprintf(os.Stderr, "w%02d: PUSH %05d\n", wi, pc)
 }
+
+func (r *debugReporter) WarriorTaskTerminate(wi int, a Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: %05d TERMINATE\n", wi, a)
+}
+
 func (r *debugReporter) WarriorTerminate(wi int) {
 	fmt.Fprintf(os.Stderr, "w%02d: TERMINATE\n", wi)
+}
+
+func (r *debugReporter) WarriorRead(wi int, a Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: %05d read\n", wi, a)
+}
+
+func (r *debugReporter) WarriorWrite(wi int, a Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: %05d write\n", wi, a)
+}
+
+func (r *debugReporter) WarriorIncrement(wi int, a Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
+}
+
+func (r *debugReporter) WarriorDecrement(wi int, a Address) {
+	fmt.Fprintf(os.Stderr, "w%02d: %05d++\n", wi, a)
 }
