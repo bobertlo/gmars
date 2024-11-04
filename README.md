@@ -1,5 +1,7 @@
 # gMARS
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/bobertlo/gmars/pkg/mars.svg)](https://pkg.go.dev/github.com/bobertlo/gmars/pkg/mars)
+
 gMARS is an implementation of a Memory Array Redcode Simulator (MARS) written in
 Go. The MARS simulator is used to play the game Core War, in which two or more
 virus-like programs fight against each other in core memory. For more
