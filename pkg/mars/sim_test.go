@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeSim88() *Simulator {
-	return NewSimulator(BasicConfig(ICWS88, 8000, 8000, 80000, 100))
+func makeSim88() Simulator {
+	return NewSimulator(NewQuickConfig(ICWS88, 8000, 8000, 80000, 100))
 }
 
 func TestImp(t *testing.T) {
@@ -51,7 +51,7 @@ func TestDwarf(t *testing.T) {
 
 func TestRunImp(t *testing.T) {
 	reader := strings.NewReader(imp88)
-	config := StandardConfig()
+	config := ConfigKOTH88()
 	impdata, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 
@@ -63,12 +63,12 @@ func TestRunImp(t *testing.T) {
 	require.Equal(t, 1, len(state))
 	require.True(t, state[0])
 	require.True(t, w.Alive())
-	require.Equal(t, Address(80000), sim.CycleCount())
+	require.Equal(t, 80000, sim.CycleCount())
 }
 
 func TestRunTwoImps(t *testing.T) {
 	reader := strings.NewReader(imp88)
-	config := StandardConfig()
+	config := ConfigKOTH88()
 	impdata, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 
@@ -84,5 +84,5 @@ func TestRunTwoImps(t *testing.T) {
 	require.True(t, state[1])
 	require.True(t, w.Alive())
 	require.True(t, w2.Alive())
-	require.Equal(t, Address(80000), sim.CycleCount())
+	require.Equal(t, 80000, sim.CycleCount())
 }

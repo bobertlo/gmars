@@ -2,12 +2,12 @@ package mars
 
 import "fmt"
 
-type WarriorState uint8
+type warriorState uint8
 
 const (
-	RESET WarriorState = iota
-	ALIVE
-	DEAD
+	warriorRest warriorState = iota
+	warriorAlive
+	warriorDead
 )
 
 type WarriorData struct {
@@ -16,6 +16,13 @@ type WarriorData struct {
 	Strategy string        // Strategy including multiple lines
 	Code     []Instruction // Program Instructions
 	Start    int           // Program Entry Point
+}
+
+type Warrior interface {
+	Alive() bool
+	Name() string
+	Author() string
+	Queue() []Address
 }
 
 // Copy creates a deep copy of a WarriorData object
@@ -31,45 +38,45 @@ func (w *WarriorData) Copy() *WarriorData {
 	}
 }
 
-// Warrior is a manifestation WarriorData in a Simulator
-type Warrior struct {
+// warrior is a manifestation WarriorData in a Simulator
+type warrior struct {
 	data  *WarriorData
-	sim   *Simulator
+	sim   *reportSim
 	index int
 	pq    *processQueue
 	// pspace []Instruction
-	state WarriorState
+	state warriorState
 }
 
 // Name returns the Warrior's Name
-func (w *Warrior) Name() string {
+func (w *warrior) Name() string {
 	return w.data.Name
 }
 
 // Author returns the Warrior's Author
-func (w *Warrior) Author() string {
+func (w *warrior) Author() string {
 	return w.data.Author
 }
 
 // Length returns the Warrior's code length
-func (w *Warrior) Length() int {
+func (w *warrior) Length() int {
 	return len(w.data.Code)
 }
 
-func (w *Warrior) State() WarriorState {
+func (w *warrior) State() warriorState {
 	return w.state
 }
 
 // Alive returns true if the warrior is alive
-func (w *Warrior) Alive() bool {
-	return w.state == ALIVE
+func (w *warrior) Alive() bool {
+	return w.state == warriorAlive
 }
 
-func (w *Warrior) ThreadCount() Address {
+func (w *warrior) ThreadCount() Address {
 	return w.pq.Len()
 }
 
-func (w *Warrior) LoadCode() string {
+func (w *warrior) LoadCode() string {
 	out := ""
 
 	if len(w.data.Code) == 0 {
@@ -105,11 +112,18 @@ func (w *Warrior) LoadCode() string {
 	return out
 }
 
-func (w *Warrior) LoadCodePMARS() string {
+func (w *warrior) LoadCodePMARS() string {
 	header := fmt.Sprintf("Program \"%s\" (length %d) by \"%s\"\n\n", w.Name(), w.Length(), w.Author())
 
 	if len(w.data.Code) > 0 {
 		return header + w.LoadCode() + "\n"
 	}
 	return header
+}
+
+func (w *warrior) Queue() []Address {
+	if w.pq == nil {
+		return []Address{}
+	}
+	return w.pq.Values()
 }

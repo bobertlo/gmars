@@ -22,7 +22,7 @@ type redcodeTest struct {
 }
 
 func TestFold(t *testing.T) {
-	sim := NewSimulator(SimulatorConfig{
+	sim := newReportSim(SimulatorConfig{
 		Mode:       NOP94,
 		CoreSize:   8000,
 		ReadLimit:  8000,
@@ -36,7 +36,7 @@ func TestFold(t *testing.T) {
 }
 
 func TestFoldLimit(t *testing.T) {
-	sim := NewSimulator(SimulatorConfig{
+	sim := newReportSim(SimulatorConfig{
 		Mode:       NOP94,
 		CoreSize:   8000,
 		ReadLimit:  1000,
@@ -156,10 +156,10 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 			expectedOutput[i] = instruction
 		}
 
-		config := BasicConfig(ICWS88, coresize, processes, 1, 100)
+		config := NewQuickConfig(ICWS88, coresize, processes, 1, 100)
 
-		sim := NewSimulator(config)
-		w, err := sim.SpawnWarrior(&WarriorData{Code: code, Start: int(test.offset)}, test.start)
+		sim := newReportSim(config)
+		w, err := sim.spawnWarrior(&WarriorData{Code: code, Start: int(test.offset)}, test.start)
 		require.NoError(t, err)
 
 		for i := 0; i < turns; i++ {
@@ -167,7 +167,7 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 		}
 
 		for j, expected := range expectedOutput {
-			assert.Equal(t, expected, sim.mem[j], fmt.Sprintf("%s test %d address %d", set_name, i, j))
+			assert.Equal(t, expected, sim.GetMem(Address(j)), fmt.Sprintf("%s test %d address %d", set_name, i, j))
 		}
 		assert.Equal(t, test.pq, w.pq.Values(), fmt.Sprintf("%s test %d", set_name, i))
 	}

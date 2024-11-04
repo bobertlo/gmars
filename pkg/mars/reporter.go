@@ -31,19 +31,19 @@ type Reporter interface {
 }
 
 type debugReporter struct {
-	s *Simulator
+	s Simulator
 }
 
-func NewDebugReporter(s *Simulator) Reporter {
+func NewDebugReporter(s Simulator) Reporter {
 	return &debugReporter{s: s}
 }
 
 func (r *debugReporter) Report(report Report) {
 	switch report.Type {
 	case CycleStart:
-		fmt.Printf("Cycle %d\n", r.s.cycleCount)
+		fmt.Printf("Cycle %d\n", r.s.CycleCount())
 	case WarriorTaskPop:
-		fmt.Printf("W%02d %04d: %s\n", report.WarriorIndex, report.Address, r.s.mem[report.Address].NormString(r.s.m))
+		fmt.Printf("W%02d %04d: %s\n", report.WarriorIndex, report.Address, r.s.GetMem(report.Address).NormString(r.s.CoreSize()))
 	case WarriorTaskTerminate:
 		fmt.Printf("W%02d %04d: Task Terminated\n", report.WarriorIndex, report.Address)
 	case WarriorTerminate:

@@ -1,12 +1,5 @@
 package mars
 
-import (
-	"os"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
 func makeDwarfData() *WarriorData {
 	return &WarriorData{
 		Name:   "Dwarf",
@@ -47,22 +40,22 @@ func makeDwarfData() *WarriorData {
 		}}
 }
 
-func TestWarriorMethodLoadCode88(t *testing.T) {
-	wdata := makeDwarfData()
-	sim := makeSim88()
-	w, err := sim.SpawnWarrior(wdata, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+// func TestWarriorMethodLoadCode88(t *testing.T) {
+// 	wdata := makeDwarfData()
+// 	sim := makeSim88()
+// 	w, err := sim.SpawnWarrior(wdata, 0)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	loadCodeStr := w.LoadCodePMARS()
-	dat, err := os.ReadFile("test/dwarf_pmars88.rc")
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	loadCodeStr := w.LoadCodePMARS()
+// 	dat, err := os.ReadFile("test/dwarf_pmars88.rc")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	require.Equal(t, string(dat), loadCodeStr)
-}
+// 	require.Equal(t, string(dat), loadCodeStr)
+// }
 
 // func TestWarriorMethodLoadCode94(t *testing.T) {
 // 	wdata := makeDwarfData()

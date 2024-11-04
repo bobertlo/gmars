@@ -35,7 +35,7 @@ const imp94 = `;redcode
 `
 
 func TestLoadImp88(t *testing.T) {
-	config := StandardConfig()
+	config := ConfigKOTH88()
 
 	reader := strings.NewReader(imp88)
 	data, err := ParseLoadFile(reader, config)
@@ -49,7 +49,7 @@ func TestLoadImp88(t *testing.T) {
 }
 
 func TestLoadImp94(t *testing.T) {
-	config := Standard94Config()
+	config := ConfigNOP94()
 
 	reader := strings.NewReader(imp94)
 	data, err := ParseLoadFile(reader, config)
@@ -63,7 +63,7 @@ func TestLoadImp94(t *testing.T) {
 }
 
 func TestLoadDwarf(t *testing.T) {
-	config := StandardConfig()
+	config := ConfigKOTH88()
 
 	dwarf_code := `
 	ADD #  4,  $  3
@@ -92,7 +92,7 @@ func TestValidInput(t *testing.T) {
 		"\n\n",
 	}
 
-	config := StandardConfig()
+	config := ConfigKOTH88()
 	for i, testCase := range cases {
 		reader := strings.NewReader(testCase)
 		_, err := ParseLoadFile(reader, config)
@@ -134,7 +134,7 @@ func TestInvalidInput(t *testing.T) {
 		"MOV $ 0, $ ooops\n",
 	}
 
-	config := StandardConfig()
+	config := ConfigKOTH88()
 
 	for i, testCase := range cases {
 		reader := strings.NewReader(testCase)
@@ -212,7 +212,7 @@ func TestValidOpModeCombos88(t *testing.T) {
 		{"JMP < 1, < 2\n", Instruction{Op: JMP, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: B_DECREMENT, B: 2}},
 	}
 
-	config := StandardConfig()
+	config := ConfigKOTH88()
 
 	for i, testCase := range testCases {
 		reader := strings.NewReader(testCase.input)

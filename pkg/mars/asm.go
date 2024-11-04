@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Address uint32
+type Address uint64
 type OpCode uint8
 type OpMode uint8
 type AddressMode uint8
@@ -65,9 +65,9 @@ func (o OpCode) String() string {
 		return "DJN"
 	case SPL:
 		return "SPL"
+	default:
+		return "???"
 	}
-	// I don't want to handle errors when the whole enum is defined above
-	return "___"
 }
 
 func getOpCode(op string) (OpCode, error) {
@@ -121,8 +121,9 @@ const (
 	I
 )
 
-func (om OpMode) String() string {
-	switch om {
+// String returns the string representation of an OpMode, or "?"
+func (m OpMode) String() string {
+	switch m {
 	case A:
 		return "A"
 	case B:
@@ -137,9 +138,9 @@ func (om OpMode) String() string {
 		return "X"
 	case I:
 		return "I"
+	default:
+		return "?"
 	}
-	// I don't want to handle errors when the whole enum is defined above
-	return "_"
 }
 
 func getOpMode(opModeStr string) (OpMode, error) {
@@ -212,18 +213,19 @@ func getOpCode88(op string) (OpCode, error) {
 }
 
 const (
-	DIRECT AddressMode = iota
-	IMMEDIATE
-	A_INDIRECT
-	B_INDIRECT
-	A_DECREMENT
-	B_DECREMENT
-	A_INCREMENT
-	B_INCREMENT
+	DIRECT      AddressMode = iota // "$" direct reference to another address
+	IMMEDIATE                      // "#" use the immediate value of this instruction
+	A_INDIRECT                     // "*" use the A-Field of the address referenced by a pointer
+	B_INDIRECT                     // "@" use the B-Field of the address referenced by a pointer
+	A_DECREMENT                    // "{" use the A-field of the address referenced by a pointer, after decrementing
+	B_DECREMENT                    // "<" use the B-field of the address referenced by a pointer, after decrementing
+	A_INCREMENT                    // "}" use the A-field of the address referenced by a pointer, before incrementing
+	B_INCREMENT                    // ">" use the B-field of the address referenced by a pointer, before incrementing
 )
 
-func (am AddressMode) String() string {
-	switch am {
+// String returns the single character string representation of an AddressMode, or "?"
+func (m AddressMode) String() string {
+	switch m {
 	case IMMEDIATE:
 		return "#"
 	case DIRECT:
@@ -240,8 +242,9 @@ func (am AddressMode) String() string {
 		return "}"
 	case B_INCREMENT:
 		return ">"
+	default:
+		return "?"
 	}
-	return "_"
 }
 
 func getAddressMode(modeStr string) (AddressMode, error) {
@@ -304,6 +307,7 @@ func signedAddress(a, coresize Address) int {
 	return int(a)
 }
 
+// Instruction represents the raw values of a memory address
 type Instruction struct {
 	Op     OpCode
 	OpMode OpMode
@@ -313,10 +317,12 @@ type Instruction struct {
 	BMode  AddressMode
 }
 
+// String returns the decompiled instruction with unsigned field values
 func (i Instruction) String() string {
 	return fmt.Sprintf("%s.%-2s %s %5d %s %5d", i.Op, i.OpMode, i.AMode, i.A, i.BMode, i.B)
 }
 
+// NormString returns the decompiled instruction with signed field values normalized to a core size.
 func (i Instruction) NormString(coresize Address) string {
 	anorm := signedAddress(i.A, coresize)
 	bnorm := signedAddress(i.B, coresize)

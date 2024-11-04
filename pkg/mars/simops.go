@@ -1,6 +1,6 @@
 package mars
 
-func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) mov(IR, IRA Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = IRA.A
@@ -22,7 +22,7 @@ func (s *Simulator) mov(IR, IRA Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) add(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + IRA.A) % s.m
@@ -44,7 +44,7 @@ func (s *Simulator) add(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A + (s.m - IRA.A)) % s.m
@@ -66,7 +66,7 @@ func (s *Simulator) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		s.mem[WAB].A = (IRB.A * IRA.A) % s.m
@@ -88,7 +88,7 @@ func (s *Simulator) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) div(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != 0 {
@@ -146,7 +146,7 @@ func (s *Simulator) div(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
+func (s *reportSim) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != 0 {
@@ -204,7 +204,7 @@ func (s *Simulator) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *Warrior) {
 	w.pq.Push((PC + 1) % s.m)
 }
 
-func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
+func (s *reportSim) jmz(IR, IRB Instruction, RAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
@@ -235,7 +235,7 @@ func (s *Simulator) jmz(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
 	}
 }
 
-func (s *Simulator) jmn(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
+func (s *reportSim) jmn(IR, IRB Instruction, RAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
@@ -266,7 +266,7 @@ func (s *Simulator) jmn(IR, IRB Instruction, RAB, PC Address, w *Warrior) {
 	}
 }
 
-func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *Warrior) {
+func (s *reportSim) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		fallthrough
@@ -305,7 +305,7 @@ func (s *Simulator) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *Warrior) {
 	}
 }
 
-func (s *Simulator) cmp(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
+func (s *reportSim) cmp(IR, IRA, IRB Instruction, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A == IRB.A {
@@ -354,7 +354,7 @@ func (s *Simulator) cmp(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
 	}
 }
 
-func (s *Simulator) sne(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
+func (s *reportSim) sne(IR, IRA, IRB Instruction, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A != IRB.A {
@@ -403,7 +403,7 @@ func (s *Simulator) sne(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
 	}
 }
 
-func (s *Simulator) slt(IR, IRA, IRB Instruction, PC Address, w *Warrior) {
+func (s *reportSim) slt(IR, IRA, IRB Instruction, PC Address, w *warrior) {
 	switch IR.OpMode {
 	case A:
 		if IRA.A < IRB.A {

@@ -8,7 +8,21 @@ const (
 	ICWS94
 )
 
-type Simulator struct {
+type Simulator interface {
+	CoreSize() Address
+	CycleCount() int
+	SpawnWarrior(data *WarriorData, startOffset Address) (Warrior, error)
+	Run() []bool
+	RunCycle() int
+	GetMem(a Address) Instruction
+}
+
+type ReportingSimulator interface {
+	Simulator
+	AddReporter(r Reporter)
+}
+
+type reportSim struct {
 	m          Address
 	maxProcs   Address
 	maxCycles  Address
@@ -17,7 +31,7 @@ type Simulator struct {
 	mem        []Instruction
 	legacy     bool
 
-	warriors  []*Warrior
+	warriors  []*warrior
 	reporters []Reporter
 	// state    WarriorState
 
@@ -35,7 +49,7 @@ type SimulatorConfig struct {
 	Distance   Address
 }
 
-func StandardConfig() SimulatorConfig {
+func ConfigKOTH88() SimulatorConfig {
 	return SimulatorConfig{
 		Mode:       ICWS88,
 		CoreSize:   8000,
@@ -48,7 +62,7 @@ func StandardConfig() SimulatorConfig {
 	}
 }
 
-func Standard94Config() SimulatorConfig {
+func ConfigNOP94() SimulatorConfig {
 	return SimulatorConfig{
 		Mode:       ICWS94,
 		CoreSize:   8000,
@@ -61,7 +75,7 @@ func Standard94Config() SimulatorConfig {
 	}
 }
 
-func BasicConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
+func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
 	out := SimulatorConfig{
 		Mode:       mode,
 		CoreSize:   coreSize,
@@ -75,9 +89,16 @@ func BasicConfig(mode SimulatorMode, coreSize, processes, cycles, length Address
 	return out
 }
 
-// func NewSimulator(coreSize, maxProcs, maxCycles, readLimit, writeLimit Address, legacy bool) *Simulator {
-func NewSimulator(config SimulatorConfig) *Simulator {
-	sim := &Simulator{
+func NewSimulator(config SimulatorConfig) Simulator {
+	return newReportSim(config)
+}
+
+func NewReportingSimulator(config SimulatorConfig) ReportingSimulator {
+	return newReportSim(config)
+}
+
+func newReportSim(config SimulatorConfig) *reportSim {
+	sim := &reportSim{
 		m:          Address(config.CoreSize),
 		maxProcs:   Address(config.Processes),
 		maxCycles:  Address(config.Cycles),
@@ -89,30 +110,38 @@ func NewSimulator(config SimulatorConfig) *Simulator {
 	return sim
 }
 
-func (s *Simulator) CycleCount() Address {
-	return s.cycleCount
+func (s *reportSim) CoreSize() Address {
+	return s.m
 }
 
-func (s *Simulator) AddReporter(r Reporter) {
+func (s *reportSim) CycleCount() int {
+	return int(s.cycleCount)
+}
+
+func (s *reportSim) AddReporter(r Reporter) {
 	s.reporters = append(s.reporters, r)
 }
 
-func (s *Simulator) Report(report Report) {
+func (s *reportSim) Report(report Report) {
 	for _, r := range s.reporters {
 		r.Report(report)
 	}
 }
 
-func (s *Simulator) addressSigned(a Address) int {
+func (s *reportSim) addressSigned(a Address) int {
 	if a > (s.m / 2) {
 		return -(int(s.m) - int(a))
 	}
 	return int(a)
 }
 
-func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warrior, error) {
+func (s *reportSim) SpawnWarrior(data *WarriorData, startOffset Address) (Warrior, error) {
+	return s.spawnWarrior(data, startOffset)
+}
 
-	w := &Warrior{
+func (s *reportSim) spawnWarrior(data *WarriorData, startOffset Address) (*warrior, error) {
+
+	w := &warrior{
 		data: data.Copy(),
 		sim:  s,
 	}
@@ -125,7 +154,7 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 	s.warriors = append(s.warriors, w)
 	w.pq = NewProcessQueue(s.maxProcs)
 	w.pq.Push(startOffset + Address(data.Start))
-	w.state = ALIVE
+	w.state = warriorAlive
 
 	s.Report(Report{Type: WarriorSpawn, WarriorIndex: w.index, Address: startOffset})
 
@@ -134,13 +163,13 @@ func (s *Simulator) SpawnWarrior(data *WarriorData, startOffset Address) (*Warri
 
 // RunTurn runs a cycle, executing each living warrior and returns
 // the number of living warriors at the end of the cycle
-func (s *Simulator) RunCycle() int {
+func (s *reportSim) RunCycle() int {
 	nAlive := 0
 
 	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
 
 	for i, warrior := range s.warriors {
-		if warrior.state != ALIVE {
+		if warrior.state != warriorAlive {
 			continue
 		}
 
@@ -149,7 +178,7 @@ func (s *Simulator) RunCycle() int {
 
 		if err != nil {
 			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
-			warrior.state = DEAD
+			warrior.state = warriorDead
 			continue
 		}
 
@@ -159,7 +188,7 @@ func (s *Simulator) RunCycle() int {
 			nAlive++
 		} else {
 			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
-			warrior.state = DEAD
+			warrior.state = warriorDead
 		}
 	}
 
@@ -169,7 +198,7 @@ func (s *Simulator) RunCycle() int {
 	return nAlive
 }
 
-func (s *Simulator) readFold(pointer Address) Address {
+func (s *reportSim) readFold(pointer Address) Address {
 	res := pointer % s.readLimit
 	if res > (s.readLimit / 2) {
 		res += (s.m - s.readLimit)
@@ -177,7 +206,7 @@ func (s *Simulator) readFold(pointer Address) Address {
 	return res
 }
 
-func (s *Simulator) writeFold(pointer Address) Address {
+func (s *reportSim) writeFold(pointer Address) Address {
 	res := pointer % s.writeLimit
 	if res > (s.writeLimit / 2) {
 		res += (s.m - s.writeLimit)
@@ -185,7 +214,7 @@ func (s *Simulator) writeFold(pointer Address) Address {
 	return res
 }
 
-func (s *Simulator) exec(PC Address, w *Warrior) {
+func (s *reportSim) exec(PC Address, w *warrior) {
 	IR := s.mem[PC]
 
 	// read and write limit folded pointers for A, B
@@ -353,7 +382,7 @@ func (s *Simulator) exec(PC Address, w *Warrior) {
 // Run runs the simulator until the max cycles are reached, one warrior
 // remains in a battle with more than one warrior, or the only warrior
 // dies in a single warrior battle
-func (s *Simulator) Run() []bool {
+func (s *reportSim) Run() []bool {
 	nWarriors := len(s.warriors)
 
 	// if no warriors are loaded, return nil
@@ -378,4 +407,8 @@ func (s *Simulator) Run() []bool {
 		result[i] = warrior.Alive()
 	}
 	return result
+}
+
+func (s *reportSim) GetMem(a Address) Instruction {
+	return s.mem[a%s.m]
 }
