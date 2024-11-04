@@ -152,7 +152,7 @@ func (s *reportSim) spawnWarrior(data *WarriorData, startOffset Address) (*warri
 
 	w.index = len(s.warriors)
 	s.warriors = append(s.warriors, w)
-	w.pq = NewProcessQueue(s.maxProcs)
+	w.pq = newProcessQueue(s.maxProcs)
 	w.pq.Push(startOffset + Address(data.Start))
 	w.state = warriorAlive
 

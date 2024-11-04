@@ -10,7 +10,7 @@ type processQueue struct {
 	end    Address
 }
 
-func NewProcessQueue(size Address) *processQueue {
+func newProcessQueue(size Address) *processQueue {
 	queue := make([]Address, size)
 
 	return &processQueue{

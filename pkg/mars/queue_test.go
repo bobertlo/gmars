@@ -7,13 +7,13 @@ import (
 )
 
 func TestQueueEmpty(t *testing.T) {
-	pq := NewProcessQueue(2)
+	pq := newProcessQueue(2)
 	_, err := pq.Pop()
 	require.Error(t, err)
 }
 
 func TestQueue(t *testing.T) {
-	pq := NewProcessQueue(2)
+	pq := newProcessQueue(2)
 
 	pq.Push(1)
 	pq.Push(2)
