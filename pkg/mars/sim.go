@@ -1,5 +1,7 @@
 package mars
 
+import "fmt"
+
 type SimulatorMode uint8
 
 const (
@@ -19,7 +21,8 @@ const (
 type Simulator interface {
 	CoreSize() Address
 	CycleCount() int
-	SpawnWarrior(data *WarriorData, startOffset Address) (Warrior, error)
+	AddWarrior(data *WarriorData) (Warrior, error)
+	SpawnWarrior(wi int, startOffset Address) error
 	Run() []bool
 	RunCycle() int
 	GetMem(a Address) Instruction
@@ -101,32 +104,44 @@ func (s *reportSim) addressSigned(a Address) int {
 	return int(a)
 }
 
-func (s *reportSim) SpawnWarrior(data *WarriorData, startOffset Address) (Warrior, error) {
-	return s.spawnWarrior(data, startOffset)
+func (s *reportSim) AddWarrior(data *WarriorData) (Warrior, error) {
+	return s.addWarrior(data)
 }
 
-func (s *reportSim) spawnWarrior(data *WarriorData, startOffset Address) (*warrior, error) {
-
+func (s *reportSim) addWarrior(data *WarriorData) (*warrior, error) {
 	w := &warrior{
 		data: data.Copy(),
 		sim:  s,
 	}
+	w.index = len(s.warriors)
+	s.warriors = append(s.warriors, w)
+	s.warriorCount += 1
+	w.state = WarriorAdded
+
+	return w, nil
+}
+
+func (s *reportSim) SpawnWarrior(wi int, startOffset Address) error {
+	return s.spawnWarrior(wi, startOffset)
+}
+
+func (s *reportSim) spawnWarrior(wi int, startOffset Address) error {
+	if wi > s.warriorCount {
+		return fmt.Errorf("warrior index out of bounds")
+	}
+	w := s.warriors[wi]
 
 	for i := Address(0); i < Address(len(w.data.Code)); i++ {
 		s.mem[(startOffset+i)%s.m] = w.data.Code[i]
 	}
 
-	w.index = len(s.warriors)
-	s.warriors = append(s.warriors, w)
 	w.pq = newProcessQueue(s.maxProcs)
-	w.pq.Push(startOffset + Address(data.Start))
+	w.pq.Push(startOffset + Address(w.data.Start))
 	w.state = warriorAlive
 
 	s.Report(Report{Type: WarriorSpawn, WarriorIndex: w.index, Address: startOffset})
 
-	s.warriorCount += 1
-
-	return w, nil
+	return nil
 }
 
 // RunTurn find the next living warrior, returns 0 if none are found, or

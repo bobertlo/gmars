@@ -89,14 +89,22 @@ func main() {
 			w2start = rand.Intn(int(startRange)+1) + int(minStart)
 		}
 
-		w1, err := sim.SpawnWarrior(&w1data, 0)
+		w1, err := sim.AddWarrior(&w1data)
 		if err != nil {
-			fmt.Printf("error spawning warrior 1: %n", err)
+			fmt.Printf("error adding warrior 1: %s", err)
+		}
+		err = sim.SpawnWarrior(0, 0)
+		if err != nil {
+			fmt.Printf("error adding warrior 1: %s", err)
 		}
 
-		w2, err := sim.SpawnWarrior(&w2data, mars.Address(w2start))
+		w2, err := sim.AddWarrior(&w2data)
 		if err != nil {
-			fmt.Printf("error spawning warrior 2: %n", err)
+			fmt.Printf("error adding warrior 2: %s", err)
+		}
+		err = sim.SpawnWarrior(1, mars.Address(w2start))
+		if err != nil {
+			fmt.Printf("error spawning warrior 1: %s", err)
 		}
 
 		sim.Run()

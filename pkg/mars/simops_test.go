@@ -169,7 +169,9 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 
 		sim, err := newReportSim(config)
 		require.NoError(t, err)
-		w, err := sim.spawnWarrior(&WarriorData{Code: code, Start: int(test.offset)}, test.start)
+		w, err := sim.addWarrior(&WarriorData{Code: code, Start: int(test.offset)})
+		require.NoError(t, err)
+		err = sim.spawnWarrior(0, test.start)
 		require.NoError(t, err)
 
 		for i := 0; i < turns; i++ {

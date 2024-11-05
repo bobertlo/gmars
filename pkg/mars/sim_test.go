@@ -53,7 +53,9 @@ func TestRunImp(t *testing.T) {
 
 	sim, err := NewSimulator(config)
 	require.NoError(t, err)
-	w, err := sim.SpawnWarrior(&impdata, 0)
+	w, err := sim.AddWarrior(&impdata)
+	require.NoError(t, err)
+	err = sim.SpawnWarrior(0, 0)
 	require.NoError(t, err)
 
 	state := sim.Run()
@@ -71,9 +73,13 @@ func TestRunTwoImps(t *testing.T) {
 
 	sim, err := NewSimulator(config)
 	require.NoError(t, err)
-	w, err := sim.SpawnWarrior(&impdata, 0)
+	w, err := sim.AddWarrior(&impdata)
 	require.NoError(t, err)
-	w2, err := sim.SpawnWarrior(&impdata, 200)
+	err = sim.SpawnWarrior(0, 0)
+	require.NoError(t, err)
+	w2, err := sim.AddWarrior(&impdata)
+	require.NoError(t, err)
+	err = sim.SpawnWarrior(1, 200)
 	require.NoError(t, err)
 
 	state := sim.Run()
