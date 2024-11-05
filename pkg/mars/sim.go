@@ -8,6 +8,14 @@ const (
 	ICWS94
 )
 
+type SimulatorState uint8
+
+const (
+	Initialized SimulatorState = iota
+	Running
+	Complete
+)
+
 type Simulator interface {
 	CoreSize() Address
 	CycleCount() int
@@ -15,6 +23,7 @@ type Simulator interface {
 	Run() []bool
 	RunCycle() int
 	GetMem(a Address) Instruction
+	Reset()
 }
 
 type ReportingSimulator interface {
@@ -31,73 +40,28 @@ type reportSim struct {
 	mem        []Instruction
 	legacy     bool
 
-	warriors  []*warrior
-	reporters []Reporter
-	// state    WarriorState
+	warriors     []*warrior
+	reporters    []Reporter
+	warriorIndex int
+	warriorCount int
 
 	cycleCount Address
 }
 
-type SimulatorConfig struct {
-	Mode       SimulatorMode
-	CoreSize   Address
-	Processes  Address
-	Cycles     Address
-	ReadLimit  Address
-	WriteLimit Address
-	Length     Address
-	Distance   Address
-}
-
-func ConfigKOTH88() SimulatorConfig {
-	return SimulatorConfig{
-		Mode:       ICWS88,
-		CoreSize:   8000,
-		Processes:  8000,
-		Cycles:     80000,
-		ReadLimit:  8000,
-		WriteLimit: 8000,
-		Length:     100,
-		Distance:   100,
-	}
-}
-
-func ConfigNOP94() SimulatorConfig {
-	return SimulatorConfig{
-		Mode:       ICWS94,
-		CoreSize:   8000,
-		Processes:  8000,
-		Cycles:     80000,
-		ReadLimit:  8000,
-		WriteLimit: 8000,
-		Length:     100,
-		Distance:   100,
-	}
-}
-
-func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
-	out := SimulatorConfig{
-		Mode:       mode,
-		CoreSize:   coreSize,
-		Processes:  processes,
-		Cycles:     cycles,
-		ReadLimit:  coreSize,
-		WriteLimit: coreSize,
-		Length:     length,
-		Distance:   length,
-	}
-	return out
-}
-
-func NewSimulator(config SimulatorConfig) Simulator {
+func NewSimulator(config SimulatorConfig) (Simulator, error) {
 	return newReportSim(config)
 }
 
-func NewReportingSimulator(config SimulatorConfig) ReportingSimulator {
+func NewReportingSimulator(config SimulatorConfig) (ReportingSimulator, error) {
 	return newReportSim(config)
 }
 
-func newReportSim(config SimulatorConfig) *reportSim {
+func newReportSim(config SimulatorConfig) (*reportSim, error) {
+	err := config.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	sim := &reportSim{
 		m:          Address(config.CoreSize),
 		maxProcs:   Address(config.Processes),
@@ -106,8 +70,10 @@ func newReportSim(config SimulatorConfig) *reportSim {
 		writeLimit: Address(config.WriteLimit),
 		legacy:     config.Mode == ICWS88,
 	}
+
 	sim.mem = make([]Instruction, sim.m)
-	return sim
+
+	return sim, nil
 }
 
 func (s *reportSim) CoreSize() Address {
@@ -158,42 +124,63 @@ func (s *reportSim) spawnWarrior(data *WarriorData, startOffset Address) (*warri
 
 	s.Report(Report{Type: WarriorSpawn, WarriorIndex: w.index, Address: startOffset})
 
+	s.warriorCount += 1
+
 	return w, nil
 }
 
-// RunTurn runs a cycle, executing each living warrior and returns
-// the number of living warriors at the end of the cycle
+// RunTurn find the next living warrior, returns 0 if none are found, or
+// executes a cycle and returns the number of living warriors at the end
+// of the cycle
 func (s *reportSim) RunCycle() int {
-	nAlive := 0
-
 	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
 
-	for i, warrior := range s.warriors {
-		if warrior.state != warriorAlive {
-			continue
+	var warrior *warrior
+	var pc Address
+
+	// find the first living warrior, starting at s.warriorIndex
+	// return 0 if no living warriors are found
+	for i := 0; ; i++ {
+		s.warriorIndex = (s.warriorIndex + i) % s.warriorCount
+		if s.warriors[s.warriorIndex].state == warriorAlive {
+			warrior = s.warriors[s.warriorIndex]
+
+			// I don't like this, and this should never happen, but we will
+			// silently reap any zombie warriors here that are 'alive' without
+			// a process queue so we can continue and check the next ones.
+			var err error
+			pc, err = warrior.pq.Pop()
+			if err != nil {
+				warrior.state = warriorDead
+				continue
+			}
+
+			break
 		}
-
-		pc, err := warrior.pq.Pop()
-		s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
-
-		if err != nil {
-			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
-			warrior.state = warriorDead
-			continue
-		}
-
-		s.exec(pc, warrior)
-
-		if warrior.pq.Len() > 0 {
-			nAlive++
-		} else {
-			s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
-			warrior.state = warriorDead
+		if i == s.warriorCount {
+			return 0
 		}
 	}
 
+	s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: s.warriorIndex, Address: pc})
+
+	s.exec(pc, warrior)
+	if warrior.pq.Len() == 0 {
+		s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: s.warriorIndex, Address: pc})
+		warrior.state = warriorDead
+	}
+
 	s.Report(Report{Type: CycleEnd, Cycle: int(s.cycleCount)})
+
+	s.warriorIndex = (s.warriorIndex + 1) % s.warriorCount
 	s.cycleCount++
+
+	nAlive := 0
+	for i := 0; i < s.warriorCount; i++ {
+		if s.warriors[i].state == warriorAlive {
+			nAlive += 1
+		}
+	}
 
 	return nAlive
 }
@@ -411,4 +398,11 @@ func (s *reportSim) Run() []bool {
 
 func (s *reportSim) GetMem(a Address) Instruction {
 	return s.mem[a%s.m]
+}
+
+func (s *reportSim) Reset() {
+	for _, warrior := range s.warriors {
+		warrior.state = WarriorAdded
+	}
+	s.mem = make([]Instruction, s.m)
 }

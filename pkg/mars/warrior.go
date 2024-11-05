@@ -2,10 +2,10 @@ package mars
 
 import "fmt"
 
-type warriorState uint8
+type WarriorState uint8
 
 const (
-	warriorRest warriorState = iota
+	WarriorAdded WarriorState = iota
 	warriorAlive
 	warriorDead
 )
@@ -45,7 +45,7 @@ type warrior struct {
 	index int
 	pq    *processQueue
 	// pspace []Instruction
-	state warriorState
+	state WarriorState
 }
 
 // Name returns the Warrior's Name
@@ -63,7 +63,7 @@ func (w *warrior) Length() int {
 	return len(w.data.Code)
 }
 
-func (w *warrior) State() warriorState {
+func (w *warrior) State() WarriorState {
 	return w.state
 }
 

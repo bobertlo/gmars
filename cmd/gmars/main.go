@@ -73,7 +73,10 @@ func main() {
 	w2win := 0
 	w2tie := 0
 	for i := 0; i < rounds; i++ {
-		sim := mars.NewReportingSimulator(config)
+		sim, err := mars.NewReportingSimulator(config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error creating sim: %s", err)
+		}
 		if *debugFlag {
 			sim.AddReporter(mars.NewDebugReporter(sim))
 		}
