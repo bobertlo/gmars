@@ -13,25 +13,17 @@ const (
 	CoreDecremented
 )
 
-type Recorder interface {
-	// GetMemState takes a memory address and returns the CoreState, and the
-	// index of the last warrior to modify it, or -1 if no warrior has
-	// modified the address.
-	GetMemState(a Address) (CoreState, int)
-}
-
-type recorder struct {
+// Recorder implements a Reporter which records the most recent operation
+// performed each core address and the warrior index associated. The inital
+// state of each address is CoreEmpty with a warrior index of -1.
+type Recorder struct {
 	sim      ReportingSimulator
 	coresize Address
 	color    []int
 	state    []CoreState
 }
 
-func NewRecorder(s ReportingSimulator) Recorder {
-	return newRecorder(s)
-}
-
-func newRecorder(sim ReportingSimulator) *recorder {
+func NewRecorder(sim ReportingSimulator) *Recorder {
 	coresize := sim.CoreSize()
 
 	color := make([]int, coresize)
@@ -41,7 +33,7 @@ func newRecorder(sim ReportingSimulator) *recorder {
 
 	state := make([]CoreState, coresize)
 
-	return &recorder{
+	return &Recorder{
 		sim:      sim,
 		coresize: coresize,
 		color:    color,
@@ -49,18 +41,18 @@ func newRecorder(sim ReportingSimulator) *recorder {
 	}
 }
 
-func (r *recorder) GetMemState(a Address) (CoreState, int) {
+func (r *Recorder) GetMemState(a Address) (CoreState, int) {
 	return r.state[a], r.color[a]
 }
 
-func (r *recorder) reset() {
+func (r *Recorder) reset() {
 	for i := Address(0); i < r.coresize; i++ {
 		r.state[i] = CoreEmpty
 		r.color[i] = -1
 	}
 }
 
-func (r *recorder) Report(report Report) {
+func (r *Recorder) Report(report Report) {
 	switch report.Type {
 	case SimReset:
 		r.reset()
