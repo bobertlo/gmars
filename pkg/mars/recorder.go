@@ -6,10 +6,8 @@ type CoreState uint8
 
 const (
 	CoreEmpty CoreState = iota
-	CoreDataWritten
-	CoreDataExecuted
-	CoreCodeWritten
-	CoreCodeExecuted
+	CoreWritten
+	CoreExecuted
 	CoreRead
 	CoreIncremented
 	CoreDecremented
@@ -70,23 +68,15 @@ func (r *recorder) Report(report Report) {
 		w := r.sim.GetWarrior(report.WarriorIndex)
 		for i := report.Address; i < report.Address+Address(w.Length()); i++ {
 			r.color[i%r.coresize] = report.WarriorIndex
-			r.state[i%r.coresize] = CoreCodeWritten
+			r.state[i%r.coresize] = CoreWritten
 			fmt.Println(i % r.coresize)
 		}
 	case WarriorTaskPop:
 		r.color[report.Address] = report.WarriorIndex
-		if r.sim.GetMem(report.Address).Op == DAT {
-			r.state[report.Address] = CoreDataExecuted
-		} else {
-			r.state[report.Address] = CoreCodeExecuted
-		}
+		r.state[report.Address] = CoreExecuted
 	case WarriorWrite:
 		r.color[report.Address] = report.WarriorIndex
-		if r.sim.GetMem(report.Address).Op == DAT {
-			r.state[report.Address] = CoreDataWritten
-		} else {
-			r.state[report.Address] = CoreCodeWritten
-		}
+		r.state[report.Address] = CoreWritten
 	case WarriorRead:
 		r.color[report.Address] = report.WarriorIndex
 		r.state[report.Address] = CoreRead
