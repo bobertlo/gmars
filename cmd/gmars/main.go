@@ -17,7 +17,7 @@ func main() {
 	lenFlag := flag.Int("l", 100, "Max. warrior length")
 	fixedFlag := flag.Int("F", 0, "fixed position of warrior #2")
 	roundFlag := flag.Int("r", 1, "Rounds to play")
-	debugFlag := flag.Bool("debug", false, "Dump verbose debug information")
+	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
 	flag.Parse()
 
 	coresize := mars.Address(*sizeFlag)

@@ -22,6 +22,7 @@ type Warrior interface {
 	Alive() bool
 	Name() string
 	Author() string
+	Length() int
 	Queue() []Address
 }
 

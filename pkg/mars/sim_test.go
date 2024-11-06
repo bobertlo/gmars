@@ -26,7 +26,7 @@ func TestImp(t *testing.T) {
 	runTests(t, "dwarf", tests)
 }
 
-func TestDwarf(t *testing.T) {
+func TestSimDwarf(t *testing.T) {
 	tests := []redcodeTest{
 		{
 			input: []string{

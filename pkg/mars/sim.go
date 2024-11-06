@@ -22,6 +22,7 @@ type Simulator interface {
 	CoreSize() Address
 	CycleCount() int
 	AddWarrior(data *WarriorData) (Warrior, error)
+	GetWarrior(wi int) Warrior
 	SpawnWarrior(wi int, startOffset Address) error
 	Run() []bool
 	RunCycle() int
@@ -102,6 +103,13 @@ func (s *reportSim) addressSigned(a Address) int {
 		return -(int(s.m) - int(a))
 	}
 	return int(a)
+}
+
+func (s *reportSim) GetWarrior(i int) Warrior {
+	if i > s.warriorCount {
+		return nil
+	}
+	return s.warriors[i]
 }
 
 func (s *reportSim) AddWarrior(data *WarriorData) (Warrior, error) {
