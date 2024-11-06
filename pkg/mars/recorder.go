@@ -16,8 +16,6 @@ const (
 )
 
 type Recorder interface {
-	Reporter
-
 	// GetMemState takes a memory address and returns the CoreState, and the
 	// index of the last warrior to modify it, or -1 if no warrior has
 	// modified the address.
