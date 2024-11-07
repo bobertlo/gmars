@@ -21,7 +21,7 @@ type recorderTest struct {
 	pq        []Address
 }
 
-func TestRecorderDwarf(t *testing.T) {
+func TestStateRecorderDwarf(t *testing.T) {
 	tests := []recorderTest{
 		{
 			input: []string{
@@ -49,10 +49,10 @@ func TestRecorderDwarf(t *testing.T) {
 			pq:    []Address{0},
 		},
 	}
-	runRecorderTests(t, "dwarf recorder", tests)
+	runStateRecorderTests(t, "dwarf recorder", tests)
 }
 
-func runRecorderTests(t *testing.T, set_name string, tests []recorderTest) {
+func runStateRecorderTests(t *testing.T, set_name string, tests []recorderTest) {
 	for i, test := range tests {
 		coresize := test.coresize
 		if coresize == 0 {
@@ -90,7 +90,7 @@ func runRecorderTests(t *testing.T, set_name string, tests []recorderTest) {
 
 		sim, err := newReportSim(config)
 		require.NoError(t, err)
-		rec := NewRecorder(sim)
+		rec := NewStateRecorder(sim)
 		sim.AddReporter(rec)
 		w, err := sim.addWarrior(&WarriorData{Code: code, Start: int(test.offset)})
 		require.NoError(t, err)
