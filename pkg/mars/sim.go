@@ -434,4 +434,5 @@ func (s *reportSim) Reset() {
 		warrior.state = WarriorAdded
 	}
 	s.mem = make([]Instruction, s.m)
+	s.cycleCount = 0
 }

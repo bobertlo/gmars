@@ -3,15 +3,18 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"log"
+	"math/rand"
 	"os"
 
 	"github.com/bobertlo/gmars/pkg/mars"
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
@@ -21,13 +24,16 @@ const (
 )
 
 const (
-	tileSize = 6
+	tileSize         = 6
+	defaultSpeedStep = 8
 )
 
 type Game struct {
-	counter int
-	sim     mars.ReportingSimulator
-	rec     mars.StateRecorder
+	sim       mars.ReportingSimulator
+	rec       mars.StateRecorder
+	running   bool
+	speedStep int
+	counter   int
 }
 
 var (
@@ -37,6 +43,8 @@ var (
 	tiles_png []byte
 
 	tilesImage *ebiten.Image
+
+	speeds = []int{-60, -30, -15, -4, -2, 1, 2, 4, 16, 32, 64, 128, 256, 512, 1024}
 )
 
 func init() {
@@ -54,29 +62,81 @@ func init() {
 
 }
 
-func (g *Game) Update() error {
-	for i := 0; i < 100; i++ {
-		g.sim.RunCycle()
+func (g *Game) slowDown() {
+	g.speedStep--
+	if g.speedStep < 0 {
+		g.speedStep = 0
 	}
+}
+
+func (g *Game) speedUp() {
+	g.speedStep++
+	if g.speedStep >= len(speeds) {
+		g.speedStep = len(speeds) - 1
+	}
+}
+
+func (g *Game) handleInput() {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		g.running = !g.running
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		g.sim.Reset()
+		g.sim.SpawnWarrior(0, 0)
+		g.sim.SpawnWarrior(1, mars.Address(rand.Intn(7000)+200))
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+		g.slowDown()
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+		g.speedUp()
+	}
+}
+
+func (g *Game) Update() error {
+	speed := speeds[g.speedStep]
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return errors.New("game ended by player")
+	}
+
+	if g.running {
+		if speed < 0 {
+			if g.counter%speed == 0 {
+				g.sim.RunCycle()
+			}
+		} else {
+			for i := 0; i < speeds[g.speedStep]; i++ {
+				g.sim.RunCycle()
+			}
+		}
+	}
+
+	g.handleInput()
+
 	g.counter++
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	scales := make([]ebiten.ColorScale, 3)
+	scales[0].Scale(1, 1, 1, 1)
+	scales[1].Scale(1, 1, 0, 1)
+	scales[2].Scale(0, 1, 1, 1)
+
 	w := tilesImage.Bounds().Dx()
 	tileXCount := w / tileSize
 
 	const xCount = screenWidth / tileSize
 
 	for i := 0; i < int(g.sim.CoreSize()); i++ {
-		state, _ := g.rec.GetMemState(mars.Address(i))
+		state, color := g.rec.GetMemState(mars.Address(i))
+
 		// fmt.Println(i, state)
 		if state == mars.CoreEmpty {
 			continue
 		}
 		t := int(state)
 
-		op := &ebiten.DrawImageOptions{}
+		op := &ebiten.DrawImageOptions{ColorScale: scales[color+1]}
 		op.GeoM.Translate(float64((i%xCount)*tileSize), float64((i/xCount)*tileSize))
 
 		sx := (t % tileXCount) * tileSize
@@ -110,7 +170,7 @@ func main() {
 	sim.AddReporter(rec)
 	// sim.AddReporter(mars.NewDebugReporter(sim))
 
-	w1file, err := os.Open("warriors/94/blur2.rc")
+	w1file, err := os.Open("warriors/k94/julietstorm.red")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,7 +180,7 @@ func main() {
 	}
 	w1file.Close()
 
-	w2file, err := os.Open("warriors/94/npaper2.rc")
+	w2file, err := os.Open("warriors/k94/timescape10.red")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,8 +200,9 @@ func main() {
 	ebiten.SetWindowTitle("gMARS")
 
 	game := &Game{
-		sim: sim,
-		rec: *rec,
+		sim:       sim,
+		rec:       *rec,
+		speedStep: defaultSpeedStep,
 	}
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
