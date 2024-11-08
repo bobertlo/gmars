@@ -1,16 +1,14 @@
 package mars
 
-import "fmt"
-
 type CoreState uint8
 
 const (
 	CoreEmpty CoreState = iota
-	CoreWritten
 	CoreExecuted
-	CoreRead
+	CoreWritten
 	CoreIncremented
 	CoreDecremented
+	CoreRead
 )
 
 // StateRecorder implements a Reporter which records the most recent operation
@@ -61,7 +59,6 @@ func (r *StateRecorder) Report(report Report) {
 		for i := report.Address; i < report.Address+Address(w.Length()); i++ {
 			r.color[i%r.coresize] = report.WarriorIndex
 			r.state[i%r.coresize] = CoreWritten
-			fmt.Println(i % r.coresize)
 		}
 	case WarriorTaskPop:
 		r.color[report.Address] = report.WarriorIndex

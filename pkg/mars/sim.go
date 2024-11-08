@@ -156,17 +156,21 @@ func (s *reportSim) spawnWarrior(wi int, startOffset Address) error {
 // executes a cycle and returns the number of living warriors at the end
 // of the cycle
 func (s *reportSim) RunCycle() int {
+	if s.cycleCount > s.maxCycles {
+		return 0
+	}
 	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
 
 	var warrior *warrior
 	var pc Address
+	var warriorIndex int
 
 	// find the first living warrior, starting at s.warriorIndex
 	// return 0 if no living warriors are found
 	for i := 0; ; i++ {
-		s.warriorIndex = (s.warriorIndex + i) % s.warriorCount
-		if s.warriors[s.warriorIndex].state == WarriorAlive {
-			warrior = s.warriors[s.warriorIndex]
+		warriorIndex = (s.warriorIndex + i) % s.warriorCount
+		if s.warriors[warriorIndex].state == WarriorAlive {
+			warrior = s.warriors[warriorIndex]
 
 			// I don't like this, and this should never happen, but we will
 			// silently reap any zombie warriors here that are 'alive' without
@@ -185,17 +189,17 @@ func (s *reportSim) RunCycle() int {
 		}
 	}
 
-	s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: s.warriorIndex, Address: pc})
+	s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: warriorIndex, Address: pc})
 
 	s.exec(pc, warrior)
 	if warrior.pq.Len() == 0 {
-		s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: s.warriorIndex, Address: pc})
+		s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: warriorIndex, Address: pc})
 		warrior.state = WarriorDead
 	}
 
 	s.Report(Report{Type: CycleEnd, Cycle: int(s.cycleCount)})
 
-	s.warriorIndex = (s.warriorIndex + 1) % s.warriorCount
+	s.warriorIndex = (warriorIndex + 1) % s.warriorCount
 	s.cycleCount++
 
 	nAlive := 0
@@ -371,16 +375,16 @@ func (s *reportSim) exec(PC Address, w *warrior) {
 		fallthrough
 	case SEQ:
 		s.cmp(IR, IRA, IRB, PC, w)
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SLT:
 		s.slt(IR, IRA, IRB, PC, w)
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SNE:
 		s.sne(IR, IRA, IRB, PC, w)
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
-		s.Report(Report{Type: WarriorWrite, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPA) % s.m})
+		s.Report(Report{Type: WarriorRead, WarriorIndex: w.index, Address: (PC + RPB) % s.m})
 	case SPL:
 		w.pq.Push((PC + 1) % s.m)
 		w.pq.Push(RAB)

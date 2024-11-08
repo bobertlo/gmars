@@ -331,7 +331,6 @@ func parseLoadFile88(reader io.Reader, coresize Address) (WarriorData, error) {
 	}
 
 	if data.Start != 0 && data.Start >= len(data.Code) {
-		fmt.Println(data.Start, len(data.Code))
 		return WarriorData{}, fmt.Errorf("invalid start position")
 	}
 
