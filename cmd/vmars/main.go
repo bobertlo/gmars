@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"errors"
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -25,7 +26,7 @@ const (
 
 const (
 	tileSize         = 6
-	defaultSpeedStep = 8
+	defaultSpeedStep = 6
 )
 
 type Game struct {
@@ -44,7 +45,7 @@ var (
 
 	tilesImage *ebiten.Image
 
-	speeds = []int{-60, -30, -15, -4, -2, 1, 2, 4, 16, 32, 64, 128, 256, 512, 1024}
+	speeds = []int{-64, -32, -16, -8, -4, -2, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384}
 )
 
 func init() {
@@ -83,10 +84,20 @@ func (g *Game) handleInput() {
 		g.sim.Reset()
 		g.sim.SpawnWarrior(0, 0)
 		g.sim.SpawnWarrior(1, mars.Address(rand.Intn(7000)+200))
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.slowDown()
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
 		g.speedUp()
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+		g.running = false
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+		if g.running {
+			g.running = false
+		} else {
+			for i := 0; i < speeds[g.speedStep]; i++ {
+				g.sim.RunCycle()
+			}
+		}
 	}
 }
 
@@ -130,7 +141,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for i := 0; i < int(g.sim.CoreSize()); i++ {
 		state, color := g.rec.GetMemState(mars.Address(i))
 
-		// fmt.Println(i, state)
 		if state == mars.CoreEmpty {
 			continue
 		}
@@ -145,9 +155,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Draw info
-	msg := fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS())
+	msg := fmt.Sprintf("FPS: %0.2f", ebiten.ActualTPS())
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(560, 460)
+	op.ColorScale.ScaleWithColor(color.White)
+	text.Draw(screen, msg, &text.GoTextFace{
+		Source: mplusFaceSource,
+		Size:   12,
+	}, op)
+
+	msg = fmt.Sprintf("Cycle: %05d (%dx)", g.sim.CycleCount(), speeds[g.speedStep])
+	op = &text.DrawOptions{}
+	op.GeoM.Translate(30, 460)
 	op.ColorScale.ScaleWithColor(color.White)
 	text.Draw(screen, msg, &text.GoTextFace{
 		Source: mplusFaceSource,
@@ -161,49 +180,93 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
-	config := mars.ConfigNOP94()
-	sim, err := mars.NewReportingSimulator(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	rec := mars.NewStateRecorder(sim)
-	sim.AddReporter(rec)
-	// sim.AddReporter(mars.NewDebugReporter(sim))
+	use88Flag := flag.Bool("8", false, "Enforce ICWS'88 rules")
+	sizeFlag := flag.Int("s", 8000, "Size of core")
+	procFlag := flag.Int("p", 8000, "Max. Processes")
+	cycleFlag := flag.Int("c", 80000, "Cycles until tie")
+	lenFlag := flag.Int("l", 100, "Max. warrior length")
+	fixedFlag := flag.Int("F", 0, "fixed position of warrior #2")
+	// roundFlag := flag.Int("r", 1, "Rounds to play")
+	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
+	flag.Parse()
 
-	w1file, err := os.Open("warriors/k94/julietstorm.red")
-	if err != nil {
-		log.Fatal(err)
+	coresize := mars.Address(*sizeFlag)
+	processes := mars.Address(*procFlag)
+	cycles := mars.Address(*cycleFlag)
+	length := mars.Address(*lenFlag)
+
+	var mode mars.SimulatorMode
+	if *use88Flag {
+		mode = mars.ICWS88
+	} else {
+		mode = mars.ICWS94
 	}
+	config := mars.NewQuickConfig(mode, coresize, processes, cycles, length)
+
+	args := flag.Args()
+
+	if len(args) < 2 || len(args) > 2 {
+		fmt.Println("only 2 warrior battles supported")
+		os.Exit(1)
+	}
+
+	w1file, err := os.Open(args[0])
+	if err != nil {
+		fmt.Printf("error opening warrior file '%s': %s\n", args[0], err)
+		os.Exit(1)
+	}
+	defer w1file.Close()
 	w1data, err := mars.ParseLoadFile(w1file, config)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
+		os.Exit(1)
 	}
 	w1file.Close()
 
-	w2file, err := os.Open("warriors/k94/timescape10.red")
+	w2file, err := os.Open(args[1])
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error opening warrior file '%s': %s\n", args[1], err)
+		os.Exit(1)
 	}
+	defer w1file.Close()
 	w2data, err := mars.ParseLoadFile(w2file, config)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
 	}
-	w2file.Close()
+	w1file.Close()
+
+	sim, err := mars.NewReportingSimulator(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating sim: %s", err)
+	}
+	if *debugFlag {
+		sim.AddReporter(mars.NewDebugReporter(sim))
+	}
+	rec := mars.NewStateRecorder(sim)
+	sim.AddReporter(rec)
+
+	w2start := *fixedFlag
+	if w2start == 0 {
+		minStart := 2 * config.Length
+		maxStart := config.CoreSize - config.Length - 1
+		startRange := maxStart - minStart
+		w2start = rand.Intn(int(startRange)+1) + int(minStart)
+	}
 
 	sim.AddWarrior(&w1data)
 	sim.AddWarrior(&w2data)
 
 	sim.SpawnWarrior(0, 0)
-	sim.SpawnWarrior(1, 5555)
-
-	ebiten.SetWindowSize(screenWidth, screenHeight)
-	ebiten.SetWindowTitle("gMARS")
+	sim.SpawnWarrior(1, mars.Address(w2start))
 
 	game := &Game{
 		sim:       sim,
 		rec:       *rec,
 		speedStep: defaultSpeedStep,
 	}
+
+	ebiten.SetWindowSize(screenWidth, screenHeight)
+	ebiten.SetWindowTitle(fmt.Sprintf("gMARS - '%s' vs '%s'", w1data.Name, w2data.Name))
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

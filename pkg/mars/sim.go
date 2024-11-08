@@ -156,7 +156,7 @@ func (s *reportSim) spawnWarrior(wi int, startOffset Address) error {
 // executes a cycle and returns the number of living warriors at the end
 // of the cycle
 func (s *reportSim) RunCycle() int {
-	if s.cycleCount > s.maxCycles {
+	if s.cycleCount >= s.maxCycles {
 		return 0
 	}
 	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})

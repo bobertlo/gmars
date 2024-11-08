@@ -26,7 +26,6 @@ func main() {
 	length := mars.Address(*lenFlag)
 
 	var mode mars.SimulatorMode
-
 	if *use88Flag {
 		mode = mars.ICWS88
 	} else {
