@@ -9,8 +9,6 @@ written in Go.
 
 ![vmars screenshot](screenshot.png)
 
-> demo: `go run github.com/bobertlo/gmars/cmd/vmars`
-
 In the the game of Core War, two virus-like programs written in assembly fight
 against each other in the memory of a Simulator where they are able to write and
 execute new code and modify eachother. For more information about Core War see:
@@ -25,7 +23,7 @@ execute new code and modify eachother. For more information about Core War see:
 
 ## Running
 
-The simulator setting arguments are specified the same for the GUI and CLI simulators:
+Currently only two warrior matches are supported. The simulator setting arguments are specified the same for the GUI and CLI simulators:
 
 
 ```
