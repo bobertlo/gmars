@@ -1,7 +1,7 @@
 # gMARS
 
 [![Go
-Reference](https://pkg.go.dev/badge/github.com/bobertlo/gmars/pkg/mars.svg)](https://pkg.go.dev/github.com/bobertlo/gmars/pkg/mars)
+Reference](https://pkg.go.dev/badge/github.com/bobertlo/gmars.svg)](https://pkg.go.dev/github.com/bobertlo/gmars/)
 [![Go Report
 Card](https://goreportcard.com/badge/github.com/bobertlo/gmars)](https://goreportcard.com/report/github.com/bobertlo/gmars)
 
