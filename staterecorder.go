@@ -1,4 +1,4 @@
-package mars
+package gmars
 
 type CoreState uint8
 

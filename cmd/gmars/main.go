@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/bobertlo/gmars/pkg/mars"
+	"github.com/bobertlo/gmars"
 )
 
 func main() {
@@ -20,18 +20,18 @@ func main() {
 	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
 	flag.Parse()
 
-	coresize := mars.Address(*sizeFlag)
-	processes := mars.Address(*procFlag)
-	cycles := mars.Address(*cycleFlag)
-	length := mars.Address(*lenFlag)
+	coresize := gmars.Address(*sizeFlag)
+	processes := gmars.Address(*procFlag)
+	cycles := gmars.Address(*cycleFlag)
+	length := gmars.Address(*lenFlag)
 
-	var mode mars.SimulatorMode
+	var mode gmars.SimulatorMode
 	if *use88Flag {
-		mode = mars.ICWS88
+		mode = gmars.ICWS88
 	} else {
-		mode = mars.ICWS94
+		mode = gmars.ICWS94
 	}
-	config := mars.NewQuickConfig(mode, coresize, processes, cycles, length)
+	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
 
 	args := flag.Args()
 
@@ -46,7 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w1data, err := mars.ParseLoadFile(w1file, config)
+	w1data, err := gmars.ParseLoadFile(w1file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
 		os.Exit(1)
@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w2data, err := mars.ParseLoadFile(w2file, config)
+	w2data, err := gmars.ParseLoadFile(w2file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
 	}
@@ -72,12 +72,12 @@ func main() {
 	w2win := 0
 	w2tie := 0
 	for i := 0; i < rounds; i++ {
-		sim, err := mars.NewReportingSimulator(config)
+		sim, err := gmars.NewReportingSimulator(config)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error creating sim: %s", err)
 		}
 		if *debugFlag {
-			sim.AddReporter(mars.NewDebugReporter(sim))
+			sim.AddReporter(gmars.NewDebugReporter(sim))
 		}
 
 		w2start := *fixedFlag
@@ -101,7 +101,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("error adding warrior 2: %s", err)
 		}
-		err = sim.SpawnWarrior(1, mars.Address(w2start))
+		err = sim.SpawnWarrior(1, gmars.Address(w2start))
 		if err != nil {
 			fmt.Printf("error spawning warrior 1: %s", err)
 		}

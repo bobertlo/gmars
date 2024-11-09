@@ -12,4 +12,4 @@
 //
 // The SimulatorConfig struct is provided to define configuration when
 // creating Simulator instances, and compiling warriors.
-package mars
+package gmars

@@ -12,7 +12,7 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/bobertlo/gmars/pkg/mars"
+	"github.com/bobertlo/gmars"
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -30,8 +30,8 @@ const (
 )
 
 type Game struct {
-	sim       mars.ReportingSimulator
-	rec       mars.StateRecorder
+	sim       gmars.ReportingSimulator
+	rec       gmars.StateRecorder
 	running   bool
 	finished  bool
 	speedStep int
@@ -84,7 +84,7 @@ func (g *Game) handleInput() {
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyR) {
 		g.sim.Reset()
 		g.sim.SpawnWarrior(0, 0)
-		g.sim.SpawnWarrior(1, mars.Address(rand.Intn(7000)+200))
+		g.sim.SpawnWarrior(1, gmars.Address(rand.Intn(7000)+200))
 		g.finished = false
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.slowDown()
@@ -153,9 +153,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	const xCount = screenWidth / tileSize
 
 	for i := 0; i < int(g.sim.CoreSize()); i++ {
-		state, color := g.rec.GetMemState(mars.Address(i))
+		state, color := g.rec.GetMemState(gmars.Address(i))
 
-		if state == mars.CoreEmpty {
+		if state == gmars.CoreEmpty {
 			continue
 		}
 		t := int(state)
@@ -229,18 +229,18 @@ func main() {
 	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
 	flag.Parse()
 
-	coresize := mars.Address(*sizeFlag)
-	processes := mars.Address(*procFlag)
-	cycles := mars.Address(*cycleFlag)
-	length := mars.Address(*lenFlag)
+	coresize := gmars.Address(*sizeFlag)
+	processes := gmars.Address(*procFlag)
+	cycles := gmars.Address(*cycleFlag)
+	length := gmars.Address(*lenFlag)
 
-	var mode mars.SimulatorMode
+	var mode gmars.SimulatorMode
 	if *use88Flag {
-		mode = mars.ICWS88
+		mode = gmars.ICWS88
 	} else {
-		mode = mars.ICWS94
+		mode = gmars.ICWS94
 	}
-	config := mars.NewQuickConfig(mode, coresize, processes, cycles, length)
+	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
 
 	args := flag.Args()
 
@@ -255,7 +255,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w1data, err := mars.ParseLoadFile(w1file, config)
+	w1data, err := gmars.ParseLoadFile(w1file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
 		os.Exit(1)
@@ -268,20 +268,20 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w2data, err := mars.ParseLoadFile(w2file, config)
+	w2data, err := gmars.ParseLoadFile(w2file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
 	}
 	w1file.Close()
 
-	sim, err := mars.NewReportingSimulator(config)
+	sim, err := gmars.NewReportingSimulator(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error creating sim: %s", err)
 	}
 	if *debugFlag {
-		sim.AddReporter(mars.NewDebugReporter(sim))
+		sim.AddReporter(gmars.NewDebugReporter(sim))
 	}
-	rec := mars.NewStateRecorder(sim)
+	rec := gmars.NewStateRecorder(sim)
 	sim.AddReporter(rec)
 
 	w2start := *fixedFlag
@@ -296,7 +296,7 @@ func main() {
 	sim.AddWarrior(&w2data)
 
 	sim.SpawnWarrior(0, 0)
-	sim.SpawnWarrior(1, mars.Address(w2start))
+	sim.SpawnWarrior(1, gmars.Address(w2start))
 
 	game := &Game{
 		sim:       sim,

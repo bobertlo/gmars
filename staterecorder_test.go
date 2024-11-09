@@ -1,4 +1,4 @@
-package mars
+package gmars
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package mars
+package gmars
 
 func (s *reportSim) mov(IR, IRA Instruction, WAB, PC Address, w *warrior) {
 	switch IR.OpMode {
