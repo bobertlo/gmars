@@ -19,7 +19,9 @@ func (s *reportSim) mov(IR, IRA Instruction, WAB, PC Address, w *warrior) {
 	case I:
 		s.mem[WAB] = IRA
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) add(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
@@ -41,7 +43,9 @@ func (s *reportSim) add(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 		s.mem[WAB].A = (IRB.A + IRA.B) % s.m
 		s.mem[WAB].B = (IRB.B + IRA.A) % s.m
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
@@ -63,7 +67,9 @@ func (s *reportSim) sub(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 		s.mem[WAB].A = (IRB.A + (s.m - IRA.B)) % s.m
 		s.mem[WAB].B = (IRB.B + (s.m - IRA.A)) % s.m
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
@@ -85,7 +91,9 @@ func (s *reportSim) mul(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 		s.mem[WAB].A = (IRB.A * IRA.B) % s.m
 		s.mem[WAB].B = (IRB.B * IRA.A) % s.m
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) div(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
@@ -143,7 +151,9 @@ func (s *reportSim) div(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 			return
 		}
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
@@ -201,7 +211,9 @@ func (s *reportSim) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 			return
 		}
 	}
-	w.pq.Push((PC + 1) % s.m)
+	nextPC := (PC + 1) % s.m
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) jmz(IR, IRB Instruction, RAB, PC Address, w *warrior) {
@@ -236,22 +248,19 @@ func (s *reportSim) jmz(IR, IRB Instruction, RAB, PC Address, w *warrior) {
 }
 
 func (s *reportSim) jmn(IR, IRB Instruction, RAB, PC Address, w *warrior) {
+	nextPC := (PC + 1) % s.m
 	switch IR.OpMode {
 	case A:
 		fallthrough
 	case BA:
 		if IRB.A != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
 	case B:
 		fallthrough
 	case AB:
 		if IRB.B != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
 	case F:
 		fallthrough
@@ -259,14 +268,19 @@ func (s *reportSim) jmn(IR, IRB Instruction, RAB, PC Address, w *warrior) {
 		fallthrough
 	case I:
 		if IRB.A != 0 || IRB.B != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
+	default:
+		return
 	}
+
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *warrior) {
+	nextPC := (PC + 1) % s.m
+
 	switch IR.OpMode {
 	case A:
 		fallthrough
@@ -274,9 +288,7 @@ func (s *reportSim) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *warrior) {
 		s.mem[WAB].A = (s.mem[WAB].A + s.m - 1) % s.m
 		IRB.A -= 1
 		if IRB.A != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
 	case B:
 		fallthrough
@@ -284,9 +296,7 @@ func (s *reportSim) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *warrior) {
 		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
 		IRB.B -= 1
 		if IRB.B != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
 	case F:
 		fallthrough
@@ -298,151 +308,121 @@ func (s *reportSim) djn(IR, IRB Instruction, RAB, WAB, PC Address, w *warrior) {
 		s.mem[WAB].B = (s.mem[WAB].B + s.m - 1) % s.m
 		IRB.B -= 1
 		if IRB.B != 0 || IRB.A != 0 {
-			w.pq.Push(RAB)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = RAB
 		}
 	}
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) cmp(IR, IRA, IRB Instruction, PC Address, w *warrior) {
+	nextPC := (PC + 1) % s.m
 	switch IR.OpMode {
 	case A:
 		if IRA.A == IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case B:
 		if IRA.B == IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case AB:
 		if IRA.A == IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case BA:
 		if IRA.B == IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case F:
 		if IRA.A == IRB.A && IRA.B == IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case X:
 		if IRA.A == IRB.B && IRA.B == IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case I:
 		if IRA.Op == IRB.Op && IRA.OpMode == IRB.OpMode &&
 			IRA.AMode == IRB.AMode && IRA.A == IRB.A &&
 			IRA.BMode == IRB.BMode && IRA.B == IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	}
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) sne(IR, IRA, IRB Instruction, PC Address, w *warrior) {
+
+	nextPC := (PC + 1) % s.m
 	switch IR.OpMode {
 	case A:
 		if IRA.A != IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case B:
 		if IRA.B != IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case AB:
 		if IRA.A != IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case BA:
 		if IRA.B != IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case F:
 		if IRA.A != IRB.A || IRA.B != IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case X:
 		if IRA.A != IRB.B || IRA.B != IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case I:
 		if IRA.Op != IRB.Op || IRA.OpMode != IRB.OpMode ||
 			IRA.AMode != IRB.AMode || IRA.A != IRB.A ||
 			IRA.BMode != IRB.BMode || IRA.B != IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	}
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }
 
 func (s *reportSim) slt(IR, IRA, IRB Instruction, PC Address, w *warrior) {
+	nextPC := (PC + 1) % s.m
 	switch IR.OpMode {
 	case A:
 		if IRA.A < IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case B:
 		if IRA.B < IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case AB:
 		if IRA.A < IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case BA:
 		if IRA.B < IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	case F:
 		fallthrough
 	case I:
 		if IRA.A < IRB.A && IRA.B < IRB.B {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 
 	case X:
 		if IRA.A < IRB.B && IRA.B < IRB.A {
-			w.pq.Push((PC + 2) % s.m)
-		} else {
-			w.pq.Push((PC + 1) % s.m)
+			nextPC = (PC + 2) % s.m
 		}
 	}
+	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
+	w.pq.Push(nextPC)
 }

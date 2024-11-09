@@ -53,3 +53,10 @@ func (q *processQueue) Values() []Address {
 	}
 	return dat
 }
+
+func (q *processQueue) Next() (Address, error) {
+	if q.length == 0 {
+		return 0, fmt.Errorf("process queue is empty")
+	}
+	return q.get(0), nil
+}

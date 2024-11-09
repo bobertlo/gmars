@@ -24,6 +24,7 @@ type Warrior interface {
 	Author() string
 	Length() int
 	Queue() []Address
+	NextPC() (Address, error)
 }
 
 // Copy creates a deep copy of a WarriorData object
@@ -127,4 +128,8 @@ func (w *warrior) Queue() []Address {
 		return []Address{}
 	}
 	return w.pq.Values()
+}
+
+func (w *warrior) NextPC() (Address, error) {
+	return w.pq.Next()
 }

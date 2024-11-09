@@ -12,6 +12,7 @@ const (
 	CycleEnd
 	WarriorSpawn
 	WarriorTaskPop
+	WarriorTaskPush
 	WarriorTaskTerminate
 	WarriorTerminate
 	WarriorRead
@@ -48,7 +49,9 @@ func (r *debugReporter) Report(report Report) {
 	case WarriorSpawn:
 		fmt.Printf("w%02d %04d: Warrior Spawn\n", report.WarriorIndex, report.Address)
 	case WarriorTaskPop:
-		fmt.Printf("W%02d %04d: %s\n", report.WarriorIndex, report.Address, r.s.GetMem(report.Address).NormString(r.s.CoreSize()))
+		fmt.Printf("W%02d %04d: Exec %s\n", report.WarriorIndex, report.Address, r.s.GetMem(report.Address).NormString(r.s.CoreSize()))
+	case WarriorTaskPush:
+		fmt.Printf("W%02d: Task Push %04d\n", report.WarriorIndex, report.Address)
 	case WarriorTaskTerminate:
 		fmt.Printf("W%02d %04d: Task Terminated\n", report.WarriorIndex, report.Address)
 	case WarriorTerminate:
