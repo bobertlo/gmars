@@ -25,9 +25,18 @@ type Simulator interface {
 	GetWarrior(wi int) Warrior
 	SpawnWarrior(wi int, startOffset Address) error
 	Run() []bool
+
+	// RunCycle runs a full cyle of the living warriors, starting at s,warriorIndex.
+	//
+	// If s.cycleCount > s.maxCycles or there are no living warriors, no warrior
+	// will be run, s.cycleCount will not be incremented, and the return value will
+	// be 0. Otherwise s.cycleCount is incremented and
 	RunCycle() int
 	GetMem(a Address) Instruction
 	Reset()
+
+	WarriorLivingCount() int
+	WarriorCount() int
 }
 
 type ReportingSimulator interface {
@@ -44,10 +53,11 @@ type reportSim struct {
 	mem        []Instruction
 	legacy     bool
 
-	warriors     []*warrior
-	reporters    []Reporter
-	warriorIndex int
-	warriorCount int
+	warriors           []*warrior
+	reporters          []Reporter
+	warriorIndex       int
+	warriorCount       int
+	warriorLivingCount int
 
 	cycleCount Address
 }
@@ -138,6 +148,9 @@ func (s *reportSim) spawnWarrior(wi int, startOffset Address) error {
 		return fmt.Errorf("warrior index out of bounds")
 	}
 	w := s.warriors[wi]
+	if w.state == WarriorAlive {
+		return fmt.Errorf("warrior already spawned")
+	}
 
 	for i := Address(0); i < Address(len(w.data.Code)); i++ {
 		s.mem[(startOffset+i)%s.m] = w.data.Code[i]
@@ -146,70 +159,60 @@ func (s *reportSim) spawnWarrior(wi int, startOffset Address) error {
 	w.pq = newProcessQueue(s.maxProcs)
 	w.pq.Push(startOffset + Address(w.data.Start))
 	w.state = WarriorAlive
+	s.warriorLivingCount += 1
 
 	s.Report(Report{Type: WarriorSpawn, WarriorIndex: w.index, Address: startOffset})
 
 	return nil
 }
 
-// RunTurn find the next living warrior, returns 0 if none are found, or
-// executes a cycle and returns the number of living warriors at the end
-// of the cycle
+func (s *reportSim) WarriorCount() int {
+	return s.warriorCount
+}
+
+func (s *reportSim) WarriorLivingCount() int {
+	return s.warriorLivingCount
+}
+
 func (s *reportSim) RunCycle() int {
-	if s.cycleCount >= s.maxCycles {
+	if s.cycleCount >= s.maxCycles || s.warriorLivingCount < 1 {
 		return 0
 	}
-	s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
 
-	var warrior *warrior
-	var pc Address
-	var warriorIndex int
+	if s.warriorIndex == 0 {
+		s.Report(Report{Type: CycleStart, Cycle: int(s.cycleCount)})
+	}
 
-	// find the first living warrior, starting at s.warriorIndex
-	// return 0 if no living warriors are found
-	for i := 0; ; i++ {
-		warriorIndex = (s.warriorIndex + i) % s.warriorCount
-		if s.warriors[warriorIndex].state == WarriorAlive {
-			warrior = s.warriors[warriorIndex]
-
+	// step through s.warriors from s.warriorIndex to the end
+	for i := s.warriorIndex; i < s.warriorCount; i++ {
+		if s.warriors[i].state == WarriorAlive {
 			// I don't like this, and this should never happen, but we will
 			// silently reap any zombie warriors here that are 'alive' without
 			// a process queue so we can continue and check the next ones.
 			var err error
-			pc, err = warrior.pq.Pop()
+			pc, err := s.warriors[i].pq.Pop()
 			if err != nil {
-				warrior.state = WarriorDead
+				s.warriors[i].state = WarriorDead
 				continue
 			}
 
-			break
-		}
-		if i == s.warriorCount {
-			return 0
-		}
-	}
+			s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
 
-	s.Report(Report{Type: WarriorTaskPop, Cycle: int(s.cycleCount), WarriorIndex: warriorIndex, Address: pc})
-
-	s.exec(pc, warrior)
-	if warrior.pq.Len() == 0 {
-		s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: warriorIndex, Address: pc})
-		warrior.state = WarriorDead
+			s.exec(pc, s.warriors[i])
+			if s.warriors[i].pq.Len() == 0 {
+				s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
+				s.warriors[i].state = WarriorDead
+				s.warriorLivingCount--
+			}
+		}
 	}
 
 	s.Report(Report{Type: CycleEnd, Cycle: int(s.cycleCount)})
 
-	s.warriorIndex = (warriorIndex + 1) % s.warriorCount
+	s.warriorIndex = 0
 	s.cycleCount++
 
-	nAlive := 0
-	for i := 0; i < s.warriorCount; i++ {
-		if s.warriors[i].state == WarriorAlive {
-			nAlive += 1
-		}
-	}
-
-	return nAlive
+	return s.warriorLivingCount
 }
 
 func (s *reportSim) readFold(pointer Address) Address {
@@ -435,4 +438,5 @@ func (s *reportSim) Reset() {
 	}
 	s.mem = make([]Instruction, s.m)
 	s.cycleCount = 0
+	s.warriorLivingCount = 0
 }

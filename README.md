@@ -9,6 +9,8 @@ written in Go.
 
 ![vmars screenshot](screenshot.png)
 
+> demo: `go run github.com/bobertlo/gmars/cmd/vmars`
+
 In the the game of Core War, two virus-like programs written in assembly fight
 against each other in the memory of a Simulator where they are able to write and
 execute new code and modify eachother. For more information about Core War see:
@@ -20,6 +22,45 @@ execute new code and modify eachother. For more information about Core War see:
 - [Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html): An 'infinite
    hill' site that collects warriors and publishes their rankings and source
    code.
+
+## Running
+
+The simulator setting arguments are specified the same for the GUI and CLI simulators:
+
+
+```
+Usage of ./gmars:
+  -8    Enforce ICWS'88 rules
+  -F int
+        fixed position of warrior #2
+  -c int
+        Cycles until tie (default 80000)
+  -debug
+        Dump verbose debug information
+  -l int
+        Max. warrior length (default 100)
+  -p int
+        Max. Processes (default 8000)
+  -r int
+        Rounds to play (default 1)
+  -s int
+        Size of core (default 8000)
+```
+
+
+## Run and Install
+
+To install the simulator executables in your GOPATH run:
+
+
+```
+# vmars - Visual MARS simulator
+go install github.com/bobertlo/gmars/cmd/vmars@latest
+
+# gmars - command line MARS
+go install github.com/bobertlo/gmars/cmd/gmars@latest
+```
+
 
 ## Components
 

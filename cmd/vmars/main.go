@@ -95,9 +95,15 @@ func (g *Game) handleInput() {
 			g.running = false
 		} else {
 			for i := 0; i < speeds[g.speedStep]; i++ {
-				g.sim.RunCycle()
+				g.runCycle()
 			}
 		}
+	}
+}
+
+func (g *Game) runCycle() {
+	if g.sim.WarriorLivingCount() > 1 {
+		g.sim.RunCycle()
 	}
 }
 
@@ -111,11 +117,11 @@ func (g *Game) Update() error {
 	if g.running {
 		if speed < 0 {
 			if g.counter%speed == 0 {
-				g.sim.RunCycle()
+				g.runCycle()
 			}
 		} else {
 			for i := 0; i < speeds[g.speedStep]; i++ {
-				g.sim.RunCycle()
+				g.runCycle()
 			}
 		}
 	}
@@ -161,7 +167,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.ColorScale.ScaleWithColor(color.White)
 	text.Draw(screen, msg, &text.GoTextFace{
 		Source: mplusFaceSource,
-		Size:   12,
+		Size:   10,
 	}, op)
 
 	msg = fmt.Sprintf("Cycle: %05d (%dx)", g.sim.CycleCount(), speeds[g.speedStep])
@@ -170,7 +176,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.ColorScale.ScaleWithColor(color.White)
 	text.Draw(screen, msg, &text.GoTextFace{
 		Source: mplusFaceSource,
-		Size:   12,
+		Size:   10,
 	}, op)
 
 }

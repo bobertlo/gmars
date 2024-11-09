@@ -164,7 +164,7 @@ func runTests(t *testing.T, set_name string, tests []redcodeTest) {
 			expectedOutput[i] = instruction
 		}
 
-		config := NewQuickConfig(ICWS88, coresize, processes, 1, coresize)
+		config := NewQuickConfig(ICWS88, coresize, processes, Address(turns), coresize)
 		config.Distance = 0
 
 		sim, err := newReportSim(config)

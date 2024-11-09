@@ -23,7 +23,7 @@ func TestImp(t *testing.T) {
 			pq:    []Address{0},
 		},
 	}
-	runTests(t, "dwarf", tests)
+	runTests(t, "imp", tests)
 }
 
 func TestSimDwarf(t *testing.T) {
