@@ -2,7 +2,6 @@ package gmars
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"unicode"
 )
@@ -33,10 +32,8 @@ type token struct {
 type lexer struct {
 	reader   *bufio.Reader
 	nextRune rune
-	// width    int
-	atEOF bool
-	// finished bool
-	tokens chan token
+	atEOF    bool
+	tokens   chan token
 }
 
 func newLexer(r io.Reader) *lexer {
@@ -57,10 +54,8 @@ func (l *lexer) next() (rune, bool) {
 	r, _, err := l.reader.ReadRune()
 	if err != nil {
 		l.atEOF = true
-		// l.finished = true
 		return l.nextRune, true
 	}
-	fmt.Println(r)
 
 	lastRune := l.nextRune
 	l.nextRune = r
@@ -75,9 +70,6 @@ func (l *lexer) run() {
 }
 
 func (l *lexer) NextToken() (token, error) {
-	// if l.finished {
-	// 	return token{}, fmt.Errorf("already reached EOF")
-	// }
 	return <-l.tokens, nil
 }
 
@@ -167,6 +159,11 @@ func lexInput(l *lexer) stateFn {
 	case '>':
 		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
 	}
+
+	// this should only happen if run on an empty file
+	if l.atEOF {
+		l.tokens <- token{typ: tokEOF}
+	}
 	return nil
 }
 
@@ -216,7 +213,8 @@ func lexComment(l *lexer) stateFn {
 		commentBuf = append(commentBuf, l.nextRune)
 		_, eof := l.next()
 		if eof {
-			l.tokens <- token{typ: tokComment, val: string(commentBuf)}
+			l.tokens <- token{tokComment, string(commentBuf)}
+			l.tokens <- token{tokEOF, ""}
 			return nil
 		}
 	}

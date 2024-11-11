@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,13 +18,19 @@ func runLexTests(t *testing.T, setName string, testCases []lexTestCase) {
 	for i, test := range testCases {
 		l := newLexer(strings.NewReader(test.input))
 		out, err := l.Tokens()
-		require.NoError(t, err, fmt.Errorf("%s test %d error: %s", setName, i, err))
-		require.Equal(t, test.expected, out, fmt.Sprintf("%s test %d", setName, i))
+		require.NoError(t, err, fmt.Errorf("%s test %d: error: %s", setName, i, err))
+		assert.Equal(t, test.expected, out, fmt.Sprintf("%s test %d", setName, i))
 	}
 }
 
 func TestLexer(t *testing.T) {
 	testCases := []lexTestCase{
+		{
+			input: "",
+			expected: []token{
+				{tokEOF, ""},
+			},
+		},
 		{
 			input: "\n",
 			expected: []token{
@@ -60,6 +67,34 @@ func TestLexer(t *testing.T) {
 				{tokExprOp, "-"},
 				{tokText, "start"},
 				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "111",
+			expected: []token{
+				{tokNumber, "111"},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "; comment",
+			expected: []token{
+				{tokComment, "; comment"},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "text",
+			expected: []token{
+				{tokText, "text"},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "#",
+			expected: []token{
+				{tokAddressMode, "#"},
 				{tokEOF, ""},
 			},
 		},
