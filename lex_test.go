@@ -98,6 +98,19 @@ func TestLexer(t *testing.T) {
 				{tokEOF, ""},
 			},
 		},
+		{
+			input: "underscore_text",
+			expected: []token{
+				{tokText, "underscore_text"},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "~",
+			expected: []token{
+				{tokError, "unexpected character: '~'"},
+			},
+		},
 	}
 
 	runLexTests(t, "TestLexer", testCases)

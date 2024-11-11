@@ -2,6 +2,7 @@ package gmars
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"unicode"
 )
@@ -115,7 +116,7 @@ func lexInput(l *lexer) stateFn {
 	}
 
 	// handle alphanumeric input
-	if unicode.IsLetter(l.nextRune) {
+	if unicode.IsLetter(l.nextRune) || l.nextRune == '_' {
 		return lexText
 	}
 
@@ -130,6 +131,8 @@ func lexInput(l *lexer) stateFn {
 
 	// dispatch based on next rune, or error
 	switch l.nextRune {
+	case '\x00':
+		l.tokens <- token{tokEOF, ""}
 	case ',':
 		return l.emitConsume(token{tokComma, ","}, lexInput)
 	case '(':
@@ -158,19 +161,17 @@ func lexInput(l *lexer) stateFn {
 		fallthrough
 	case '>':
 		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
+	default:
+		l.tokens <- token{tokError, fmt.Sprintf("unexpected character: '%s'", string(l.nextRune))}
 	}
 
-	// this should only happen if run on an empty file
-	if l.atEOF {
-		l.tokens <- token{typ: tokEOF}
-	}
 	return nil
 }
 
 func lexText(l *lexer) stateFn {
 	runeBuf := make([]rune, 0, 10)
 
-	for unicode.IsLetter(l.nextRune) || unicode.IsDigit(l.nextRune) || l.nextRune == '.' {
+	for unicode.IsLetter(l.nextRune) || unicode.IsDigit(l.nextRune) || l.nextRune == '.' || l.nextRune == '_' {
 		r, eof := l.next()
 		runeBuf = append(runeBuf, r)
 		if eof {
