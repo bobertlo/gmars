@@ -53,12 +53,14 @@ type parser struct {
 }
 
 func newParser(lex *lexer) *parser {
-	return &parser{
+	p := &parser{
 		lex:        lex,
 		symbols:    make(map[string]int),
 		references: make(map[string]int),
 		line:       1,
 	}
+	p.next()
+	return p
 }
 
 type parseStateFn func(p *parser) parseStateFn
@@ -111,8 +113,21 @@ func (p *parser) next() (token, bool) {
 // helper function to emit the current working line and consume
 // the current token. return nextState or nil on EOF
 func (p *parser) consumeEmitLine(nextState parseStateFn) parseStateFn {
-	p.lines = append(p.lines, p.currentLine)
+	// consume current character
 	_, eof := p.next()
+	if eof {
+		return nil
+	}
+
+	if p.nextToken.typ != tokNewline {
+		p.err = fmt.Errorf("expected newline, got: '%s'", p.nextToken)
+		return nil
+	}
+
+	p.currentLine.newlines += 1
+	p.lines = append(p.lines, p.currentLine)
+
+	_, eof = p.next()
 	if eof {
 		return nil
 	}
@@ -137,8 +152,10 @@ func parseLine(p *parser) parseStateFn {
 		return parseComment
 	case tokText:
 		return parseLabels
+	case tokEOF:
+		return nil
 	default:
-		p.err = fmt.Errorf("line %d: unexpected token: '%s'", p.line, p.nextToken)
+		p.err = fmt.Errorf("line %d: unexpected token: '%s' type %d", p.line, p.nextToken, p.nextToken.typ)
 	}
 
 	return nil
