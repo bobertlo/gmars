@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 	"unicode"
 )
 
 type tokenType uint8
-
-type stateFn func(l *lexer) stateFn
 
 const (
 	tokError       tokenType = iota // returned when an error is encountered
@@ -30,6 +29,44 @@ type token struct {
 	val string
 }
 
+func (t token) String() string {
+	switch t.typ {
+	case tokEOF:
+		return "EOF"
+	case tokNewline:
+		return "newline"
+	default:
+		return t.val
+	}
+}
+
+func (t token) IsOp() bool {
+	if t.typ != tokText {
+		return false
+	}
+	if strings.Contains(t.val, ".") {
+		return true
+	}
+	return t.IsPseudoOp()
+}
+
+func (t token) IsPseudoOp() bool {
+	switch strings.ToLower(t.val) {
+	case "end":
+		return true
+	case "equ":
+		return true
+	case "org":
+		return true
+	case "for":
+		return true
+	case "rof":
+		return true
+	default:
+		return false
+	}
+}
+
 type lexer struct {
 	reader   *bufio.Reader
 	nextRune rune
@@ -37,6 +74,8 @@ type lexer struct {
 	closed   bool
 	tokens   chan token
 }
+
+type lexStateFn func(l *lexer) lexStateFn
 
 func newLexer(r io.Reader) *lexer {
 	lex := &lexer{
@@ -94,7 +133,7 @@ func (l *lexer) Tokens() ([]token, error) {
 	return tokens, nil
 }
 
-func (l *lexer) emitConsume(tok token, nextState stateFn) stateFn {
+func (l *lexer) emitConsume(tok token, nextState lexStateFn) lexStateFn {
 	l.tokens <- tok
 	_, eof := l.next()
 	if eof {
@@ -104,7 +143,7 @@ func (l *lexer) emitConsume(tok token, nextState stateFn) stateFn {
 	return nextState
 }
 
-func lexInput(l *lexer) stateFn {
+func lexInput(l *lexer) lexStateFn {
 	// consume any space until non-space characters, emitting tokNewlines
 	if unicode.IsSpace(l.nextRune) {
 		for unicode.IsSpace(l.nextRune) {
@@ -173,7 +212,7 @@ func lexInput(l *lexer) stateFn {
 	return nil
 }
 
-func lexText(l *lexer) stateFn {
+func lexText(l *lexer) lexStateFn {
 	runeBuf := make([]rune, 0, 10)
 
 	for unicode.IsLetter(l.nextRune) || unicode.IsDigit(l.nextRune) || l.nextRune == '.' || l.nextRune == '_' {
@@ -193,7 +232,7 @@ func lexText(l *lexer) stateFn {
 	return lexInput
 }
 
-func lexNumber(l *lexer) stateFn {
+func lexNumber(l *lexer) lexStateFn {
 	numberBuf := make([]rune, 0, 10)
 	for unicode.IsDigit(l.nextRune) {
 		r, eof := l.next()
@@ -212,7 +251,7 @@ func lexNumber(l *lexer) stateFn {
 	return lexInput
 }
 
-func lexComment(l *lexer) stateFn {
+func lexComment(l *lexer) lexStateFn {
 	commentBuf := make([]rune, 0, 32)
 
 	for l.nextRune != '\n' {
