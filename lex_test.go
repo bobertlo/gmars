@@ -115,3 +115,22 @@ func TestLexer(t *testing.T) {
 
 	runLexTests(t, "TestLexer", testCases)
 }
+
+func TestLexEnd(t *testing.T) {
+	l := newLexer(strings.NewReader("test mov 0, 1\n"))
+
+	_, err := l.Tokens()
+	assert.NoError(t, err)
+
+	tok, err := l.NextToken()
+	assert.Error(t, err)
+	assert.Equal(t, token{}, tok)
+
+	tokens, err := l.Tokens()
+	assert.Error(t, err)
+	assert.Nil(t, tokens)
+
+	r, eof := l.next()
+	assert.True(t, eof)
+	assert.Equal(t, r, '\x00')
+}

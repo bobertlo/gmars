@@ -34,6 +34,7 @@ type lexer struct {
 	reader   *bufio.Reader
 	nextRune rune
 	atEOF    bool
+	closed   bool
 	tokens   chan token
 }
 
@@ -49,7 +50,7 @@ func newLexer(r io.Reader) *lexer {
 
 func (l *lexer) next() (rune, bool) {
 	if l.atEOF {
-		return l.nextRune, true
+		return '\x00', true
 	}
 
 	r, _, err := l.reader.ReadRune()
@@ -68,9 +69,13 @@ func (l *lexer) run() {
 		state = state(l)
 	}
 	close(l.tokens)
+	l.closed = true
 }
 
 func (l *lexer) NextToken() (token, error) {
+	if l.closed {
+		return token{}, fmt.Errorf("no more tokens")
+	}
 	return <-l.tokens, nil
 }
 
