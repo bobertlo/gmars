@@ -17,7 +17,9 @@ type parserTestCase struct {
 
 func assertSourceLineEqual(t *testing.T, expected, value sourceLine) {
 	assert.Equal(t, expected.line, value.line, "line")
+	assert.Equal(t, expected.codeLine, value.codeLine, "codeline")
 	assert.Equal(t, expected.typ, value.typ, "type")
+	assert.Equal(t, expected.labels, value.labels)
 	assert.Equal(t, expected.amode, value.amode, "amode")
 
 	if expected.a == nil {
@@ -35,6 +37,7 @@ func assertSourceLineEqual(t *testing.T, expected, value sourceLine) {
 	}
 
 	assert.Equal(t, expected.comment, value.comment, "comment")
+	assert.Equal(t, expected.newlines, value.newlines, "newlines")
 }
 
 func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
@@ -88,6 +91,21 @@ func TestParserPositive(t *testing.T) {
 			}},
 		},
 		{
+			input: "a b mov $0, $1 ; comment\n",
+			output: []sourceLine{{
+				line:     1,
+				labels:   []string{"a", "b"},
+				typ:      lineInstruction,
+				op:       "mov",
+				amode:    "$",
+				a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+				bmode:    "$",
+				b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+				comment:  "; comment",
+				newlines: 1,
+			}},
+		},
+		{
 			input: "mov $ -1, $ 2 + 2\n",
 			output: []sourceLine{{
 				line:  1,
@@ -107,6 +125,37 @@ func TestParserPositive(t *testing.T) {
 				comment:  "",
 				newlines: 1,
 			}},
+		},
+		{
+			input: "\n\nmov $0, $1 ; comment\n\nmov $0, $1 ; comment\n",
+			output: []sourceLine{
+				{line: 1, typ: lineEmpty, newlines: 2},
+				{
+					line:     3,
+					codeLine: 0,
+					typ:      lineInstruction,
+					op:       "mov",
+					amode:    "$",
+					a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+					bmode:    "$",
+					b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+					comment:  "; comment",
+					newlines: 1,
+				},
+				{line: 4, typ: lineEmpty, newlines: 1},
+				{
+					line:     5,
+					codeLine: 1,
+					typ:      lineInstruction,
+					op:       "mov",
+					amode:    "$",
+					a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+					bmode:    "$",
+					b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+					comment:  "; comment",
+					newlines: 1,
+				},
+			},
 		},
 	}
 

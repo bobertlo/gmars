@@ -14,8 +14,9 @@ const (
 )
 
 type sourceLine struct {
-	line int
-	typ  lineType
+	line     int
+	codeLine int
+	typ      lineType
 
 	// string values of input to parse tokens from lexer into
 	labels   []string
@@ -39,6 +40,7 @@ type parser struct {
 	// state for the running parser
 	nextToken   token
 	line        int
+	codeLine    int
 	atEOF       bool
 	err         error
 	currentLine sourceLine
@@ -223,6 +225,7 @@ func parsePseudoOp(p *parser) parseStateFn {
 		return parseComment
 	} else if p.nextToken.typ == tokNewline {
 		if lastToken.NoOperandsOk() {
+			p.currentLine.newlines += 1
 			p.lines = append(p.lines, p.currentLine)
 			return nil
 		}
@@ -249,6 +252,8 @@ func parsePseudoExpr(p *parser) parseStateFn {
 func parseOp(p *parser) parseStateFn {
 	p.currentLine.op = p.nextToken.val
 	p.currentLine.typ = lineInstruction
+	p.currentLine.codeLine = p.codeLine
+	p.codeLine += 1
 
 	p.next()
 
@@ -358,6 +363,7 @@ func parseExprB(p *parser) parseStateFn {
 	case tokComment:
 		return parseComment
 	case tokNewline:
+		p.currentLine.newlines += 1
 		p.lines = append(p.lines, p.currentLine)
 		p.next()
 		return parseLine
