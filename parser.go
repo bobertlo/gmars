@@ -1,6 +1,8 @@
 package gmars
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type lineType uint8
 
@@ -19,9 +21,9 @@ type sourceLine struct {
 	labels   []string
 	op       string
 	amode    string
-	a        expression
+	a        *expression
 	bmode    string
-	b        expression
+	b        *expression
 	comment  string
 	newlines int
 }
@@ -90,15 +92,15 @@ func (p *parser) parse() (*sourceFile, error) {
 	return &sourceFile{lines: p.lines, symbols: p.symbols}, nil
 }
 
-func (p *parser) next() (token, bool) {
+func (p *parser) next() token {
 	if p.atEOF {
-		return token{}, true
+		return token{typ: tokEOF}
 	}
 
 	nextToken, err := p.lex.NextToken()
 	if err != nil {
 		p.atEOF = true
-		return p.nextToken, true
+		return p.nextToken
 	}
 
 	lastToken := p.nextToken
@@ -107,17 +109,14 @@ func (p *parser) next() (token, bool) {
 	if lastToken.typ == tokNewline {
 		p.line += 1
 	}
-	return lastToken, false
+	return lastToken
 }
 
 // helper function to emit the current working line and consume
 // the current token. return nextState or nil on EOF
 func (p *parser) consumeEmitLine(nextState parseStateFn) parseStateFn {
 	// consume current character
-	_, eof := p.next()
-	if eof {
-		return nil
-	}
+	nextToken := p.next()
 
 	if p.nextToken.typ != tokNewline {
 		p.err = fmt.Errorf("expected newline, got: '%s'", p.nextToken)
@@ -127,8 +126,8 @@ func (p *parser) consumeEmitLine(nextState parseStateFn) parseStateFn {
 	p.currentLine.newlines += 1
 	p.lines = append(p.lines, p.currentLine)
 
-	_, eof = p.next()
-	if eof {
+	nextToken = p.next()
+	if nextToken.typ == tokEOF {
 		return nil
 	}
 	return nextState
@@ -156,9 +155,8 @@ func parseLine(p *parser) parseStateFn {
 		return nil
 	default:
 		p.err = fmt.Errorf("line %d: unexpected token: '%s' type %d", p.line, p.nextToken, p.nextToken.typ)
+		return nil
 	}
-
-	return nil
 }
 
 // parseNewlines consumes newlines and then returns:
@@ -167,11 +165,7 @@ func parseLine(p *parser) parseStateFn {
 func parseEmptyLines(p *parser) parseStateFn {
 	for p.nextToken.typ == tokNewline {
 		p.currentLine.newlines += 1
-		_, eof := p.next()
-		if eof {
-			p.lines = append(p.lines, p.currentLine)
-			return nil
-		}
+		p.next()
 	}
 	p.lines = append(p.lines, p.currentLine)
 	return parseLine
@@ -179,7 +173,6 @@ func parseEmptyLines(p *parser) parseStateFn {
 
 // parseComment emits a comment and deals with newlines
 // newline: parseLine
-// eof: nil
 func parseComment(p *parser) parseStateFn {
 	p.currentLine.comment = p.nextToken.val
 	return p.consumeEmitLine(parseLine)
@@ -203,11 +196,7 @@ func parseLabels(p *parser) parseStateFn {
 	}
 
 	p.currentLine.labels = append(p.currentLine.labels, p.nextToken.val)
-	nextToken, eof := p.next()
-	if eof {
-		p.err = fmt.Errorf("line %d: label or op expected, got eof", p.line)
-		return nil
-	}
+	nextToken := p.next()
 
 	if nextToken.typ != tokText {
 		p.err = fmt.Errorf("line %d: label or op expected, got '%s'", p.line, nextToken)
@@ -216,30 +205,167 @@ func parseLabels(p *parser) parseStateFn {
 	return parseLabels
 }
 
-func parseOp(p *parser) parseStateFn {
-	return nil
-}
-
+// from: parseLabels
+// comment: parseComment
+// newline: parseLine
+// exprssionterm: parsePseudoExpr
+// anything else: error
 func parsePseudoOp(p *parser) parseStateFn {
+	p.currentLine.op = p.nextToken.val
+	p.currentLine.typ = linePseudoOp
+
+	lastToken := p.nextToken
+	p.next()
+
+	if p.nextToken.IsExpressionTerm() {
+		return parsePseudoExpr
+	} else if p.nextToken.typ == tokComment {
+		return parseComment
+	} else if p.nextToken.typ == tokNewline {
+		if lastToken.NoOperandsOk() {
+			p.lines = append(p.lines, p.currentLine)
+			return nil
+		}
+		p.err = fmt.Errorf("line %d: expected operand expression after psuedo-op '%s', got newline", p.line, lastToken.val)
+		return nil
+	}
+
+	p.err = fmt.Errorf("line %d: expected operand expression, comment, or newline after pseudo-op, got: '%s'", p.line, p.nextToken)
 	return nil
 }
 
-func parseModeA(p *parser) parseStateFn {
-	return nil
-}
-
-func parseExprA(p *parser) parseStateFn {
-	return nil
-}
-
-func parseModeB(p *parser) parseStateFn {
-	return nil
-}
-
-func parseExprB(p *parser) parseStateFn {
-	return nil
-}
-
+// from: parsePseudoOp
+// on comment: parseComment
+// expressionterm: parsePseudoExpr
+// anything else: error
 func parsePseudoExpr(p *parser) parseStateFn {
 	return nil
+}
+
+// from: parseLabels
+// addressmode: parseModeA
+// expressionterm: parseExprA
+// anything else: error
+func parseOp(p *parser) parseStateFn {
+	p.currentLine.op = p.nextToken.val
+	p.currentLine.typ = lineInstruction
+
+	p.next()
+
+	if p.nextToken.IsExpressionTerm() {
+		return parseExprA
+	}
+
+	switch p.nextToken.typ {
+	case tokComment:
+		p.err = fmt.Errorf("line %d: expected operand expression after op, got comment", p.line)
+		return nil
+	case tokNewline:
+		p.err = fmt.Errorf("line %d: expected operand expression after op, got newline", p.line)
+		return nil
+	case tokAddressMode:
+		return parseModeA
+	default:
+		p.err = fmt.Errorf("line %d: expected operand expression after op, got '%s'", p.line, p.nextToken)
+		return nil
+	}
+}
+
+// from: parseOp
+// experssionterm: parseExprA
+// anything else: error
+func parseModeA(p *parser) parseStateFn {
+	if p.nextToken.typ == tokAddressMode {
+		p.currentLine.amode = p.nextToken.val
+		p.next()
+	}
+	if p.nextToken.IsExpressionTerm() {
+		return parseExprA
+	}
+	p.err = fmt.Errorf("line %d: expected address mode or operand expression, got '%s'", p.line, p.nextToken)
+	return nil
+}
+
+// from: parseOp, parseModeA
+// expression term: recursively consume tokens to exprA
+// comma: parseComma
+// comment: parseComment
+// newline: emit and parseLine
+// anything else: error
+func parseExprA(p *parser) parseStateFn {
+	if p.currentLine.a == nil {
+		p.currentLine.a = &expression{}
+	}
+
+	for p.nextToken.IsExpressionTerm() {
+		p.currentLine.a.AppendToken(p.nextToken)
+		p.next()
+	}
+	switch p.nextToken.typ {
+	case tokComma:
+		return parseComma
+	case tokNewline:
+		fallthrough
+	case tokEOF:
+		p.lines = append(p.lines, p.currentLine)
+		return parseLine
+	default:
+		p.err = fmt.Errorf("line %d: expected comma or newline after op, got '%s'", p.line, p.nextToken)
+		return nil
+	}
+}
+
+// from: parseExprA
+// addressmode: parseModeB
+// expression term: parseExprB
+// anything else: error
+func parseComma(p *parser) parseStateFn {
+	p.next()
+	return parseModeB
+}
+
+// from: parseComma
+// expressionterm: parseExprB
+// anything else: error
+func parseModeB(p *parser) parseStateFn {
+	if p.nextToken.typ == tokAddressMode {
+		p.currentLine.bmode = p.nextToken.val
+		p.next()
+	}
+	if p.nextToken.IsExpressionTerm() {
+		return parseExprB
+	}
+	p.err = fmt.Errorf("line %d: expected address mode or operand expression, got '%s'", p.line, p.nextToken)
+	return nil
+}
+
+// from parseComma, parseModeB
+// expressionTerm: recursively consume tokens to exprB
+// comment: parseComment
+// newline: parseLine
+// anything else: error
+func parseExprB(p *parser) parseStateFn {
+	if p.currentLine.b == nil {
+		p.currentLine.b = &expression{}
+	}
+
+	for p.nextToken.IsExpressionTerm() {
+		p.currentLine.b.AppendToken(p.nextToken)
+		p.next()
+	}
+
+	switch p.nextToken.typ {
+	case tokComment:
+		return parseComment
+	case tokNewline:
+		p.lines = append(p.lines, p.currentLine)
+		p.next()
+		return parseLine
+	case tokEOF:
+		p.lines = append(p.lines, p.currentLine)
+		return parseLine
+	default:
+		p.err = fmt.Errorf("line %d: expected comma or newline after op, got '%s'", p.line, p.nextToken)
+		return nil
+	}
 }

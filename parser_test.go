@@ -1,28 +1,129 @@
 package gmars
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestParser(t *testing.T) {
-	l := newLexer(strings.NewReader(";comment line\n"))
-	p := newParser(l)
+type parserTestCase struct {
+	input  string
+	output []sourceLine
+	err    bool
+}
 
-	source, err := p.parse()
-	require.NoError(t, err)
-	require.NotNil(t, source)
+func assertSourceLineEqual(t *testing.T, expected, value sourceLine) {
+	assert.Equal(t, expected.line, value.line, "line")
+	assert.Equal(t, expected.typ, value.typ, "type")
+	assert.Equal(t, expected.amode, value.amode, "amode")
 
-	require.Equal(t, 0, len(p.symbols))
-	// require.Equal(t, 1, len(p.lines))
-	require.Equal(t, []sourceLine{
+	if expected.a == nil {
+		assert.Nil(t, value.a, "a is nil")
+	} else {
+		require.NotNil(t, value.a, "a not nil")
+		assert.Equal(t, expected.a.tokens, value.a.tokens, "a value")
+	}
+
+	if expected.b == nil {
+		assert.Nil(t, value.b, "b is nil")
+	} else {
+		require.NotNil(t, value.b, "b not nil")
+		assert.Equal(t, expected.b.tokens, value.b.tokens, "b value")
+	}
+
+	assert.Equal(t, expected.comment, value.comment, "comment")
+}
+
+func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
+	for i, test := range tests {
+		l := newLexer(strings.NewReader(test.input))
+		p := newParser(l)
+
+		source, err := p.parse()
+		if test.err {
+			assert.Error(t, err, fmt.Sprintf("%s test %d", setName, i))
+		} else {
+			require.NoError(t, err)
+			require.Equal(t, len(test.output), len(source.lines))
+			for i, line := range source.lines {
+				assertSourceLineEqual(t, test.output[i], line)
+			}
+		}
+	}
+}
+
+func TestParserPositive(t *testing.T) {
+	testCases := []parserTestCase{
 		{
-			line:     1,
-			typ:      lineComment,
-			comment:  ";comment line",
-			newlines: 1,
+			input:  "\n",
+			output: []sourceLine{{line: 1, typ: lineEmpty, newlines: 1}},
 		},
-	}, p.lines)
+		{
+			input:  "\n\n",
+			output: []sourceLine{{line: 1, typ: lineEmpty, newlines: 2}},
+		},
+		{
+			input:  "; comment line\n",
+			output: []sourceLine{{line: 1, typ: lineComment, comment: "; comment line", newlines: 1}},
+		},
+		{
+			input:  "end ; comment\n",
+			output: []sourceLine{{line: 1, typ: linePseudoOp, op: "end", comment: "; comment", newlines: 1}},
+		},
+		{
+			input: "mov $0, $1 ; comment\n",
+			output: []sourceLine{{
+				line:     1,
+				typ:      lineInstruction,
+				op:       "mov",
+				amode:    "$",
+				a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+				bmode:    "$",
+				b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+				comment:  "; comment",
+				newlines: 1,
+			}},
+		},
+		{
+			input: "mov $ -1, $ 2 + 2\n",
+			output: []sourceLine{{
+				line:  1,
+				typ:   lineInstruction,
+				op:    "mov",
+				amode: "$",
+				a: &expression{tokens: []token{
+					{typ: tokExprOp, val: "-"},
+					{typ: tokNumber, val: "1"},
+				}},
+				bmode: "$",
+				b: &expression{tokens: []token{
+					{typ: tokNumber, val: "2"},
+					{typ: tokExprOp, val: "+"},
+					{typ: tokNumber, val: "2"},
+				}},
+				comment:  "",
+				newlines: 1,
+			}},
+		},
+	}
+
+	runParserTests(t, "parser positive", testCases)
+}
+
+func TestParserNegative(t *testing.T) {
+	testCases := []parserTestCase{
+		{
+			input: "invalid\n",
+			err:   true,
+		},
+		{
+			input: "invalid $1, $2\n",
+			err:   true,
+		},
+	}
+
+	runParserTests(t, "parser negative", testCases)
 }
