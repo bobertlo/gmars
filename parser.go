@@ -29,11 +29,6 @@ type sourceLine struct {
 	newlines int
 }
 
-type sourceFile struct {
-	lines   []sourceLine
-	symbols map[string]int
-}
-
 type parser struct {
 	lex *lexer
 
@@ -48,11 +43,9 @@ type parser struct {
 	// collected lines
 	lines []sourceLine
 
-	// line number of symbol definitions
-	symbols map[string]int
-
-	// line number of first refernces to symbols to check for
-	// undeclared references at the end of the token stream
+	// maps of symbol definitions and references used to verify that each
+	// symbol is defined exactly once and each reference is defined.
+	symbols    map[string]int
 	references map[string]int
 }
 
@@ -84,7 +77,7 @@ type parseStateFn func(p *parser) parseStateFn
 // comment line:
 //
 //	line -> line
-func (p *parser) parse() (*sourceFile, error) {
+func (p *parser) parse() ([]sourceLine, error) {
 	for state := parseLine; state != nil; {
 		state = state(p)
 	}
@@ -97,7 +90,7 @@ func (p *parser) parse() (*sourceFile, error) {
 		return nil, err
 	}
 
-	return &sourceFile{lines: p.lines, symbols: p.symbols}, nil
+	return p.lines, nil
 }
 
 func (p *parser) validateSymbols() error {

@@ -24,7 +24,7 @@ func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
 			assert.Error(t, err, fmt.Sprintf("%s test %d", setName, i))
 		} else {
 			assert.NoError(t, err)
-			assert.Equal(t, test.output, source.lines)
+			assert.Equal(t, test.output, source)
 		}
 	}
 }
