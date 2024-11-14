@@ -6,38 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type parserTestCase struct {
 	input  string
 	output []sourceLine
 	err    bool
-}
-
-func assertSourceLineEqual(t *testing.T, expected, value sourceLine) {
-	assert.Equal(t, expected.line, value.line, "line")
-	assert.Equal(t, expected.codeLine, value.codeLine, "codeline")
-	assert.Equal(t, expected.typ, value.typ, "type")
-	assert.Equal(t, expected.labels, value.labels)
-	assert.Equal(t, expected.amode, value.amode, "amode")
-
-	if expected.a == nil {
-		assert.Nil(t, value.a, "a is nil")
-	} else {
-		require.NotNil(t, value.a, "a not nil")
-		assert.Equal(t, expected.a.tokens, value.a.tokens, "a value")
-	}
-
-	if expected.b == nil {
-		assert.Nil(t, value.b, "b is nil")
-	} else {
-		require.NotNil(t, value.b, "b not nil")
-		assert.Equal(t, expected.b.tokens, value.b.tokens, "b value")
-	}
-
-	assert.Equal(t, expected.comment, value.comment, "comment")
-	assert.Equal(t, expected.newlines, value.newlines, "newlines")
 }
 
 func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
@@ -49,11 +23,8 @@ func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
 		if test.err {
 			assert.Error(t, err, fmt.Sprintf("%s test %d", setName, i))
 		} else {
-			require.NoError(t, err)
-			require.Equal(t, len(test.output), len(source.lines))
-			for i, line := range source.lines {
-				assertSourceLineEqual(t, test.output[i], line)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.output, source.lines)
 		}
 	}
 }
@@ -83,9 +54,9 @@ func TestParserPositive(t *testing.T) {
 				typ:      lineInstruction,
 				op:       "mov",
 				amode:    "$",
-				a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+				a:        []token{{typ: tokNumber, val: "0"}},
 				bmode:    "$",
-				b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+				b:        []token{{typ: tokNumber, val: "1"}},
 				comment:  "; comment",
 				newlines: 1,
 			}},
@@ -98,9 +69,9 @@ func TestParserPositive(t *testing.T) {
 				typ:      lineInstruction,
 				op:       "mov",
 				amode:    "$",
-				a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+				a:        []token{{typ: tokNumber, val: "0"}},
 				bmode:    "$",
-				b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+				b:        []token{{typ: tokNumber, val: "1"}},
 				comment:  "; comment",
 				newlines: 1,
 			}},
@@ -112,16 +83,16 @@ func TestParserPositive(t *testing.T) {
 				typ:   lineInstruction,
 				op:    "mov",
 				amode: "$",
-				a: &expression{tokens: []token{
+				a: []token{
 					{typ: tokExprOp, val: "-"},
 					{typ: tokNumber, val: "1"},
-				}},
+				},
 				bmode: "$",
-				b: &expression{tokens: []token{
+				b: []token{
 					{typ: tokNumber, val: "2"},
 					{typ: tokExprOp, val: "+"},
 					{typ: tokNumber, val: "2"},
-				}},
+				},
 				comment:  "",
 				newlines: 1,
 			}},
@@ -136,9 +107,9 @@ func TestParserPositive(t *testing.T) {
 					typ:      lineInstruction,
 					op:       "mov",
 					amode:    "$",
-					a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+					a:        []token{{typ: tokNumber, val: "0"}},
 					bmode:    "$",
-					b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+					b:        []token{{typ: tokNumber, val: "1"}},
 					comment:  "; comment",
 					newlines: 1,
 				},
@@ -149,9 +120,9 @@ func TestParserPositive(t *testing.T) {
 					typ:      lineInstruction,
 					op:       "mov",
 					amode:    "$",
-					a:        &expression{tokens: []token{{typ: tokNumber, val: "0"}}},
+					a:        []token{{typ: tokNumber, val: "0"}},
 					bmode:    "$",
-					b:        &expression{tokens: []token{{typ: tokNumber, val: "1"}}},
+					b:        []token{{typ: tokNumber, val: "1"}},
 					comment:  "; comment",
 					newlines: 1,
 				},

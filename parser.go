@@ -22,9 +22,9 @@ type sourceLine struct {
 	labels   []string
 	op       string
 	amode    string
-	a        *expression
+	a        []token
 	bmode    string
-	b        *expression
+	b        []token
 	comment  string
 	newlines int
 }
@@ -299,11 +299,11 @@ func parseModeA(p *parser) parseStateFn {
 // anything else: error
 func parseExprA(p *parser) parseStateFn {
 	if p.currentLine.a == nil {
-		p.currentLine.a = &expression{}
+		p.currentLine.a = make([]token, 0)
 	}
 
 	for p.nextToken.IsExpressionTerm() {
-		p.currentLine.a.AppendToken(p.nextToken)
+		p.currentLine.a = append(p.currentLine.a, p.nextToken)
 		p.next()
 	}
 	switch p.nextToken.typ {
@@ -351,11 +351,11 @@ func parseModeB(p *parser) parseStateFn {
 // anything else: error
 func parseExprB(p *parser) parseStateFn {
 	if p.currentLine.b == nil {
-		p.currentLine.b = &expression{}
+		p.currentLine.b = make([]token, 0)
 	}
 
 	for p.nextToken.IsExpressionTerm() {
-		p.currentLine.b.AppendToken(p.nextToken)
+		p.currentLine.b = append(p.currentLine.b, p.nextToken)
 		p.next()
 	}
 
