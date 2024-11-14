@@ -143,6 +143,18 @@ func TestParserNegative(t *testing.T) {
 			input: "invalid $1, $2\n",
 			err:   true,
 		},
+		{
+			input: "mov $undefined, $2\n",
+			err:   true,
+		},
+		{
+			input: "mov $1, $undefined\n",
+			err:   true,
+		},
+		{
+			input: "redefined mov $0, $1\nredefined mov $0, $1\n",
+			err:   true,
+		},
 	}
 
 	runParserTests(t, "parser negative", testCases)

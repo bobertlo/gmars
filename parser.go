@@ -91,7 +91,23 @@ func (p *parser) parse() (*sourceFile, error) {
 	if p.err != nil {
 		return nil, p.err
 	}
+
+	err := p.validateSymbols()
+	if err != nil {
+		return nil, err
+	}
+
 	return &sourceFile{lines: p.lines, symbols: p.symbols}, nil
+}
+
+func (p *parser) validateSymbols() error {
+	for symbol, i := range p.references {
+		_, ok := p.symbols[symbol]
+		if !ok {
+			return fmt.Errorf("line %d: symbol '%s' undefined", i, symbol)
+		}
+	}
+	return nil
 }
 
 func (p *parser) next() token {
@@ -197,6 +213,7 @@ func parseLabels(p *parser) parseStateFn {
 		p.err = fmt.Errorf("line %d: symbol '%s' redefined", p.line, p.nextToken.val)
 	}
 
+	p.symbols[p.nextToken.val] = p.line
 	p.currentLine.labels = append(p.currentLine.labels, p.nextToken.val)
 	nextToken := p.next()
 
@@ -242,7 +259,32 @@ func parsePseudoOp(p *parser) parseStateFn {
 // expressionterm: parsePseudoExpr
 // anything else: error
 func parsePseudoExpr(p *parser) parseStateFn {
-	return nil
+	if p.currentLine.a == nil {
+		p.currentLine.a = make([]token, 0)
+	}
+
+	for p.nextToken.IsExpressionTerm() {
+		if p.nextToken.typ == tokText {
+			_, ok := p.references[p.nextToken.val]
+			if !ok {
+				p.references[p.nextToken.val] = p.line
+			}
+		}
+		p.currentLine.a = append(p.currentLine.a, p.nextToken)
+		p.next()
+	}
+	switch p.nextToken.typ {
+	case tokComment:
+		return parseComment
+	case tokNewline:
+		fallthrough
+	case tokEOF:
+		p.lines = append(p.lines, p.currentLine)
+		return parseLine
+	default:
+		p.err = fmt.Errorf("line %d: expected comment or newline after expression, got '%s'", p.line, p.nextToken)
+		return nil
+	}
 }
 
 // from: parseLabels
@@ -303,10 +345,18 @@ func parseExprA(p *parser) parseStateFn {
 	}
 
 	for p.nextToken.IsExpressionTerm() {
+		if p.nextToken.typ == tokText {
+			_, ok := p.references[p.nextToken.val]
+			if !ok {
+				p.references[p.nextToken.val] = p.line
+			}
+		}
 		p.currentLine.a = append(p.currentLine.a, p.nextToken)
 		p.next()
 	}
 	switch p.nextToken.typ {
+	case tokComment:
+		return parseComment
 	case tokComma:
 		return parseComma
 	case tokNewline:
@@ -355,6 +405,12 @@ func parseExprB(p *parser) parseStateFn {
 	}
 
 	for p.nextToken.IsExpressionTerm() {
+		if p.nextToken.typ == tokText {
+			_, ok := p.references[p.nextToken.val]
+			if !ok {
+				p.references[p.nextToken.val] = p.line
+			}
+		}
 		p.currentLine.b = append(p.currentLine.b, p.nextToken)
 		p.next()
 	}
