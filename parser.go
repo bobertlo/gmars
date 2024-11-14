@@ -304,12 +304,6 @@ func parseOp(p *parser) parseStateFn {
 	}
 
 	switch p.nextToken.typ {
-	case tokComment:
-		p.err = fmt.Errorf("line %d: expected operand expression after op, got comment", p.line)
-		return nil
-	case tokNewline:
-		p.err = fmt.Errorf("line %d: expected operand expression after op, got newline", p.line)
-		return nil
 	case tokAddressMode:
 		return parseModeA
 	default:
