@@ -18,4 +18,8 @@ func TestCompile(t *testing.T) {
 
 	_, err = compiler.compile()
 	require.Error(t, err)
+
+	out, err := compiler.expandExpression([]token{{tokText, "start"}}, 1)
+	require.NoError(t, err)
+	require.Equal(t, []token{{tokNumber, "7999"}}, out)
 }

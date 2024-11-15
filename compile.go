@@ -41,6 +41,31 @@ func (c *compiler) loadSymbols() {
 	}
 }
 
+func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
+	output := make([]token, 0)
+	for _, tok := range expr {
+		if tok.typ == tokText {
+			val, valOk := c.values[tok.val]
+			if valOk {
+				output = append(output, val...)
+				continue
+			}
+
+			label, labelOk := c.labels[tok.val]
+			if labelOk {
+				val := (Address(label) + c.config.CoreSize - Address(line)) % c.config.CoreSize
+				fmt.Println(label, line, c.config.CoreSize, val)
+				output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
+			} else {
+				return nil, fmt.Errorf("unresolved symbol '%s'", tok.val)
+			}
+		} else {
+			output = append(output, tok)
+		}
+	}
+	return output, nil
+}
+
 func (c *compiler) compile() (WarriorData, error) {
 	c.loadSymbols()
 
