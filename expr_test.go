@@ -9,8 +9,8 @@ import (
 func TestExpandExpressions(t *testing.T) {
 	values := map[string][]token{
 		"a": {{tokNumber, "1"}},
-		"b": {{tokText, "a"}, {tokExprOp, "+"}, {tokNumber, "2"}},
 		"c": {{tokText, "a"}, {tokExprOp, "*"}, {tokText, "b"}},
+		"b": {{tokText, "a"}, {tokExprOp, "+"}, {tokNumber, "2"}},
 	}
 	graph := map[string][]string{
 		"b": {"a"},
