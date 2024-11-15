@@ -6,6 +6,7 @@ import (
 
 // compiler holds the input and state required to compile a program.
 type compiler struct {
+	m      Address // coresize
 	lines  []sourceLine
 	config SimulatorConfig
 	values map[string][]token // symbols that represent expressions
@@ -18,7 +19,7 @@ func newCompiler(src []sourceLine, config SimulatorConfig) (*compiler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid condif: %s", err)
 	}
-	return &compiler{lines: src, config: config}, nil
+	return &compiler{lines: src, config: config, m: config.CoreSize}, nil
 }
 
 // load symbol []token values into value map and code line numbers of
@@ -53,8 +54,7 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 
 			label, labelOk := c.labels[tok.val]
 			if labelOk {
-				val := (Address(label) + c.config.CoreSize - Address(line)) % c.config.CoreSize
-				fmt.Println(label, line, c.config.CoreSize, val)
+				val := (Address(label) + c.m - Address(line)) % c.m
 				output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
 			} else {
 				return nil, fmt.Errorf("unresolved symbol '%s'", tok.val)
