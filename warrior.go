@@ -25,6 +25,7 @@ type Warrior interface {
 	Length() int
 	Queue() []Address
 	NextPC() (Address, error)
+	LoadCode() string
 }
 
 // Copy creates a deep copy of a WarriorData object

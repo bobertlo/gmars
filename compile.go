@@ -99,7 +99,7 @@ func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 	} else {
 		mode, err := getAddressMode(in.bmode)
 		if err != nil {
-			return Instruction{}, fmt.Errorf("invalid amode: '%s'", in.bmode)
+			return Instruction{}, fmt.Errorf("invalid bmode: '%s'", in.bmode)
 		}
 		bMode = mode
 	}
@@ -172,7 +172,7 @@ func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 		aVal = (int(c.m) + aVal) % int(c.m)
 	}
 	bVal = bVal % int(c.m)
-	if aVal < 0 {
+	if bVal < 0 {
 		bVal = (int(c.m) + bVal) % int(c.m)
 	}
 
