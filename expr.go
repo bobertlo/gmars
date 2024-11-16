@@ -99,3 +99,15 @@ func evaluateExpression(expr []token) (int, error) {
 
 	return int(val), nil
 }
+
+func exprEqual(a, b []token) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, aval := range a {
+		if b[i] != aval {
+			return false
+		}
+	}
+	return true
+}

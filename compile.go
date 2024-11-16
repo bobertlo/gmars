@@ -60,24 +60,33 @@ func (c *compiler) loadSymbols() {
 }
 
 func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
-	output := make([]token, 0)
-	for _, tok := range expr {
-		if tok.typ == tokText {
-			val, valOk := c.values[tok.val]
-			if valOk {
-				output = append(output, val...)
-				continue
-			}
+	input := expr
+	var output []token
 
-			label, labelOk := c.labels[tok.val]
-			if labelOk {
-				val := (label - line) % int(c.m)
-				output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
+	for !exprEqual(input, output) {
+		if len(output) > 0 {
+			input = output
+		}
+
+		output = make([]token, 0)
+		for _, tok := range input {
+			if tok.typ == tokText {
+				val, valOk := c.values[tok.val]
+				if valOk {
+					output = append(output, val...)
+					continue
+				}
+
+				label, labelOk := c.labels[tok.val]
+				if labelOk {
+					val := (label - line) % int(c.m)
+					output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
+				} else {
+					return nil, fmt.Errorf("unresolved symbol '%s'", tok.val)
+				}
 			} else {
-				return nil, fmt.Errorf("unresolved symbol '%s'", tok.val)
+				output = append(output, tok)
 			}
-		} else {
-			output = append(output, tok)
 		}
 	}
 	return output, nil
@@ -151,9 +160,6 @@ func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 			// set A to #0
 			aMode = IMMEDIATE
 			aVal = 0
-		} else {
-			// set B to #0
-			bMode = IMMEDIATE
 		}
 	} else {
 		bExpr, err := c.expandExpression(in.b, in.codeLine)
