@@ -1,7 +1,7 @@
 package gmars
 
 import (
-	"strings"
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -46,7 +46,7 @@ func TestSimDwarf(t *testing.T) {
 }
 
 func TestRunImp(t *testing.T) {
-	reader := strings.NewReader(imp88)
+	reader := bytes.NewReader(imp_88_red)
 	config := ConfigKOTH88()
 	impdata, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestRunImp(t *testing.T) {
 }
 
 func TestRunTwoImps(t *testing.T) {
-	reader := strings.NewReader(imp88)
+	reader := bytes.NewReader(imp_88_red)
 	config := ConfigKOTH88()
 	impdata, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)

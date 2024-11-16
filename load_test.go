@@ -1,6 +1,7 @@
 package gmars
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"testing"
@@ -14,30 +15,10 @@ type instructionParseTestCase struct {
 	output Instruction
 }
 
-const imp88 = `;redcode
-;name Imp
-;author A K Dewdney
-;strategy this is the simplest program
-;strategy it was described in the initial articles
-
-		MOV $ 0, $ 1
-		END 0
-`
-
-const imp94 = `;redcode
-;name Imp
-;author A K Dewdney
-;strategy this is the simplest program
-;strategy it was described in the initial articles
-
-		ORG 0
-		MOV.I $ 0, $ 1
-`
-
 func TestLoadImp88(t *testing.T) {
 	config := ConfigKOTH88()
 
-	reader := strings.NewReader(imp88)
+	reader := bytes.NewReader(imp_88_red)
 	data, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 	require.Equal(t, "Imp", data.Name)
@@ -51,7 +32,7 @@ func TestLoadImp88(t *testing.T) {
 func TestLoadImp94(t *testing.T) {
 	config := ConfigNOP94()
 
-	reader := strings.NewReader(imp94)
+	reader := bytes.NewReader(imp_94_red)
 	data, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 	require.Equal(t, "Imp", data.Name)

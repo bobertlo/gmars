@@ -137,54 +137,47 @@ func parseLoadFile94(reader io.Reader, coresize Address) (WarriorData, error) {
 func getOpMode94(Op OpCode, AMode AddressMode, BMode AddressMode) (OpMode, error) {
 	switch Op {
 	case DAT:
-		// DAT:
-		// F always, any combination of # and < allowed
-		if AMode != IMMEDIATE && AMode != B_DECREMENT {
-			return 0, fmt.Errorf("invalid a mode '%s' for op 'dat'", AMode)
-		}
-		if BMode != IMMEDIATE && BMode != B_DECREMENT {
-			return 0, fmt.Errorf("invalid b mode '%s' for op 'dat'", BMode)
-		}
 		return F, nil
 
 	case CMP:
 		fallthrough
 	case MOV:
-		// CMP and MOV:
-		// AB IF #A, I otherwise, no #B allowed
-		if BMode == IMMEDIATE {
-			return 0, fmt.Errorf("invalid b mode '#' for op '%s'", Op)
-		}
+		fallthrough
+	case SEQ:
+		fallthrough
+	case SNE:
 		if AMode == IMMEDIATE {
 			return AB, nil
+		} else if BMode == IMMEDIATE {
+			return B, nil
 		} else {
 			return I, nil
 		}
 
 	case SLT:
-		// SLT;
-		// AB if #A, B otherwise, no #B allowed
-		if BMode == IMMEDIATE {
-			return 0, fmt.Errorf("invalid b mode '#' for op 'slt'")
-		}
 		if AMode == IMMEDIATE {
 			return AB, nil
 		} else {
 			return B, nil
 		}
+
 	case ADD:
 		fallthrough
 	case SUB:
-		// ADD and SUB:
-		// AB if #A, F otherwise, no #B allowed
-		if BMode == IMMEDIATE {
-			return 0, fmt.Errorf("invalid b mode '#' for op '%s'", Op)
-		}
+		fallthrough
+	case MUL:
+		fallthrough
+	case DIV:
+		fallthrough
+	case MOD:
 		if AMode == IMMEDIATE {
 			return AB, nil
+		} else if BMode == IMMEDIATE {
+			return B, nil
 		} else {
 			return F, nil
 		}
+
 	case JMP:
 		fallthrough
 	case JMN:
@@ -194,9 +187,8 @@ func getOpMode94(Op OpCode, AMode AddressMode, BMode AddressMode) (OpMode, error
 	case DJN:
 		fallthrough
 	case SPL:
-		if AMode == IMMEDIATE {
-			return 0, fmt.Errorf("invalid a mode '#' for op '%s'", Op)
-		}
+		fallthrough
+	case NOP:
 		return B, nil
 	}
 	return B, fmt.Errorf("unknown op code: '%s'", Op)
