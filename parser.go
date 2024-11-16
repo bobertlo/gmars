@@ -246,7 +246,7 @@ func parsePseudoOp(p *parser) parseStateFn {
 		if lastToken.NoOperandsOk() {
 			p.currentLine.newlines += 1
 			p.lines = append(p.lines, p.currentLine)
-			return nil
+			return parseLine
 		}
 		p.err = fmt.Errorf("line %d: expected operand expression after psuedo-op '%s', got newline", p.line, lastToken.val)
 		return nil
@@ -375,15 +375,12 @@ func parseExprA(p *parser) parseStateFn {
 // anything else: error
 func parseComma(p *parser) parseStateFn {
 	p.next()
-	switch p.nextToken.typ {
-	case tokAddressMode:
+
+	if p.nextToken.typ == tokAddressMode || (p.nextToken.typ == tokExprOp && p.nextToken.val == "*") {
 		return parseModeB
-	case tokExprOp:
-		if p.nextToken.val == "*" {
-			return parseModeB
-		}
+	} else if p.nextToken.IsExpressionTerm() {
 		return parseExprB
-	default:
+	} else {
 		p.err = fmt.Errorf("expected address mode or expression after comma, got '%s'", p.nextToken)
 		return nil
 	}

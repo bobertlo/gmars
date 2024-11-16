@@ -50,7 +50,8 @@ func (t token) IsOp() bool {
 }
 
 func (t token) NoOperandsOk() bool {
-	return strings.ToLower(t.val) == "end"
+	lower := strings.ToLower(t.val)
+	return lower == "end" || lower == "rof"
 }
 
 func (t token) IsPseudoOp() bool {
