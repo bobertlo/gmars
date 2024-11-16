@@ -42,6 +42,7 @@ func runWarriorLoadFileTests(t *testing.T, tests []warriorTestCase) {
 		if test.err {
 			assert.Error(t, err, fmt.Sprintf("%s: error should be present", test.filename))
 		} else {
+			require.NoError(t, err)
 			loadInput, err := os.Open(test.loadFilename)
 			require.NoError(t, err)
 			defer loadInput.Close()
@@ -101,6 +102,11 @@ func TestCompileWarriorsFile94(t *testing.T) {
 		{
 			filename:     "warriors/94/simpleshot.red",
 			loadFilename: "test_files/simpleshot.rc",
+			config:       config,
+		},
+		{
+			filename:     "warriors/94/scaryvampire.red",
+			loadFilename: "test_files/scaryvampire.rc",
 			config:       config,
 		},
 	}

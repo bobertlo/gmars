@@ -73,9 +73,60 @@ func expandExpressions(values map[string][]token, graph map[string][]string) (ma
 	return resolved, nil
 }
 
+func combineSigns(expr []token) []token {
+	out := make([]token, 0, len(expr))
+	lastOut := token{tokEOF, ""}
+
+	// please forgive me for this lol
+	for i := 0; i < len(expr); i++ {
+		if lastOut.typ == tokExprOp {
+			negativeFound := false
+			for ; i < len(expr); i++ {
+				if !(expr[i].val == "-" || expr[i].val == "+") {
+					break
+				}
+				if expr[i].val == "-" {
+					negativeFound = true
+				}
+			}
+			if negativeFound {
+				out = append(out, token{tokExprOp, "-"})
+			}
+			if i < len(expr) {
+				out = append(out, expr[i])
+				lastOut = expr[i]
+			}
+		} else {
+			if i < len(expr) {
+				out = append(out, expr[i])
+				lastOut = expr[i]
+			}
+		}
+	}
+	return out
+}
+
+func flipDoubleNegatives(expr []token) []token {
+	out := make([]token, 0, len(expr))
+	for i := 0; i < len(expr); i++ {
+		if expr[i].val == "-" {
+			if i+1 < len(expr) && expr[i+1].val == "-" {
+				out = append(out, token{tokExprOp, "+"})
+				i += 1
+				continue
+			}
+		}
+		out = append(out, expr[i])
+	}
+	return out
+}
+
 func evaluateExpression(expr []token) (int, error) {
+	combinedExpr := combineSigns(expr)
+	flippedExpr := flipDoubleNegatives(combinedExpr)
+
 	exprStr := ""
-	for _, tok := range expr {
+	for _, tok := range flippedExpr {
 		exprStr += tok.val
 	}
 
