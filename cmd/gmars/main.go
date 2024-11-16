@@ -46,7 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w1data, err := gmars.ParseLoadFile(w1file, config)
+	w1data, err := gmars.CompileWarrior(w1file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
 		os.Exit(1)
@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer w1file.Close()
-	w2data, err := gmars.ParseLoadFile(w2file, config)
+	w2data, err := gmars.CompileWarrior(w2file, config)
 	if err != nil {
 		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
 	}

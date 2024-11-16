@@ -301,7 +301,7 @@ func parseOp(p *parser) parseStateFn {
 
 	p.next()
 
-	if p.nextToken.IsExpressionTerm() {
+	if p.nextToken.IsExpressionTerm() && p.nextToken.val != "*" {
 		return parseExprA
 	}
 
@@ -312,7 +312,7 @@ func parseOp(p *parser) parseStateFn {
 		if p.nextToken.val == "*" {
 			return parseModeA
 		}
-		fallthrough
+		return parseExprA
 	default:
 		p.err = fmt.Errorf("line %d: expected operand expression after op, got '%s'", p.line, p.nextToken)
 		return nil
@@ -323,10 +323,8 @@ func parseOp(p *parser) parseStateFn {
 // experssionterm: parseExprA
 // anything else: error
 func parseModeA(p *parser) parseStateFn {
-	if p.nextToken.typ == tokAddressMode {
-		p.currentLine.amode = p.nextToken.val
-		p.next()
-	}
+	p.currentLine.amode = p.nextToken.val
+	p.next()
 	if p.nextToken.IsExpressionTerm() {
 		return parseExprA
 	}

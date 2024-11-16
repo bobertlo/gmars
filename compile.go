@@ -3,16 +3,18 @@ package gmars
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // compiler holds the input and state required to compile a program.
 type compiler struct {
-	m        Address // coresize
-	lines    []sourceLine
-	config   SimulatorConfig
-	values   map[string][]token // symbols that represent expressions
-	labels   map[string]int     // symbols that represent addresses
-	metadata WarriorData
+	m         Address // coresize
+	lines     []sourceLine
+	config    SimulatorConfig
+	values    map[string][]token // symbols that represent expressions
+	labels    map[string]int     // symbols that represent addresses
+	startExpr []token
+	metadata  WarriorData
 }
 
 func newCompiler(src []sourceLine, metadata WarriorData, config SimulatorConfig) (*compiler, error) {
@@ -21,10 +23,11 @@ func newCompiler(src []sourceLine, metadata WarriorData, config SimulatorConfig)
 		return nil, fmt.Errorf("invalid condif: %s", err)
 	}
 	return &compiler{
-		lines:    src,
-		config:   config,
-		metadata: metadata,
-		m:        config.CoreSize,
+		lines:     src,
+		config:    config,
+		metadata:  metadata,
+		m:         config.CoreSize,
+		startExpr: []token{{tokNumber, "0"}},
 	}, nil
 }
 
@@ -35,9 +38,17 @@ func (c *compiler) loadSymbols() {
 	c.labels = make(map[string]int)
 
 	for _, line := range c.lines {
-		if line.typ == linePseudoOp && line.op == "equ" {
-			for _, label := range line.labels {
-				c.values[label] = line.a
+		if line.typ == linePseudoOp {
+			if strings.ToLower(line.op) == "equ" {
+				for _, label := range line.labels {
+					c.values[label] = line.a
+				}
+			} else if strings.ToLower(line.op) == "org" {
+				c.startExpr = line.a
+			} else if strings.ToLower(line.op) == "end" {
+				if len(line.a) > 0 {
+					c.startExpr = line.a
+				}
 			}
 		}
 		if line.typ == lineInstruction {
@@ -203,7 +214,20 @@ func (c *compiler) compile() (WarriorData, error) {
 		code = append(code, instruction)
 	}
 
+	startExpr, err := c.expandExpression(c.startExpr, 0)
+	if err != nil {
+		return WarriorData{}, fmt.Errorf("invalid start expression")
+	}
+	startVal, err := evaluateExpression(startExpr)
+	if err != nil {
+		return WarriorData{}, fmt.Errorf("invalid start expression: %s", err)
+	}
+	if startVal < 0 || startVal > len(code) {
+		return WarriorData{}, fmt.Errorf("invalid start value: %d", startVal)
+	}
+
 	c.metadata.Code = code
+	c.metadata.Start = startVal
 
 	return c.metadata, nil
 }
