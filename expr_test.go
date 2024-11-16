@@ -28,7 +28,7 @@ func TestExpandExpressions(t *testing.T) {
 	}, output)
 }
 
-func TestEvaluateExpression(t *testing.T) {
+func TestEvaluateExpressionPositive(t *testing.T) {
 	testCases := map[string]int{
 		"1":       1,
 		"2":       2,
@@ -46,5 +46,24 @@ func TestEvaluateExpression(t *testing.T) {
 		val, err := evaluateExpression(tokens)
 		require.NoError(t, err)
 		assert.Equal(t, expected, val)
+	}
+}
+
+func TestEvaluateExpressionNegative(t *testing.T) {
+	cases := []string{
+		")21",
+		"2^3",
+	}
+
+	for _, input := range cases {
+		lexer := newLexer(strings.NewReader(input))
+		tokens, err := lexer.Tokens()
+		if err != nil {
+			continue
+		}
+
+		val, err := evaluateExpression(tokens)
+		assert.Error(t, err)
+		assert.Equal(t, 0, val)
 	}
 }
