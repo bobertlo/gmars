@@ -19,9 +19,9 @@ func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
 		l := newLexer(strings.NewReader(test.input))
 		p := newParser(l)
 
-		source, err := p.parse()
+		source, _, err := p.parse()
 		if test.err {
-			assert.Error(t, err, fmt.Sprintf("%s test %d", setName, i))
+			assert.Error(t, err, fmt.Sprintf("%s test %d: error should be present", setName, i))
 		} else {
 			assert.NoError(t, err)
 			assert.Equal(t, test.output, source)

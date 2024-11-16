@@ -137,6 +137,8 @@ func lexInput(l *lexer) lexStateFn {
 		fallthrough
 	case '#':
 		fallthrough
+	case '@':
+		fallthrough
 	case '{':
 		fallthrough
 	case '}':

@@ -2,23 +2,30 @@ package gmars
 
 import (
 	"fmt"
+	"io"
 )
 
 // compiler holds the input and state required to compile a program.
 type compiler struct {
-	m      Address // coresize
-	lines  []sourceLine
-	config SimulatorConfig
-	values map[string][]token // symbols that represent expressions
-	labels map[string]int     // symbols that represent addresses
+	m        Address // coresize
+	lines    []sourceLine
+	config   SimulatorConfig
+	values   map[string][]token // symbols that represent expressions
+	labels   map[string]int     // symbols that represent addresses
+	metadata WarriorData
 }
 
-func newCompiler(src []sourceLine, config SimulatorConfig) (*compiler, error) {
+func newCompiler(src []sourceLine, metadata WarriorData, config SimulatorConfig) (*compiler, error) {
 	err := config.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("invalid condif: %s", err)
 	}
-	return &compiler{lines: src, config: config, m: config.CoreSize}, nil
+	return &compiler{
+		lines:    src,
+		config:   config,
+		metadata: metadata,
+		m:        config.CoreSize,
+	}, nil
 }
 
 // load symbol []token values into value map and code line numbers of
@@ -196,7 +203,22 @@ func (c *compiler) compile() (WarriorData, error) {
 		code = append(code, instruction)
 	}
 
-	return WarriorData{
-		Code: code,
-	}, nil
+	c.metadata.Code = code
+
+	return c.metadata, nil
+}
+
+func CompileWarrior(r io.Reader, config SimulatorConfig) (WarriorData, error) {
+	lexer := newLexer(r)
+	parser := newParser(lexer)
+	sourceLines, metadata, err := parser.parse()
+	if err != nil {
+		return WarriorData{}, err
+	}
+
+	compiler, err := newCompiler(sourceLines, metadata, config)
+	if err != nil {
+		return WarriorData{}, err
+	}
+	return compiler.compile()
 }

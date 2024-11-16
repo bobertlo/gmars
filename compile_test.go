@@ -1,26 +1,51 @@
 package gmars
 
 import (
-	"strings"
+	"bytes"
+	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCompile(t *testing.T) {
-	l := newLexer(strings.NewReader("test equ 1\ntest2 equ test+start\nstart mov $0, $1"))
-	p := newParser(l)
-	source, err := p.parse()
-	require.NoError(t, err)
+type warriorTestCase struct {
+	input  []byte
+	name   string
+	output WarriorData
+	config SimulatorConfig
+	err    bool
+}
 
-	compiler, err := newCompiler(source, ConfigNOP94())
-	require.NoError(t, err)
+func runWarriorTests(t *testing.T, tests []warriorTestCase) {
+	for _, test := range tests {
+		warriorData, err := CompileWarrior(bytes.NewReader(test.input), test.config)
+		if test.err {
+			assert.Error(t, err, fmt.Sprintf("%s: error should be present", test.name))
+		} else {
+			assert.NoError(t, err)
+			assert.Equal(t, test.output, warriorData)
+		}
+	}
+}
 
-	out, err := compiler.compile()
-	require.NoError(t, err)
-	require.Equal(t, WarriorData{
-		Code: []Instruction{
-			{Op: MOV, OpMode: I, AMode: DIRECT, A: 0, BMode: DIRECT, B: 1},
+func TestCompileWarriors88(t *testing.T) {
+	config := ConfigKOTH88()
+	tests := []warriorTestCase{
+		{
+			name:   "imp_88_red",
+			input:  imp_88_red,
+			config: config,
+			output: WarriorData{
+				Name:     "Imp",
+				Author:   "A K Dewdney",
+				Strategy: "this is the simplest program\nit was described in the initial articles\n",
+				Start:    0,
+				Code: []Instruction{
+					{Op: MOV, OpMode: I, AMode: DIRECT, A: 0, BMode: DIRECT, B: 1},
+				},
+			},
 		},
-	}, out)
+	}
+
+	runWarriorTests(t, tests)
 }

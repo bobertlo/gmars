@@ -2,6 +2,7 @@ package gmars
 
 import (
 	"fmt"
+	"strings"
 )
 
 type lineType uint8
@@ -39,6 +40,7 @@ type parser struct {
 	atEOF       bool
 	err         error
 	currentLine sourceLine
+	metadata    WarriorData
 
 	// collected lines
 	lines []sourceLine
@@ -77,20 +79,20 @@ type parseStateFn func(p *parser) parseStateFn
 // comment line:
 //
 //	line -> line
-func (p *parser) parse() ([]sourceLine, error) {
+func (p *parser) parse() ([]sourceLine, WarriorData, error) {
 	for state := parseLine; state != nil; {
 		state = state(p)
 	}
 	if p.err != nil {
-		return nil, p.err
+		return nil, WarriorData{}, p.err
 	}
 
 	err := p.validateSymbols()
 	if err != nil {
-		return nil, err
+		return nil, WarriorData{}, err
 	}
 
-	return p.lines, nil
+	return p.lines, p.metadata, nil
 }
 
 func (p *parser) validateSymbols() error {
@@ -158,6 +160,13 @@ func parseLine(p *parser) parseStateFn {
 		p.currentLine.typ = lineEmpty
 		return parseEmptyLines
 	case tokComment:
+		if strings.HasPrefix(p.nextToken.val, ";name") {
+			p.metadata.Name = strings.TrimSpace(p.nextToken.val[5:])
+		} else if strings.HasPrefix(p.nextToken.val, ";author") {
+			p.metadata.Author = strings.TrimSpace(p.nextToken.val[7:])
+		} else if strings.HasPrefix(p.nextToken.val, ";strategy") {
+			p.metadata.Strategy += p.nextToken.val[10:] + "\n"
+		}
 		p.currentLine.typ = lineComment
 		return parseComment
 	case tokText:
@@ -299,6 +308,11 @@ func parseOp(p *parser) parseStateFn {
 	switch p.nextToken.typ {
 	case tokAddressMode:
 		return parseModeA
+	case tokExprOp:
+		if p.nextToken.val == "*" {
+			return parseModeA
+		}
+		fallthrough
 	default:
 		p.err = fmt.Errorf("line %d: expected operand expression after op, got '%s'", p.line, p.nextToken)
 		return nil
@@ -363,17 +377,26 @@ func parseExprA(p *parser) parseStateFn {
 // anything else: error
 func parseComma(p *parser) parseStateFn {
 	p.next()
-	return parseModeB
+	switch p.nextToken.typ {
+	case tokAddressMode:
+		return parseModeB
+	case tokExprOp:
+		if p.nextToken.val == "*" {
+			return parseModeB
+		}
+		return parseExprB
+	default:
+		p.err = fmt.Errorf("expected address mode or expression after comma, got '%s'", p.nextToken)
+		return nil
+	}
 }
 
 // from: parseComma
 // expressionterm: parseExprB
 // anything else: error
 func parseModeB(p *parser) parseStateFn {
-	if p.nextToken.typ == tokAddressMode {
-		p.currentLine.bmode = p.nextToken.val
-		p.next()
-	}
+	p.currentLine.bmode = p.nextToken.val
+	p.next()
 	if p.nextToken.IsExpressionTerm() {
 		return parseExprB
 	}
