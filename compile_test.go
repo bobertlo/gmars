@@ -21,5 +21,5 @@ func TestCompile(t *testing.T) {
 
 	out, err := compiler.expandExpression([]token{{tokText, "start"}}, 1)
 	require.NoError(t, err)
-	require.Equal(t, []token{{tokNumber, "7999"}}, out)
+	require.Equal(t, []token{{tokNumber, "-1"}}, out)
 }

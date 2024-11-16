@@ -1,6 +1,11 @@
 package gmars
 
-import "fmt"
+import (
+	"fmt"
+	gtoken "go/token"
+	"go/types"
+	"strconv"
+)
 
 func expandValue(key string, values, resolved map[string][]token, graph map[string][]string) ([]token, error) {
 	// load key value or error
@@ -66,4 +71,31 @@ func expandExpressions(values map[string][]token, graph map[string][]string) (ma
 		resolved[key] = expanded
 	}
 	return resolved, nil
+}
+
+func evaluateExpression(expr []token) (int, error) {
+	exprStr := ""
+	for _, tok := range expr {
+		exprStr += tok.val
+	}
+
+	fs := gtoken.NewFileSet()
+	tv, err := types.Eval(fs, nil, gtoken.NoPos, exprStr)
+	if err != nil {
+		return 0, err
+	}
+
+	valStr := tv.Value.String()
+	if valStr == "true" {
+		return 1, nil
+	} else if valStr == "false" {
+		return 0, nil
+	}
+
+	val, err := strconv.ParseInt(valStr, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(val), nil
 }

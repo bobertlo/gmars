@@ -54,7 +54,7 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 
 			label, labelOk := c.labels[tok.val]
 			if labelOk {
-				val := (Address(label) + c.m - Address(line)) % c.m
+				val := (label - line) % int(c.m)
 				output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
 			} else {
 				return nil, fmt.Errorf("unresolved symbol '%s'", tok.val)

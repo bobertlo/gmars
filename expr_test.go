@@ -1,8 +1,10 @@
 package gmars
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,4 +26,25 @@ func TestExpandExpressions(t *testing.T) {
 		"b": {{tokNumber, "1"}, {tokExprOp, "+"}, {tokNumber, "2"}},
 		"c": {{tokNumber, "1"}, {tokExprOp, "*"}, {tokNumber, "1"}, {tokExprOp, "+"}, {tokNumber, "2"}},
 	}, output)
+}
+
+func TestEvaluateExpression(t *testing.T) {
+	testCases := map[string]int{
+		"1":       1,
+		"2":       2,
+		"-2":      -2,
+		"1+2*3":   7,
+		"1*2+3":   5,
+		"(1+2)*3": 9,
+	}
+
+	for input, expected := range testCases {
+		lexer := newLexer(strings.NewReader(input))
+		tokens, err := lexer.Tokens()
+		require.NoError(t, err)
+
+		val, err := evaluateExpression(tokens)
+		require.NoError(t, err)
+		assert.Equal(t, expected, val)
+	}
 }
