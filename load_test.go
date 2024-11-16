@@ -40,7 +40,7 @@ func TestLoadImp94(t *testing.T) {
 	require.Equal(t, "this is the simplest program\nit was described in the initial articles\n", data.Strategy)
 	require.Equal(t, 0, data.Start)
 	require.Equal(t, 1, len(data.Code))
-	require.Equal(t, Instruction{Op: MOV, OpMode: I, AMode: DIRECT, A: 0, BMode: DIRECT, B: 1}, data.Code[0])
+	require.Equal(t, Instruction{Op: MOV, OpMode: I, AMode: IMMEDIATE, A: 0, BMode: DIRECT, B: 1}, data.Code[0])
 }
 
 func TestLoadDwarf(t *testing.T) {

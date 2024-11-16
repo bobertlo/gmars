@@ -1,0 +1,19 @@
+       ORG          1
+       ADD.F  $     7, $     6     
+       MOV.I  $     5, @     5     
+       JMZ.F  $    -2, *     4     
+       MOV.I  $     3, *     3     
+       JMZ.F  $    -4, $    10     
+       JMP.B  $     6, $     0     
+       JMP.B  @ -1808, $  1816     
+       DAT.F  $ -1808, $  1808     
+       DAT.F  $     2, $   100     
+       DAT.F  $     2, $     9     
+       SPL.B  #     1, $    11     
+       MOV.I  *    -3, >    -3     
+       MOV.I  *    -4, >    -4     
+       DJN.F  $    -2, {  -250     
+       SPL.B  #     0, {     0     
+       SPL.B  {     0, }     0     
+       JMN.A  $    -1, $    -2     
+       END
