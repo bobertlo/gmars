@@ -11,7 +11,6 @@ type compiler struct {
 	config SimulatorConfig
 	values map[string][]token // symbols that represent expressions
 	labels map[string]int     // symbols that represent addresses
-	code   []Instruction
 }
 
 func newCompiler(src []sourceLine, config SimulatorConfig) (*compiler, error) {
@@ -66,6 +65,109 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 	return output, nil
 }
 
+func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
+	var aMode, bMode AddressMode
+	if in.amode == "" {
+		aMode = DIRECT
+	} else {
+		mode, err := getAddressMode(in.amode)
+		if err != nil {
+			return Instruction{}, fmt.Errorf("invalid amode: '%s'", in.amode)
+		}
+		aMode = mode
+	}
+	if in.bmode == "" {
+		bMode = DIRECT
+	} else {
+		mode, err := getAddressMode(in.bmode)
+		if err != nil {
+			return Instruction{}, fmt.Errorf("invalid amode: '%s'", in.bmode)
+		}
+		bMode = mode
+	}
+
+	var op OpCode
+	var opMode OpMode
+	if c.config.Mode == ICWS88 {
+		op88, err := getOpCode88(in.op)
+		if err != nil {
+			return Instruction{}, err
+		}
+		opMode88, err := getOpModeAndValidate88(op88, aMode, bMode)
+		if err != nil {
+			return Instruction{}, err
+		}
+		op, opMode = op88, opMode88
+	} else {
+		op94, opMode94, err := getOp94(in.op)
+		if err == nil {
+			op, opMode = op94, opMode94
+		} else {
+			op94, err := getOpCode(in.op)
+			if err != nil {
+				return Instruction{}, err
+			}
+			opMode94, err = getOpMode94(op94, aMode, bMode)
+			if err != nil {
+				return Instruction{}, err
+			}
+			op, opMode = op94, opMode94
+		}
+	}
+
+	aExpr, err := c.expandExpression(in.a, in.codeLine)
+	if err != nil {
+		return Instruction{}, err
+	}
+	aVal, err := evaluateExpression(aExpr)
+	if err != nil {
+		return Instruction{}, err
+	}
+
+	var bVal int
+	if len(in.b) == 0 {
+		if op == DAT {
+			// move aVal/aMode to B
+			bMode = aMode
+			bVal = aVal
+			// set A to #0
+			aMode = IMMEDIATE
+			aVal = 0
+		} else {
+			// set B to #0
+			bMode = IMMEDIATE
+		}
+	} else {
+		bExpr, err := c.expandExpression(in.b, in.codeLine)
+		if err != nil {
+			return Instruction{}, err
+		}
+		b, err := evaluateExpression(bExpr)
+		if err != nil {
+			return Instruction{}, err
+		}
+		bVal = b
+	}
+
+	aVal = aVal % int(c.m)
+	if aVal < 0 {
+		aVal = (int(c.m) + aVal) % int(c.m)
+	}
+	bVal = bVal % int(c.m)
+	if aVal < 0 {
+		bVal = (int(c.m) + bVal) % int(c.m)
+	}
+
+	return Instruction{
+		Op:     op,
+		OpMode: opMode,
+		AMode:  aMode,
+		A:      Address(aVal),
+		BMode:  bMode,
+		B:      Address(bVal),
+	}, nil
+}
+
 func (c *compiler) compile() (WarriorData, error) {
 	c.loadSymbols()
 
@@ -81,5 +183,20 @@ func (c *compiler) compile() (WarriorData, error) {
 	}
 	c.values = resolved
 
-	return WarriorData{}, fmt.Errorf("not implemented")
+	code := make([]Instruction, 0)
+	for _, line := range c.lines {
+		if line.typ != lineInstruction {
+			continue
+		}
+
+		instruction, err := c.assembleLine(line)
+		if err != nil {
+			return WarriorData{}, fmt.Errorf("line %d: %s", line.line, err)
+		}
+		code = append(code, instruction)
+	}
+
+	return WarriorData{
+		Code: code,
+	}, nil
 }

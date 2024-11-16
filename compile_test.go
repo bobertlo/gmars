@@ -16,10 +16,11 @@ func TestCompile(t *testing.T) {
 	compiler, err := newCompiler(source, ConfigNOP94())
 	require.NoError(t, err)
 
-	_, err = compiler.compile()
-	require.Error(t, err)
-
-	out, err := compiler.expandExpression([]token{{tokText, "start"}}, 1)
+	out, err := compiler.compile()
 	require.NoError(t, err)
-	require.Equal(t, []token{{tokNumber, "-1"}}, out)
+	require.Equal(t, WarriorData{
+		Code: []Instruction{
+			{Op: MOV, OpMode: I, AMode: DIRECT, A: 0, BMode: DIRECT, B: 1},
+		},
+	}, out)
 }
