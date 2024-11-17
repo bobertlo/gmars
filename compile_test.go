@@ -149,13 +149,14 @@ func TestCompileDoubleForLoop(t *testing.T) {
 	config := ConfigNOP94()
 
 	input := `
+	org start
 	dat 123, 123
 	i for 3
 	j for 2
 	dat i, j
 	rof
 	rof
-	dat 123, 123	
+	start dat 123, 123
 `
 
 	w, err := CompileWarrior(strings.NewReader(input), config)
@@ -170,4 +171,5 @@ func TestCompileDoubleForLoop(t *testing.T) {
 		{Op: DAT, OpMode: F, AMode: DIRECT, A: 3, BMode: DIRECT, B: 2},
 		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
 	}, w.Code)
+	assert.Equal(t, 7, w.Start)
 }
