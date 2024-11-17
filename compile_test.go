@@ -3,6 +3,7 @@ package gmars
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,8 +49,6 @@ func runWarriorLoadFileTests(t *testing.T, tests []warriorTestCase) {
 			defer loadInput.Close()
 			expectedData, err := ParseLoadFile(loadInput, test.config)
 			require.NoError(t, err)
-
-			// assert.NoError(t, err)
 			assert.Equal(t, expectedData.Code, warriorData.Code)
 		}
 	}
@@ -112,4 +111,35 @@ func TestCompileWarriorsFile94(t *testing.T) {
 	}
 
 	runWarriorLoadFileTests(t, tests)
+}
+
+func TestCompileForLoop(t *testing.T) {
+	config := ConfigNOP94()
+
+	input := `
+	dat 123, 123
+	i j for 3
+	dat i, j
+	rof
+	dat 123, 123	
+`
+
+	// lexer := newLexer(strings.NewReader(input))
+	// parser := newParser(lexer)
+	// src, data, err := parser.parse()
+	// require.NoError(t, err)
+	// compiler, err := newCompiler(src, data, config)
+
+	// compiler.compile()
+	fmt.Println("test start")
+	w, err := CompileWarrior(strings.NewReader(input), config)
+	require.NoError(t, err)
+	assert.Equal(t, []Instruction{
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 0, BMode: DIRECT, B: 1},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 7999, BMode: DIRECT, B: 2},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 7998, BMode: DIRECT, B: 3},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
+	}, w.Code)
+	fmt.Println(w.Code)
 }

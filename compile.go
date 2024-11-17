@@ -20,7 +20,7 @@ type compiler struct {
 func newCompiler(src []sourceLine, metadata WarriorData, config SimulatorConfig) (*compiler, error) {
 	err := config.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("invalid condif: %s", err)
+		return nil, fmt.Errorf("invalid config: %s", err)
 	}
 	return &compiler{
 		lines:     src,
@@ -57,6 +57,24 @@ func (c *compiler) loadSymbols() {
 			}
 		}
 	}
+}
+
+func (c *compiler) reloadReferences() error {
+	c.labels = make(map[string]int)
+
+	for _, line := range c.lines {
+		if line.typ == lineInstruction {
+			for _, label := range line.labels {
+				_, ok := c.labels[label]
+				if ok {
+					return fmt.Errorf("line %d: label '%s' redefined", line.line, label)
+				}
+				c.labels[label] = line.codeLine
+			}
+		}
+	}
+
+	return nil
 }
 
 func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
@@ -196,13 +214,107 @@ func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 	}, nil
 }
 
+func (c *compiler) expandFor(start, end int) error {
+	output := make([]sourceLine, 0)
+	codeLineIndex := 0
+
+	// concatenate lines preceding start
+	for i := 0; i < start; i++ {
+		// curLine := c.lines[i]
+		if c.lines[i].typ == lineInstruction {
+			// curLine.line = codeLineIndex
+			codeLineIndex++
+		}
+		output = append(output, c.lines[i])
+	}
+
+	// get labels and count from for line
+	labels := c.lines[start].labels
+	count, err := evaluateExpression(c.lines[start].a)
+	if err != nil {
+		return fmt.Errorf("line %d: invalid for count '%s", c.lines[start].line, c.lines[start].a)
+	}
+
+	for j := 1; j <= count; j++ {
+		for i := start + 1; i < end; i++ {
+			if c.lines[i].typ == lineInstruction {
+				thisLine := c.lines[i]
+
+				// subtitute symbols in line
+				for iLabel, label := range labels {
+					var newValue []token
+					if iLabel == len(labels)-1 {
+						newValue = []token{{tokNumber, fmt.Sprintf("%d", j)}}
+					} else {
+						if j == 1 {
+							newValue = []token{{tokNumber, "0"}}
+						} else {
+							newValue = []token{{tokExprOp, "-"}, {tokNumber, fmt.Sprintf("%d", -(1 - j))}}
+						}
+					}
+					thisLine = thisLine.subSymbol(label, newValue)
+				}
+
+				// update codeLine
+				thisLine.codeLine = codeLineIndex
+				codeLineIndex++
+
+				output = append(output, thisLine)
+			} else {
+				output = append(output, c.lines[i])
+			}
+		}
+
+	}
+
+	// continue appending lines until the end of the file
+	for i := end + 1; i < len(c.lines); i++ {
+		if c.lines[i].typ == lineInstruction {
+			thisLine := c.lines[i]
+			thisLine.codeLine = codeLineIndex
+			codeLineIndex++
+			output = append(output, thisLine)
+		} else {
+			output = append(output, c.lines[i])
+		}
+	}
+
+	c.lines = output
+	return c.reloadReferences()
+}
+
+// look for for statements from the bottom up. if one is found it is expanded
+// and the function calls itself again.
+func (c *compiler) expandForLoops() error {
+	rofSourceIndex := -1
+	for i := len(c.lines) - 1; i >= 0; i-- {
+		if c.lines[i].typ == linePseudoOp {
+			lop := strings.ToLower(c.lines[i].op)
+			if lop == "rof" {
+				rofSourceIndex = i
+			} else if lop == "for" {
+				if rofSourceIndex == -1 {
+					return fmt.Errorf("line %d: unmatched for", c.lines[i].codeLine)
+				}
+				c.expandFor(i, rofSourceIndex)
+				return c.expandForLoops()
+			}
+		}
+	}
+	if rofSourceIndex != -1 {
+		return fmt.Errorf("line %d: unmatched rof", c.lines[rofSourceIndex].line)
+	}
+	return nil
+}
+
 func (c *compiler) compile() (WarriorData, error) {
+
 	c.loadSymbols()
 
 	graph := buildReferenceGraph(c.values)
 	cyclic, cyclicKey := graphContainsCycle(graph)
 	if cyclic {
-		return WarriorData{}, fmt.Errorf("expressiong '%s' is cyclic", cyclicKey)
+		return WarriorData{}, fmt.Errorf("expression '%s' is cyclic", cyclicKey)
 	}
 
 	resolved, err := expandExpressions(c.values, graph)
@@ -210,6 +322,11 @@ func (c *compiler) compile() (WarriorData, error) {
 		return WarriorData{}, err
 	}
 	c.values = resolved
+
+	err = c.expandForLoops()
+	if err != nil {
+		return WarriorData{}, err
+	}
 
 	code := make([]Instruction, 0)
 	for _, line := range c.lines {
