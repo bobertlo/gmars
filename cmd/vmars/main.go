@@ -135,9 +135,11 @@ func main() {
 	sim.SpawnWarrior(1, gmars.Address(w2start))
 
 	game := &Game{
-		sim:       sim,
-		rec:       *rec,
-		speedStep: defaultSpeedStep,
+		sim:        sim,
+		config:     config,
+		rec:        *rec,
+		speedStep:  defaultSpeedStep,
+		fixedStart: *fixedFlag,
 	}
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)

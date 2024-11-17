@@ -10,12 +10,14 @@ import (
 )
 
 type Game struct {
-	sim       gmars.ReportingSimulator
-	rec       gmars.StateRecorder
-	running   bool
-	finished  bool
-	speedStep int
-	counter   int
+	sim        gmars.ReportingSimulator
+	config     gmars.SimulatorConfig
+	fixedStart int
+	rec        gmars.StateRecorder
+	running    bool
+	finished   bool
+	speedStep  int
+	counter    int
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -42,7 +44,17 @@ func (g *Game) handleInput() {
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyR) {
 		g.sim.Reset()
 		g.sim.SpawnWarrior(0, 0)
-		g.sim.SpawnWarrior(1, gmars.Address(rand.Intn(7000)+200))
+
+		w2start := g.fixedStart
+		if w2start == 0 {
+			minStart := 2 * g.config.Length
+			maxStart := g.config.CoreSize - g.config.Length - 1
+			startRange := maxStart - minStart
+			w2start = rand.Intn(int(startRange)+1) + int(minStart)
+		}
+
+		g.sim.SpawnWarrior(1, gmars.Address(w2start))
+
 		g.finished = false
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.slowDown()
