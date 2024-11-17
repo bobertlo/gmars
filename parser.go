@@ -30,6 +30,25 @@ type sourceLine struct {
 	newlines int
 }
 
+func subExprSymbol(expr []token, label string, value []token) []token {
+	output := make([]token, 0, len(expr))
+	for _, tok := range expr {
+		if tok.typ == tokText && tok.val == label {
+			output = append(output, value...)
+		} else {
+			output = append(output, tok)
+		}
+	}
+	return output
+}
+
+func (line sourceLine) subSymbol(label string, value []token) sourceLine {
+	// output := make()
+	line.a = subExprSymbol(line.a, label, value)
+	line.b = subExprSymbol(line.b, label, value)
+	return line
+}
+
 type parser struct {
 	lex *lexer
 
@@ -244,6 +263,7 @@ func parsePseudoOp(p *parser) parseStateFn {
 		return parseComment
 	} else if p.nextToken.typ == tokNewline {
 		if lastToken.NoOperandsOk() {
+			p.next()
 			p.currentLine.newlines += 1
 			p.lines = append(p.lines, p.currentLine)
 			return parseLine
@@ -279,7 +299,10 @@ func parsePseudoExpr(p *parser) parseStateFn {
 	case tokComment:
 		return parseComment
 	case tokNewline:
-		fallthrough
+		p.next()
+		p.currentLine.newlines += 1
+		p.lines = append(p.lines, p.currentLine)
+		return parseLine
 	case tokEOF:
 		p.lines = append(p.lines, p.currentLine)
 		return parseLine
