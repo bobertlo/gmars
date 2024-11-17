@@ -55,7 +55,7 @@ func runWarriorLoadFileTests(t *testing.T, tests []warriorTestCase) {
 }
 
 func TestCompileWarriors88(t *testing.T) {
-	config := ConfigKOTH88()
+	config := ConfigKOTH88
 	tests := []warriorTestCase{
 		{
 			filename: "warriors/88/imp.red",
@@ -76,7 +76,7 @@ func TestCompileWarriors88(t *testing.T) {
 }
 
 func TestCompileWarriors94(t *testing.T) {
-	config := ConfigNOP94()
+	config := ConfigNOP94
 	tests := []warriorTestCase{
 		{
 			filename: "warriors/94/imp.red",
@@ -96,7 +96,7 @@ func TestCompileWarriors94(t *testing.T) {
 }
 
 func TestCompileWarriorsFile94(t *testing.T) {
-	config := ConfigNOP94()
+	config := ConfigNOP94
 	tests := []warriorTestCase{
 		{
 			filename:     "warriors/94/simpleshot.red",
@@ -124,7 +124,7 @@ func TestCompileWarriorsFile94(t *testing.T) {
 }
 
 func TestCompileForLoop(t *testing.T) {
-	config := ConfigNOP94()
+	config := ConfigNOP94
 
 	input := `
 	dat 123, 123
@@ -146,7 +146,7 @@ func TestCompileForLoop(t *testing.T) {
 }
 
 func TestCompileDoubleForLoop(t *testing.T) {
-	config := ConfigNOP94()
+	config := ConfigNOP94
 
 	input := `
 	org start
