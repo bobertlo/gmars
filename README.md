@@ -30,7 +30,7 @@ are many other implementations but I wanted to meet the following requirements:
 
 1. A thread-safe library implementing the MARS mechanics.
 2. Strong compliance to standards, with R/W limits and '88 rules enforcment.
-3. Reporting hooks to support custom front-ends and analysis.
+3. Reporting hooks to support custom front-ends and analysis engines.
 4. A modern visual simulator.
 
 ## Running the Simulator
@@ -95,15 +95,11 @@ go install github.com/bobertlo/gmars/cmd/vmars@latest
 go install github.com/bobertlo/gmars/cmd/gmars@latest
 ```
 
-## Components
-
-- `cmd/gmars` is a command line interface to run simulations and report results.
-- `cmd/vmars` is a graphical simulator with interactive controls.
-
 ## Implemented Features
 
-- Load code (compiled assembly) warrior loading for ICWS'88 and '94 standards
-   (without p-space)
+- Compilation of code compliant with the ICWS'94 standard specification
+   (favoring pMARS compatibility when applicable)
+- ICWS'88 compilation mode to enforce valid code generation.
 - Simulation of two warrior battles
 - Read/write limits (implemented, but not thoroughly tested)
 - Hooks generating updates for visualization and analysis
@@ -112,24 +108,92 @@ go install github.com/bobertlo/gmars/cmd/gmars@latest
 ## Planned Features
 
 - P-Space support
-- Parsing and linking of full '94 assembly spec (and pMARS compatibility)
 - Interactive debugger
+- Round robin and benchmark modes
+
+## Language Support
+
+I have implemented the ICWS'94 Draft Standard to the best of my ability and
+added the following modifications based pMARS and other simulators:
+
+### Empty Fields
+
+In the draft standard, if only a single operand is applied, it is placed in the
+B-Field for `DAT` instructions, or otherwise placed in the A-Field. In both
+cases `#0` is supposed to be placed in the remaining field.
+
+I found that corewin and pMARS load `$0` into the B-Field when the instruction
+opcode is not `DAT`. Since this can cause divergent outcomes, I chose to follow
+other simulators for compatibility.
+
+### FOR/ROF Macros
+
+`FOR` and `ROF` pseudo-opcodes have been added including labels and embedded for
+loops.
+
+```
+<start_ref...> <count_var> FOR <count_expr>
+...
+ROF
+```
+
+The count variable starts at 1 and increments for each following line until it
+equals the value of the count expression. Other labels added before the count
+variable name will be evaluated as line references to the first line emitted by
+the macro.
+
+Variable concatenation with the `&` pseudo op is not implemented but planned.
+
+#### Start Address Example
+
+```
+start i FOR 2
+DAT start, i
+DAT start, i
+ROF
+```
+
+Compiles to:
+
+```
+DAT  0, 1
+DAT -1, 0
+```
+
+#### Embedded Loop Example
+
+```
+i FOR 2
+j FOR 2
+DAT i, j
+DAT i, j
+ROF
+ROF
+```
+
+Compiles to:
+
+```
+DAT.F  $ 1, $ 1
+DAT.F  $ 1, $ 2
+DAT.F  $ 2, $ 1
+DAT.F  $ 2, $ 2
+```
+
+### Non-Supported Extensions
+
+pMARS allows assignment to variables with a syntax appearing as
+`(a=CORESIZE/2)`. This feature is not currently implemented, and I am not sure
+if I will plan to do so.
 
 ## Testing Status / Known Bugs
 
-> TL;DR: One warrior out of 1695 tested has divergent behavior from pMARS
-> detected and I am searching for the issue.
+The compiler is more subjective and still going through testing and active
+development, but the backend has been tested fairly thoroughly by running
+compiled load code and comparing outcomes to pMARS.
 
-To test for errors I used the 88 and 94nop hills from
-[Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html) and ran battles with
-fixed starting positions to compare the output to pMARS and other
-implementations.
-
-## Results
-
-The '88 hill has 658 warriors and all tested combinations / starting position
-results matched.
-
-The '94 hill has 1037 and all warriors had results matching pMARS except for
-one. I am working on finding the bug there, but also working on new features at
-the same time.
+Load code tests were done with the 94nop and 88
+[Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html) hills. I found a
+single warrior [Rush
+(11,1)](https://asdflkj.net/COREWAR/94/HILL32/rush_11_1.red) that has
+inconsistent outcomes.
