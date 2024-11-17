@@ -144,3 +144,30 @@ func TestCompileForLoop(t *testing.T) {
 		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
 	}, w.Code)
 }
+
+func TestCompileDoubleForLoop(t *testing.T) {
+	config := ConfigNOP94()
+
+	input := `
+	dat 123, 123
+	i for 3
+	j for 2
+	dat i, j
+	rof
+	rof
+	dat 123, 123	
+`
+
+	w, err := CompileWarrior(strings.NewReader(input), config)
+	require.NoError(t, err)
+	assert.Equal(t, []Instruction{
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 1, BMode: DIRECT, B: 1},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 1, BMode: DIRECT, B: 2},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 2, BMode: DIRECT, B: 1},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 2, BMode: DIRECT, B: 2},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 3, BMode: DIRECT, B: 1},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 3, BMode: DIRECT, B: 2},
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
+	}, w.Code)
+}
