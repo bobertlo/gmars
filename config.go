@@ -54,6 +54,16 @@ var (
 		Length:     20,
 		Distance:   20,
 	}
+	ConfigNop256 = SimulatorConfig{
+		Mode:       NOP94,
+		CoreSize:   256,
+		Processes:  60,
+		Cycles:     2560,
+		ReadLimit:  800,
+		WriteLimit: 800,
+		Length:     10,
+		Distance:   10,
+	}
 	ConfigNopNano = SimulatorConfig{
 		Mode:       NOP94,
 		CoreSize:   80,
@@ -70,6 +80,7 @@ var (
 		"icws":    ConfigICWS88,
 		"nop94":   ConfigNOP94,
 		"noptiny": ConfigNopTiny,
+		"nop256":  ConfigNop256,
 		"nopnano": ConfigNopNano,
 	}
 )
