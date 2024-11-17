@@ -31,7 +31,7 @@ are many other implementations but I wanted to meet the following requirements:
 1. A thread-safe library implementing the MARS mechanics.
 2. Strong compliance to standards, with R/W limits and '88 rules enforcment.
 3. Reporting hooks to support custom front-ends and analysis engines.
-4. A modern visual simulator.
+4. A modern visual simulator front-end.
 
 ## Running the Simulator
 
@@ -80,19 +80,6 @@ warrior with the number of wins and ties:
 ```
 1 0
 0 0 
-```
-
-## Install
-
-You can use `go install` to build and install the executables from the latest
-release:
-
-```
-# vmars - Visual MARS simulator
-go install github.com/bobertlo/gmars/cmd/vmars@latest
-
-# gmars - command line MARS
-go install github.com/bobertlo/gmars/cmd/gmars@latest
 ```
 
 ## Implemented Features
@@ -195,4 +182,4 @@ Load code tests were done with the 94nop and 88
 [Koenigstuhl](https://asdflkj.net/COREWAR/koenigstuhl.html) hills. I found a
 single warrior [Rush
 (11,1)](https://asdflkj.net/COREWAR/94/HILL32/rush_11_1.red) that has
-inconsistent outcomes.
+inconsistent outcomes, which I am stil investigating.
