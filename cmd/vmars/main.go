@@ -62,20 +62,30 @@ func main() {
 	// roundFlag := flag.Int("r", 1, "Rounds to play")
 	showReadFlag := flag.Bool("showread", false, "display reads in the visualizer")
 	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
+	presetFlag := flag.String("preset", "", "Load named preset config (and ignore other flags)")
 	flag.Parse()
 
-	coresize := gmars.Address(*sizeFlag)
-	processes := gmars.Address(*procFlag)
-	cycles := gmars.Address(*cycleFlag)
-	length := gmars.Address(*lenFlag)
-
-	var mode gmars.SimulatorMode
-	if *use88Flag {
-		mode = gmars.ICWS88
+	var config gmars.SimulatorConfig
+	if *presetFlag != "" {
+		presetConfig, err := gmars.PresetConfig(*presetFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error loading config: %s\n", err)
+			os.Exit(1)
+		}
+		config = presetConfig
 	} else {
-		mode = gmars.ICWS94
+		var mode gmars.SimulatorMode
+		if *use88Flag {
+			mode = gmars.ICWS88
+		} else {
+			mode = gmars.ICWS94
+		}
+		coresize := gmars.Address(*sizeFlag)
+		processes := gmars.Address(*procFlag)
+		cycles := gmars.Address(*cycleFlag)
+		length := gmars.Address(*lenFlag)
+		config = gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
 	}
-	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
 
 	args := flag.Args()
 

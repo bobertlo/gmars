@@ -40,6 +40,8 @@ supplied as command line arguments. Both versions also accept the following
 arguments
 
 ```
+  -preset string
+        Load named preset config (and ignore other flags)
   -8    Enforce ICWS'88 rules
   -F int
         fixed position of warrior #2
@@ -56,6 +58,16 @@ arguments
   -s int
         Size of core (default 8000)
 ```
+
+### Presets
+
+| Name    | Simulator Mode | CoreSize | Processes | Cycles | Length |
+|---------|----------------|----------|-----------|--------|--------|
+| nop94   | `NOP94`        | 8000     | 8000      | 80000  | 100    |
+| 88      | `ICWS88`       | 8000     | 8000      | 80000  | 100    |
+| icws    | `ICWS88`       | 8192     | 8000      | 100000 | 300    |
+| noptiny | `NOP94`        | 800      | 800       | 8000   | 20     |
+| nopnano | `NOP94`        | 80       | 80        | 800    | 5      |
 
 ### Visual MARS Controls
 

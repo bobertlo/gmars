@@ -13,8 +13,8 @@ type SimulatorConfig struct {
 	Distance   Address
 }
 
-func ConfigKOTH88() SimulatorConfig {
-	return SimulatorConfig{
+var (
+	ConfigKOTH88 = SimulatorConfig{
 		Mode:       ICWS88,
 		CoreSize:   8000,
 		Processes:  8000,
@@ -24,10 +24,17 @@ func ConfigKOTH88() SimulatorConfig {
 		Length:     100,
 		Distance:   100,
 	}
-}
-
-func ConfigNOP94() SimulatorConfig {
-	return SimulatorConfig{
+	ConfigICWS88 = SimulatorConfig{
+		Mode:       ICWS88,
+		CoreSize:   8192,
+		Processes:  8000,
+		Cycles:     10000,
+		ReadLimit:  8000,
+		WriteLimit: 8000,
+		Length:     300,
+		Distance:   100,
+	}
+	ConfigNOP94 = SimulatorConfig{
 		Mode:       ICWS94,
 		CoreSize:   8000,
 		Processes:  8000,
@@ -37,6 +44,42 @@ func ConfigNOP94() SimulatorConfig {
 		Length:     100,
 		Distance:   100,
 	}
+	ConfigNopTiny = SimulatorConfig{
+		Mode:       NOP94,
+		CoreSize:   800,
+		Processes:  800,
+		Cycles:     8000,
+		ReadLimit:  800,
+		WriteLimit: 800,
+		Length:     20,
+		Distance:   20,
+	}
+	ConfigNopNano = SimulatorConfig{
+		Mode:       NOP94,
+		CoreSize:   80,
+		Processes:  80,
+		Cycles:     800,
+		ReadLimit:  80,
+		WriteLimit: 80,
+		Length:     5,
+		Distance:   5,
+	}
+
+	configPresets = map[string]SimulatorConfig{
+		"88":      ConfigKOTH88,
+		"icws":    ConfigICWS88,
+		"nop94":   ConfigNOP94,
+		"noptiny": ConfigNopTiny,
+		"nopnano": ConfigNopNano,
+	}
+)
+
+func PresetConfig(name string) (SimulatorConfig, error) {
+	config, ok := configPresets[name]
+	if !ok {
+		return SimulatorConfig{}, fmt.Errorf("preset '%s' not found", name)
+	}
+	return config, nil
 }
 
 func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
