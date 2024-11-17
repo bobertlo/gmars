@@ -108,6 +108,16 @@ func TestCompileWarriorsFile94(t *testing.T) {
 			loadFilename: "test_files/scaryvampire.rc",
 			config:       config,
 		},
+		{
+			filename:     "warriors/94/bombspiral.red",
+			loadFilename: "test_files/bombspiral.rc",
+			config:       config,
+		},
+		{
+			filename:     "warriors/94/paperhaze.red",
+			loadFilename: "test_files/paperhaze.rc",
+			config:       config,
+		},
 	}
 
 	runWarriorLoadFileTests(t, tests)
@@ -124,14 +134,6 @@ func TestCompileForLoop(t *testing.T) {
 	dat 123, 123	
 `
 
-	// lexer := newLexer(strings.NewReader(input))
-	// parser := newParser(lexer)
-	// src, data, err := parser.parse()
-	// require.NoError(t, err)
-	// compiler, err := newCompiler(src, data, config)
-
-	// compiler.compile()
-	fmt.Println("test start")
 	w, err := CompileWarrior(strings.NewReader(input), config)
 	require.NoError(t, err)
 	assert.Equal(t, []Instruction{
@@ -141,5 +143,4 @@ func TestCompileForLoop(t *testing.T) {
 		{Op: DAT, OpMode: F, AMode: DIRECT, A: 7998, BMode: DIRECT, B: 3},
 		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
 	}, w.Code)
-	fmt.Println(w.Code)
 }

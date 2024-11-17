@@ -72,7 +72,7 @@ func (t token) IsPseudoOp() bool {
 }
 
 func (t token) IsExpressionTerm() bool {
-	if t.typ == tokExprOp || t.typ == tokNumber || t.typ == tokText {
+	if t.typ == tokExprOp || t.typ == tokNumber || t.typ == tokText || t.typ == tokParenL || t.typ == tokParenR {
 		return true
 	}
 	return false
