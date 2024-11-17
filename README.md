@@ -152,7 +152,6 @@ DAT.F  $ -1, $  2
 i FOR 2
 j FOR 2
 DAT i, j
-DAT i, j
 ROF
 ROF
 ```
