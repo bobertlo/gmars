@@ -64,14 +64,14 @@ arguments
 You can use the `-preset <name>` flag to use a named presed configuration. If a
 preset is loaded, the other flags are not parsed and applied.
 
-| Name    | Simulator Mode | CoreSize | Processes | Cycles | Length |
-|---------|----------------|----------|-----------|--------|--------|
-| nop94   | `NOP94`        | 8000     | 8000      | 80000  | 100    |
-| 88      | `ICWS88`       | 8000     | 8000      | 80000  | 100    |
-| icws    | `ICWS88`       | 8192     | 8000      | 100000 | 300    |
-| noptiny | `NOP94`        | 800      | 800       | 8000   | 20     |
-| nop256  | `NOP94`        | 256      | 60        | 2560   | 10     |
-| nopnano | `NOP94`        | 80       | 80        | 800    | 5      |
+| Name    | Simulator Mode | CoreSize | Length | Processes | Cycles |
+|---------|----------------|----------|--------|-----------|--------|
+| nop94   | `NOP94`        | 8000     | 100    | 8000      | 80000  |
+| 88      | `ICWS88`       | 8000     | 100    | 8000      | 80000  |
+| icws    | `ICWS88`       | 8192     | 300    | 8000      | 100000 |
+| noptiny | `NOP94`        | 800      | 20     | 800       | 8000   |
+| nop256  | `NOP94`        | 256      | 10     | 60        | 2560   |
+| nopnano | `NOP94`        | 80       | 5      | 80        | 800    |
 
 ### Visual MARS Controls
 
