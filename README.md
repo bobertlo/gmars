@@ -149,15 +149,14 @@ Variable concatenation with the `&` pseudo op is not implemented but planned.
 ```
 start i FOR 2
 DAT start, i
-DAT start, i
 ROF
 ```
 
 Compiles to:
 
 ```
-DAT  0, 1
-DAT -1, 0
+DAT.F  $  0, $  1
+DAT.F  $ -1, $  2
 ```
 
 #### Embedded Loop Example
@@ -174,10 +173,10 @@ ROF
 Compiles to:
 
 ```
-DAT.F  $ 1, $ 1
-DAT.F  $ 1, $ 2
-DAT.F  $ 2, $ 1
-DAT.F  $ 2, $ 2
+DAT.F  $  1, $  1
+DAT.F  $  1, $  2
+DAT.F  $  2, $  1
+DAT.F  $  2, $  2
 ```
 
 ### Non-Supported Extensions
