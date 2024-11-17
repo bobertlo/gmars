@@ -230,7 +230,12 @@ func (c *compiler) expandFor(start, end int) error {
 
 	// get labels and count from for line
 	labels := c.lines[start].labels
-	count, err := evaluateExpression(c.lines[start].a)
+
+	countExpr, err := c.expandExpression(c.lines[start].a, start)
+	if err != nil {
+		return err
+	}
+	count, err := evaluateExpression(countExpr)
 	if err != nil {
 		return fmt.Errorf("line %d: invalid for count '%s", c.lines[start].line, c.lines[start].a)
 	}
@@ -296,7 +301,10 @@ func (c *compiler) expandForLoops() error {
 				if rofSourceIndex == -1 {
 					return fmt.Errorf("line %d: unmatched for", c.lines[i].codeLine)
 				}
-				c.expandFor(i, rofSourceIndex)
+				err := c.expandFor(i, rofSourceIndex)
+				if err != nil {
+					return err
+				}
 				return c.expandForLoops()
 			}
 		}

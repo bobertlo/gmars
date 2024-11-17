@@ -73,6 +73,15 @@ func (l *lexer) Tokens() ([]token, error) {
 	return tokens, nil
 }
 
+func (l *lexer) consume(nextState lexStateFn) lexStateFn {
+	_, eof := l.next()
+	if eof {
+		l.tokens <- token{tokEOF, ""}
+		return nil
+	}
+	return nextState
+}
+
 func (l *lexer) emitConsume(tok token, nextState lexStateFn) lexStateFn {
 	l.tokens <- tok
 	_, eof := l.next()
@@ -147,6 +156,8 @@ func lexInput(l *lexer) lexStateFn {
 		fallthrough
 	case '>':
 		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
+	case '\x1a':
+		return l.consume(lexInput)
 	default:
 		l.tokens <- token{tokError, fmt.Sprintf("unexpected character: '%s'", string(l.nextRune))}
 	}
