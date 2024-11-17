@@ -267,6 +267,13 @@ func parsePseudoOp(p *parser) parseStateFn {
 		return parsePseudoExpr
 	} else if p.nextToken.typ == tokComment {
 		return parseComment
+	} else if p.nextToken.typ == tokEOF {
+		if lastToken.NoOperandsOk() {
+			p.next()
+			p.currentLine.newlines += 1
+			p.lines = append(p.lines, p.currentLine)
+			return nil
+		}
 	} else if p.nextToken.typ == tokNewline {
 		if lastToken.NoOperandsOk() {
 			p.next()
