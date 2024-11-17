@@ -207,6 +207,12 @@ func (s *reportSim) RunCycle() int {
 				s.Report(Report{Type: WarriorTerminate, Cycle: int(s.cycleCount), WarriorIndex: i, Address: pc})
 				s.warriors[i].state = WarriorDead
 				s.warriorLivingCount--
+
+				if s.warriorCount > 1 {
+					if s.warriorLivingCount == 1 {
+						return s.warriorLivingCount
+					}
+				}
 			}
 		}
 	}
