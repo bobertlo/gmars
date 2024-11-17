@@ -2,20 +2,37 @@ package main
 
 import (
 	"errors"
-	"math/rand"
+	"image/color"
 
 	"github.com/bobertlo/gmars"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+func NewGame(config gmars.SimulatorConfig, sim gmars.ReportingSimulator, rec *gmars.StateRecorder, defaultSpeedStep int) *Game {
+	game := &Game{
+		config:    config,
+		sim:       sim,
+		rec:       *rec,
+		speedStep: defaultSpeedStep,
+		hues:      []float64{0.0, 250.0},
+	}
+	game.cacheSprites()
+	game.cacheColors()
+	return game
+}
+
 type Game struct {
-	sim       gmars.ReportingSimulator
-	rec       gmars.StateRecorder
-	running   bool
-	finished  bool
-	speedStep int
-	counter   int
+	config      gmars.SimulatorConfig
+	sim         gmars.ReportingSimulator
+	rec         gmars.StateRecorder
+	running     bool
+	finished    bool
+	speedStep   int
+	counter     int
+	spriteCache [][]*ebiten.Image
+	colorCache  []color.Color
+	hues        []float64
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -40,9 +57,10 @@ func (g *Game) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.running = !g.running
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		w2Start := g.config.GetW2Start()
 		g.sim.Reset()
 		g.sim.SpawnWarrior(0, 0)
-		g.sim.SpawnWarrior(1, gmars.Address(rand.Intn(7000)+200))
+		g.sim.SpawnWarrior(1, w2Start)
 		g.finished = false
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.slowDown()

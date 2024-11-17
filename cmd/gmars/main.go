@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"os"
 
 	"github.com/bobertlo/gmars"
@@ -25,6 +24,7 @@ func main() {
 	processes := gmars.Address(*procFlag)
 	cycles := gmars.Address(*cycleFlag)
 	length := gmars.Address(*lenFlag)
+	fixed := gmars.Address(*fixedFlag)
 
 	var mode gmars.SimulatorMode
 	if *use88Flag {
@@ -32,7 +32,7 @@ func main() {
 	} else {
 		mode = gmars.ICWS94
 	}
-	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
+	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length, fixed)
 
 	args := flag.Args()
 
@@ -99,14 +99,6 @@ func main() {
 			sim.AddReporter(gmars.NewDebugReporter(sim))
 		}
 
-		w2start := *fixedFlag
-		if w2start == 0 {
-			minStart := 2 * config.Length
-			maxStart := config.CoreSize - config.Length - 1
-			startRange := maxStart - minStart
-			w2start = rand.Intn(int(startRange)+1) + int(minStart)
-		}
-
 		w1, err := sim.AddWarrior(&w1data)
 		if err != nil {
 			fmt.Printf("error adding warrior 1: %s", err)
@@ -120,7 +112,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("error adding warrior 2: %s", err)
 		}
-		err = sim.SpawnWarrior(1, gmars.Address(w2start))
+		err = sim.SpawnWarrior(1, config.GetW2Start())
 		if err != nil {
 			fmt.Printf("error spawning warrior 1: %s", err)
 		}

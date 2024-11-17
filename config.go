@@ -1,6 +1,10 @@
 package gmars
 
-import "fmt"
+import (
+	"fmt"
+
+	"math/rand"
+)
 
 type SimulatorConfig struct {
 	Mode       SimulatorMode
@@ -11,6 +15,7 @@ type SimulatorConfig struct {
 	WriteLimit Address
 	Length     Address
 	Distance   Address
+	Fixed      Address
 }
 
 func ConfigKOTH88() SimulatorConfig {
@@ -23,6 +28,7 @@ func ConfigKOTH88() SimulatorConfig {
 		WriteLimit: 8000,
 		Length:     100,
 		Distance:   100,
+		Fixed:      0,
 	}
 }
 
@@ -36,10 +42,11 @@ func ConfigNOP94() SimulatorConfig {
 		WriteLimit: 8000,
 		Length:     100,
 		Distance:   100,
+		Fixed:      0,
 	}
 }
 
-func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length Address) SimulatorConfig {
+func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length, fixed Address) SimulatorConfig {
 	out := SimulatorConfig{
 		Mode:       mode,
 		CoreSize:   coreSize,
@@ -49,6 +56,7 @@ func NewQuickConfig(mode SimulatorMode, coreSize, processes, cycles, length Addr
 		WriteLimit: coreSize,
 		Length:     length,
 		Distance:   length,
+		Fixed:      fixed,
 	}
 	return out
 }
@@ -81,5 +89,21 @@ func (c SimulatorConfig) Validate() error {
 		return fmt.Errorf("invalid distance")
 	}
 
+	if c.Fixed != 0 && c.Fixed+c.Length+1 > c.CoreSize {
+		return fmt.Errorf("invalid fixed starting point")
+	}
+
 	return nil
+}
+
+func (c SimulatorConfig) GetW2Start() Address {
+	w2start := c.Fixed
+	if w2start == 0 {
+		minStart := 2 * c.Length
+		maxStart := c.CoreSize - c.Length - 1
+		startRange := maxStart - minStart
+		w2start = Address(rand.Intn(int(startRange)+1) + int(minStart))
+	}
+
+	return w2start
 }

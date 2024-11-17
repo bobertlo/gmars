@@ -4,73 +4,203 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
+	"sort"
 
 	"github.com/bobertlo/gmars"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/colorm"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"golang.org/x/image/colornames"
 )
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	warriorColors := make([]ebiten.ColorScale, 3)
-	warriorColors[0].Scale(1, 1, 1, 1)
-	warriorColors[1].Scale(1, 1, 0, 1)
-	warriorColors[2].Scale(0, 1, 1, 1)
+const (
+	SpriteFirst = iota
+	SpriteHead
+	SpriteHeadActive
+	SpriteExecuted
+	SpriteCode
+	SpriteData
+	SpriteIncr
+	SpriteDecr
+	SpriteRead
+	SpriteDead
+	SpriteLast
+)
 
-	warriorQueueColors := make([]ebiten.ColorScale, 2)
-	warriorQueueColors[0].Scale(0.5, 0.5, 0.15, 1)
-	warriorQueueColors[1].Scale(0.15, 0.5, 0.5, 1)
+const screenXTileCount = screenWidth / tileSize
+const minimumHeadTransparency = 0.5
+const offsetHeadSprites = tileSize / 2.0
 
-	execColor := ebiten.ColorScale{}
-	execColor.Scale(1, 0.25, 0.25, 1)
+// cacheSprites buffers specific tiles from the tile image in different hue
+// variants.  This helps performance a lot, because we don't need to shuffle so
+// much memory on ever Update anymore.
+func (g *Game) cacheSprites() {
+	g.spriteCache = make([][]*ebiten.Image, SpriteLast)
+	sprnum := SpriteFirst + 1
 
-	w := tilesImage.Bounds().Dx()
-	tileXCount := w / tileSize
+	tileXCount := tilesImage.Bounds().Dx() / tileSize
+	for y := 0; y < tileXCount; y++ {
+		for x := 0; x < tileXCount; x++ {
+			sx := x * tileSize
+			sy := y * tileSize
+			rect := image.Rect(sx, sy, sx+tileSize, sy+tileSize)
 
-	const xCount = screenWidth / tileSize
+			subImage := tilesImage.SubImage(rect).(*ebiten.Image)
 
-	for i := 0; i < int(g.sim.CoreSize()); i++ {
-		state, color := g.rec.GetMemState(gmars.Address(i))
+			g.spriteCache[sprnum] = make([]*ebiten.Image, len(g.hues))
+			for i, hue := range g.hues {
+				var c colorm.ColorM
+				c.ChangeHSV(hue/180.0*math.Pi, 1.0, 1.0)
+				g.spriteCache[sprnum][i] = ebiten.NewImage(tileSize, tileSize)
+				colorm.DrawImage(g.spriteCache[sprnum][i], subImage, c, nil)
+			}
 
-		if state == gmars.CoreEmpty {
-			continue
+			sprnum++
+			if sprnum >= SpriteLast {
+				goto stop
+			}
 		}
-		t := int(state)
+	}
+stop:
+}
 
-		op := &ebiten.DrawImageOptions{ColorScale: warriorColors[color+1]}
-		op.GeoM.Translate(float64((i%xCount)*tileSize), float64((i/xCount)*tileSize))
+// cacheColors precomputes colors to use for static display, such as text.  This
+// color matches dominant color of the sprite tileset.
+func (g *Game) cacheColors() {
+	g.colorCache = make([]color.Color, SpriteLast-1)
+	// This color should match the tiles_X.png sprite
+	baseColor := color.RGBA{106, 190, 48, 255}
+	for i, hue := range g.hues {
+		var cm colorm.ColorM
+		cm.ChangeHSV(hue/180.0*math.Pi, 1.0, 1.0)
+		g.colorCache[i] = cm.Apply(baseColor)
+	}
+}
 
-		sx := (t % tileXCount) * tileSize
-		sy := (t / tileXCount) * tileSize
-		screen.DrawImage(tilesImage.SubImage(image.Rect(sx, sy, sx+tileSize, sy+tileSize)).(*ebiten.Image), op)
+// blitSpriteAlpha draws specific sprite to memory cell with alpha blending,
+// taking into account sprite specifics.
+func (g *Game) blitSpriteAlpha(screen *ebiten.Image, sprnum int, a gmars.Address, hue int, alpha float32) {
+	var offsetY float64
+	if sprnum != SpriteHead && sprnum != SpriteHeadActive && sprnum != SpriteDead {
+		offsetY = offsetHeadSprites
+	}
+	var scale ebiten.ColorScale
+	scale.ScaleAlpha(alpha)
+	op := &ebiten.DrawImageOptions{ColorScale: scale}
+	op.GeoM.Translate(float64((a%screenXTileCount)*tileSize), float64((a/screenXTileCount)*tileSize)+offsetY)
+	screen.DrawImage(g.spriteCache[sprnum][hue], op)
+}
+
+// blitSprite draws specific sprite to memory cell taking into account sprite
+// specifics.
+func (g *Game) blitSprite(screen *ebiten.Image, sprnum int, a gmars.Address, hue int) {
+	var offsetY float64
+	if sprnum != SpriteHead && sprnum != SpriteHeadActive && sprnum != SpriteDead {
+		offsetY = offsetHeadSprites
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64((a%screenXTileCount)*tileSize), float64((a/screenXTileCount)*tileSize)+offsetY)
+	screen.DrawImage(g.spriteCache[sprnum][hue], op)
+}
+
+// queuePosition is used for sorting memory addresses by earlies position in the
+// queue.
+type queuePosition struct {
+	PC               gmars.Address
+	EarliestPosition int
+}
+
+func getSprite(state gmars.CoreState, instr gmars.Instruction) int {
+	if state == gmars.CoreRead {
+		return SpriteRead
+	} else if state == gmars.CoreWritten {
+		if instr.Op == gmars.DAT {
+			return SpriteData
+		} else {
+			return SpriteCode
+		}
+	} else if state == gmars.CoreExecuted {
+		return SpriteExecuted
+	} else if state == gmars.CoreDecremented {
+		return SpriteDecr
+	} else if state == gmars.CoreIncremented {
+		return SpriteIncr
 	}
 
-	for i := 0; i < int(g.sim.WarriorCount()); i++ {
-		t := 0
+	return -1
+}
 
-		w := g.sim.GetWarrior(i)
+func (g *Game) Draw(screen *ebiten.Image) {
+	for i := 0; i < int(g.sim.CoreSize()); i++ {
+		a := gmars.Address(i)
+		mem := g.sim.GetMem(a)
+		curState, curWar := g.rec.GetMemState(gmars.Address(i))
+
+		sprite := getSprite(curState, mem)
+		if sprite >= SpriteFirst {
+			g.blitSprite(screen, sprite, a, curWar)
+		}
+
+		// Display CoreTerminated above the memory cell, as we do with heads.
+		// We can then display the cause of death, if we look two steps behind.
+		// (One step behind is always going to be warrior's own execute, so not interesting.)
+		if curState == gmars.CoreTerminated {
+			prevState, prevWar := g.rec.GetMemStateN(gmars.Address(i), 2)
+			sprite := getSprite(prevState, mem)
+			if sprite >= SpriteFirst {
+				g.blitSprite(screen, sprite, a, prevWar)
+			}
+
+			g.blitSprite(screen, SpriteDead, a, curWar)
+		}
+	}
+
+	wc := g.sim.WarriorCount()
+	for wid := 0; wid < int(wc); wid++ {
+		w := g.sim.GetWarrior(wid)
 		if w == nil || !w.Alive() {
 			continue
 		}
 
+		// The idea here is to show the PC queue using transparency.  Since
+		// warriors often SPL thousands of times, often on top of the same
+		// memory cells, we instead opt to show how soon *any* PC (head) on a
+		// memory cell will execute.  So if a cell has a thousand heads, but
+		// none of them is scheduled any time soon, the head will be shown
+		// semi-transparent.
+		earliestOccurence := make(map[gmars.Address]int)
+		position := 0
 		for _, pc := range w.Queue()[1:] {
-
-			op := &ebiten.DrawImageOptions{ColorScale: warriorQueueColors[i]}
-			op.GeoM.Translate(float64((pc%xCount)*tileSize), float64((pc/xCount)*tileSize))
-
-			sx := (t % tileXCount) * tileSize
-			sy := (t / tileXCount) * tileSize
-			screen.DrawImage(tilesImage.SubImage(image.Rect(sx, sy, sx+tileSize, sy+tileSize)).(*ebiten.Image), op)
+			if _, ok := earliestOccurence[pc]; !ok {
+				earliestOccurence[pc] = position
+			}
+			position++
 		}
 
-		t = 1
+		queuePositions := make([]queuePosition, len(earliestOccurence))
+		i := 0
+		for pc, occurence := range earliestOccurence {
+			queuePositions[i] = queuePosition{
+				PC:               pc,
+				EarliestPosition: occurence,
+			}
+			i++
+		}
+
+		sort.Slice(queuePositions, func(i, j int) bool {
+			return queuePositions[i].EarliestPosition < queuePositions[j].EarliestPosition
+		})
+
+		valDecr := (1.0 - minimumHeadTransparency) / float64(len(queuePositions))
+		val := 1.0
+		for _, qp := range queuePositions {
+			g.blitSpriteAlpha(screen, SpriteHead, qp.PC, wid, float32(val*val))
+			val -= valDecr
+		}
+
 		pc, _ := w.NextPC()
-		op := &ebiten.DrawImageOptions{ColorScale: execColor}
-		op.GeoM.Translate(float64((pc%xCount)*tileSize), float64((pc/xCount)*tileSize))
-
-		sx := (t % tileXCount) * tileSize
-		sy := (t / tileXCount) * tileSize
-		screen.DrawImage(tilesImage.SubImage(image.Rect(sx, sy, sx+tileSize, sy+tileSize)).(*ebiten.Image), op)
-
+		g.blitSprite(screen, SpriteHeadActive, pc, wid)
 	}
 
 	// Draw info
@@ -100,18 +230,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if w1a || w2a {
 
 			var msg string
+			color := color.Color(colornames.White)
 			op = &text.DrawOptions{}
 			op.GeoM.Translate(115, 465)
 			if w1a && w2a {
-				op.ColorScale = warriorColors[0]
 				msg = "tie"
 			} else if w1a {
-				op.ColorScale = warriorColors[1]
+				color = g.colorCache[0]
 				msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(0).Name())
 			} else if w2a {
-				op.ColorScale = warriorColors[2]
+				color = g.colorCache[1]
 				msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(1).Name())
 			}
+
+			op.ColorScale.ScaleWithColor(color)
 			text.Draw(screen, msg, &text.GoTextFace{
 				Source: mplusFaceSource,
 				Size:   10,
@@ -125,5 +257,4 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   10,
 		}, op)
 	}
-
 }

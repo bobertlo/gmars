@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"log"
-	"math/rand"
 	"os"
 
 	"github.com/bobertlo/gmars"
@@ -68,6 +67,7 @@ func main() {
 	processes := gmars.Address(*procFlag)
 	cycles := gmars.Address(*cycleFlag)
 	length := gmars.Address(*lenFlag)
+	fixed := gmars.Address(*fixedFlag)
 
 	var mode gmars.SimulatorMode
 	if *use88Flag {
@@ -75,7 +75,7 @@ func main() {
 	} else {
 		mode = gmars.ICWS94
 	}
-	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length)
+	config := gmars.NewQuickConfig(mode, coresize, processes, cycles, length, fixed)
 
 	args := flag.Args()
 
@@ -116,32 +116,21 @@ func main() {
 	if *debugFlag {
 		sim.AddReporter(gmars.NewDebugReporter(sim))
 	}
-	rec := gmars.NewStateRecorder(sim)
+	rec := gmars.NewStateRecorder(sim, 10)
 	rec.SetRecordRead(*showReadFlag)
 	sim.AddReporter(rec)
-
-	w2start := *fixedFlag
-	if w2start == 0 {
-		minStart := 2 * config.Length
-		maxStart := config.CoreSize - config.Length - 1
-		startRange := maxStart - minStart
-		w2start = rand.Intn(int(startRange)+1) + int(minStart)
-	}
 
 	sim.AddWarrior(&w1data)
 	sim.AddWarrior(&w2data)
 
 	sim.SpawnWarrior(0, 0)
-	sim.SpawnWarrior(1, gmars.Address(w2start))
+	sim.SpawnWarrior(1, config.GetW2Start())
 
-	game := &Game{
-		sim:       sim,
-		rec:       *rec,
-		speedStep: defaultSpeedStep,
-	}
+	game := NewGame(config, sim, rec, defaultSpeedStep)
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle(fmt.Sprintf("gMARS - '%s' vs '%s'", w1data.Name, w2data.Name))
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
