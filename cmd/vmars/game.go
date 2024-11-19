@@ -45,15 +45,16 @@ func (g *Game) handleInput() {
 		g.sim.Reset()
 		g.sim.SpawnWarrior(0, 0)
 
-		w2start := g.fixedStart
-		if w2start == 0 {
-			minStart := 2 * g.config.Length
-			maxStart := g.config.CoreSize - g.config.Length - 1
-			startRange := maxStart - minStart
-			w2start = rand.Intn(int(startRange)+1) + int(minStart)
+		if g.sim.WarriorCount() > 1 {
+			w2start := g.fixedStart
+			if w2start == 0 {
+				minStart := 2 * g.config.Length
+				maxStart := g.config.CoreSize - g.config.Length - 1
+				startRange := maxStart - minStart
+				w2start = rand.Intn(int(startRange)+1) + int(minStart)
+			}
+			g.sim.SpawnWarrior(1, gmars.Address(w2start))
 		}
-
-		g.sim.SpawnWarrior(1, gmars.Address(w2start))
 
 		g.finished = false
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
@@ -78,7 +79,9 @@ func (g *Game) runCycle() {
 		return
 	}
 
-	if g.sim.WarriorLivingCount() > 1 && g.sim.CycleCount() < g.sim.MaxCycles() {
+	count := g.sim.WarriorCount()
+	living := g.sim.WarriorLivingCount()
+	if ((count > 1 && living > 1) || living > 0) && g.sim.CycleCount() < g.sim.MaxCycles() {
 		g.sim.RunCycle()
 	} else {
 		g.finished = true
