@@ -46,53 +46,49 @@ func main() {
 
 	args := flag.Args()
 
-	if *assembleFlag {
-		if len(args) != 1 {
-			fmt.Println("wrong number of arguments")
+	if len(args) > 2 {
+		fmt.Fprintf(os.Stderr, "only 2 warrior battles supported")
+		os.Exit(1)
+	}
+
+	warriors := make([]gmars.WarriorData, 0)
+	for _, arg := range args {
+		in, err := os.Open(arg)
+		if err != nil {
+			fmt.Printf("error opening warrior file '%s': %s\n", arg, err)
 			os.Exit(1)
 		}
-	} else if len(args) < 2 || len(args) > 2 {
-		fmt.Println("only 2 warrior battles supported")
-		os.Exit(1)
+		defer in.Close()
+
+		warrior, err := gmars.CompileWarrior(in, config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error parsing warrior file '%s': %s\n", arg, err)
+			os.Exit(1)
+		}
+
+		warriors = append(warriors, warrior)
 	}
 
-	w1file, err := os.Open(args[0])
-	if err != nil {
-		fmt.Printf("error opening warrior file '%s': %s\n", args[0], err)
+	if len(warriors) == 0 {
+		fmt.Fprintf(os.Stderr, "no warriors specified\n")
 		os.Exit(1)
 	}
-	defer w1file.Close()
-	w1data, err := gmars.CompileWarrior(w1file, config)
-	if err != nil {
-		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
-		os.Exit(1)
-	}
-	w1file.Close()
-
 	if *assembleFlag {
 		sim, err := gmars.NewSimulator(config)
 		if err != nil {
 			fmt.Printf("error creating sim: %s", err)
 		}
-		w1, err := sim.AddWarrior(&w1data)
-		if err != nil {
-			fmt.Printf("error loading warrior: %s", err)
+
+		for _, warriorData := range warriors {
+			w, err := sim.AddWarrior(&warriorData)
+			if err != nil {
+				fmt.Printf("error loading warrior: %s", err)
+			}
+			fmt.Println(w.LoadCode())
 		}
-		fmt.Println(w1.LoadCode())
+
 		return
 	}
-
-	w2file, err := os.Open(args[1])
-	if err != nil {
-		fmt.Printf("error opening warrior file '%s': %s\n", args[1], err)
-		os.Exit(1)
-	}
-	defer w1file.Close()
-	w2data, err := gmars.CompileWarrior(w2file, config)
-	if err != nil {
-		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
-	}
-	w1file.Close()
 
 	rounds := *roundFlag
 
@@ -117,42 +113,58 @@ func main() {
 			w2start = rand.Intn(int(startRange)+1) + int(minStart)
 		}
 
-		w1, err := sim.AddWarrior(&w1data)
+		w1, err := sim.AddWarrior(&warriors[0])
 		if err != nil {
 			fmt.Printf("error adding warrior 1: %s", err)
+			os.Exit(1)
 		}
 		err = sim.SpawnWarrior(0, 0)
 		if err != nil {
 			fmt.Printf("error adding warrior 1: %s", err)
+			os.Exit(1)
 		}
 
-		w2, err := sim.AddWarrior(&w2data)
-		if err != nil {
-			fmt.Printf("error adding warrior 2: %s", err)
-		}
-		err = sim.SpawnWarrior(1, gmars.Address(w2start))
-		if err != nil {
-			fmt.Printf("error spawning warrior 1: %s", err)
+		var w2 gmars.Warrior
+		if len(warriors) > 1 {
+			w, err := sim.AddWarrior(&warriors[1])
+			if err != nil {
+				fmt.Printf("error adding warrior 2: %s", err)
+				os.Exit(1)
+			}
+			err = sim.SpawnWarrior(1, gmars.Address(w2start))
+			if err != nil {
+				fmt.Printf("error spawning warrior 1: %s", err)
+				os.Exit(1)
+			}
+			w2 = w
 		}
 
 		sim.Run()
 
-		if w1.Alive() {
-			if w2.Alive() {
-				w1tie += 1
-			} else {
+		if len(warriors) == 1 {
+			if w1.Alive() {
 				w1win += 1
 			}
-		}
-
-		if w2.Alive() {
+		} else if len(warriors) == 2 {
 			if w1.Alive() {
-				w2tie += 1
-			} else {
-				w2win += 1
+				if w2.Alive() {
+					w1tie += 1
+				} else {
+					w1win += 1
+				}
+			}
+
+			if w2.Alive() {
+				if w1.Alive() {
+					w2tie += 1
+				} else {
+					w2win += 1
+				}
 			}
 		}
 	}
 	fmt.Printf("%d %d\n", w1win, w1tie)
-	fmt.Printf("%d %d\n", w2win, w2tie)
+	if len(warriors) > 1 {
+		fmt.Printf("%d %d\n", w2win, w2tie)
+	}
 }
