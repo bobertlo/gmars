@@ -94,28 +94,30 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// draw results if finished
 	if g.finished {
-		w1a := g.sim.GetWarrior(0).Alive()
-		w2a := g.sim.GetWarrior(1).Alive()
+		if g.sim.WarriorCount() > 1 {
+			w1a := g.sim.GetWarrior(0).Alive()
+			w2a := g.sim.GetWarrior(1).Alive()
 
-		if w1a || w2a {
+			if w1a || w2a {
 
-			var msg string
-			op = &text.DrawOptions{}
-			op.GeoM.Translate(115, 465)
-			if w1a && w2a {
-				op.ColorScale = warriorColors[0]
-				msg = "tie"
-			} else if w1a {
-				op.ColorScale = warriorColors[1]
-				msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(0).Name())
-			} else if w2a {
-				op.ColorScale = warriorColors[2]
-				msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(1).Name())
+				var msg string
+				op = &text.DrawOptions{}
+				op.GeoM.Translate(115, 465)
+				if w1a && w2a {
+					op.ColorScale = warriorColors[0]
+					msg = "tie"
+				} else if w1a {
+					op.ColorScale = warriorColors[1]
+					msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(0).Name())
+				} else if w2a {
+					op.ColorScale = warriorColors[2]
+					msg = fmt.Sprintf("%s wins", g.sim.GetWarrior(1).Name())
+				}
+				text.Draw(screen, msg, &text.GoTextFace{
+					Source: mplusFaceSource,
+					Size:   10,
+				}, op)
 			}
-			text.Draw(screen, msg, &text.GoTextFace{
-				Source: mplusFaceSource,
-				Size:   10,
-			}, op)
 		}
 	} else if !g.running {
 		op = &text.DrawOptions{}

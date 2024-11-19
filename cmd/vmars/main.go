@@ -89,35 +89,28 @@ func main() {
 
 	args := flag.Args()
 
-	if len(args) < 2 || len(args) > 2 {
-		fmt.Println("only 2 warrior battles supported")
+	if len(args) > 2 {
+		fmt.Fprintf(os.Stderr, "only 2 warrior battles supported")
 		os.Exit(1)
 	}
 
-	w1file, err := os.Open(args[0])
-	if err != nil {
-		fmt.Printf("error opening warrior file '%s': %s\n", args[0], err)
-		os.Exit(1)
-	}
-	defer w1file.Close()
-	w1data, err := gmars.CompileWarrior(w1file, config)
-	if err != nil {
-		fmt.Printf("error parsing warrior file '%s': %s\n", args[0], err)
-		os.Exit(1)
-	}
-	w1file.Close()
+	warriors := make([]gmars.WarriorData, 0)
+	for _, arg := range args {
+		in, err := os.Open(arg)
+		if err != nil {
+			fmt.Printf("error opening warrior file '%s': %s\n", arg, err)
+			os.Exit(1)
+		}
+		defer in.Close()
 
-	w2file, err := os.Open(args[1])
-	if err != nil {
-		fmt.Printf("error opening warrior file '%s': %s\n", args[1], err)
-		os.Exit(1)
+		warrior, err := gmars.CompileWarrior(in, config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error parsing warrior file '%s': %s\n", arg, err)
+			os.Exit(1)
+		}
+
+		warriors = append(warriors, warrior)
 	}
-	defer w1file.Close()
-	w2data, err := gmars.CompileWarrior(w2file, config)
-	if err != nil {
-		fmt.Printf("error parsing warrior file '%s': %s\n", args[1], err)
-	}
-	w1file.Close()
 
 	sim, err := gmars.NewReportingSimulator(config)
 	if err != nil {
@@ -130,19 +123,23 @@ func main() {
 	rec.SetRecordRead(*showReadFlag)
 	sim.AddReporter(rec)
 
-	w2start := *fixedFlag
-	if w2start == 0 {
-		minStart := 2 * config.Length
-		maxStart := config.CoreSize - config.Length - 1
-		startRange := maxStart - minStart
-		w2start = rand.Intn(int(startRange)+1) + int(minStart)
+	sim.AddWarrior(&warriors[0])
+	if len(warriors) > 1 {
+		sim.AddWarrior(&warriors[1])
 	}
 
-	sim.AddWarrior(&w1data)
-	sim.AddWarrior(&w2data)
-
 	sim.SpawnWarrior(0, 0)
-	sim.SpawnWarrior(1, gmars.Address(w2start))
+
+	if len(warriors) > 1 {
+		w2start := *fixedFlag
+		if w2start == 0 {
+			minStart := 2 * config.Length
+			maxStart := config.CoreSize - config.Length - 1
+			startRange := maxStart - minStart
+			w2start = rand.Intn(int(startRange)+1) + int(minStart)
+		}
+		sim.SpawnWarrior(1, gmars.Address(w2start))
+	}
 
 	game := &Game{
 		sim:        sim,
@@ -153,7 +150,11 @@ func main() {
 	}
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
-	ebiten.SetWindowTitle(fmt.Sprintf("gMARS - '%s' vs '%s'", w1data.Name, w2data.Name))
+	if len(warriors) > 1 {
+		ebiten.SetWindowTitle(fmt.Sprintf("gMARS - '%s' vs '%s'", warriors[0].Name, warriors[1].Name))
+	} else {
+		ebiten.SetWindowTitle(fmt.Sprintf("gMARS - '%s'", warriors[0].Name))
+	}
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
