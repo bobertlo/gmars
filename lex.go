@@ -156,6 +156,8 @@ func lexInput(l *lexer) lexStateFn {
 		fallthrough
 	case '>':
 		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
+	case ':':
+		return l.emitConsume(token{tokColon, ":"}, lexInput)
 	case '\x1a':
 		return l.consume(lexInput)
 	default:

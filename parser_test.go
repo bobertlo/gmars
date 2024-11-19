@@ -77,6 +77,21 @@ func TestParserPositive(t *testing.T) {
 			}},
 		},
 		{
+			input: "a: mov $0, $1 ; comment\n",
+			output: []sourceLine{{
+				line:     1,
+				labels:   []string{"a"},
+				typ:      lineInstruction,
+				op:       "mov",
+				amode:    "$",
+				a:        []token{{typ: tokNumber, val: "0"}},
+				bmode:    "$",
+				b:        []token{{typ: tokNumber, val: "1"}},
+				comment:  "; comment",
+				newlines: 1,
+			}},
+		},
+		{
 			input: "mov $ -1, $ 2 + 2\n",
 			output: []sourceLine{{
 				line:  1,

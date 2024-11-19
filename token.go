@@ -11,6 +11,7 @@ const (
 	tokNumber                       // (optionally) signed integer
 	tokExprOp                       // + - * / % ==
 	tokComma
+	tokColon
 	tokParenL
 	tokParenR
 	tokComment // includes semi-colon, no newline char
