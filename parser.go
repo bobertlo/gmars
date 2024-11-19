@@ -220,6 +220,8 @@ func parseComment(p *parser) parseStateFn {
 // parseLabels consumes text tokens until an op is read
 // label text token: parseLabels
 // op text token: parseOp
+// colon: parseColon
+// newline / comments: consume
 // anyting else: nil
 func parseLabels(p *parser) parseStateFn {
 	if p.nextToken.IsOp() {
@@ -227,6 +229,10 @@ func parseLabels(p *parser) parseStateFn {
 			return parsePseudoOp
 		}
 		return parseOp
+	}
+
+	if p.nextToken.typ == tokColon {
+		return parseColon
 	}
 
 	_, ok := p.symbols[p.nextToken.val]
@@ -249,6 +255,30 @@ func parseLabels(p *parser) parseStateFn {
 		return nil
 	}
 	return parseLabels
+}
+
+// from: parseLabels
+// newline or comments: parseColon
+// op: parseOp
+// anything else: nil
+func parseColon(p *parser) parseStateFn {
+	p.next()
+
+	// just consume newlines and comments for now
+	if p.nextToken.typ == tokNewline || p.nextToken.typ == tokComment {
+		p.next()
+		return parseColon
+	}
+
+	if p.nextToken.IsOp() {
+		if p.nextToken.IsPseudoOp() {
+			return parsePseudoOp
+		}
+		return parseOp
+	}
+
+	p.err = fmt.Errorf("line %d: op expected after colon, got '%s'", p.line, p.nextToken)
+	return nil
 }
 
 // from: parseLabels
