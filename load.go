@@ -343,6 +343,7 @@ func parseLoadFile88(reader io.Reader, coresize Address) (WarriorData, error) {
 			if fields[0] == "end" {
 				break
 			}
+			continue
 		}
 
 		// comma is ignored, but required
