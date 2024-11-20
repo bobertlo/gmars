@@ -163,6 +163,24 @@ func TestParserPositive(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: "label ;\ndat $0, $0\n",
+			output: []sourceLine{
+				{
+					line:     1,
+					codeLine: 0,
+					labels:   []string{"label"},
+					typ:      lineInstruction,
+					op:       "dat",
+					amode:    "$",
+					a:        []token{{typ: tokNumber, val: "0"}},
+					bmode:    "$",
+					b:        []token{{typ: tokNumber, val: "0"}},
+					comment:  "",
+					newlines: 1,
+				},
+			},
+		},
 	}
 
 	runParserTests(t, "parser positive", testCases)

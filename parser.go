@@ -224,6 +224,12 @@ func parseComment(p *parser) parseStateFn {
 // newline / comments: consume
 // anyting else: nil
 func parseLabels(p *parser) parseStateFn {
+	// just consume newlines and comments for now
+	if p.nextToken.typ == tokNewline || p.nextToken.typ == tokComment {
+		p.next()
+		return parseLabels
+	}
+
 	if p.nextToken.IsOp() {
 		if p.nextToken.IsPseudoOp() {
 			return parsePseudoOp
@@ -243,12 +249,6 @@ func parseLabels(p *parser) parseStateFn {
 	p.symbols[p.nextToken.val] = p.line
 	p.currentLine.labels = append(p.currentLine.labels, p.nextToken.val)
 	nextToken := p.next()
-
-	// just consume newlines and comments for now
-	if nextToken.typ == tokNewline || nextToken.typ == tokComment {
-		p.next()
-		return parseLabels
-	}
 
 	if nextToken.typ != tokText {
 		p.err = fmt.Errorf("line %d: label or op expected, got '%s'", p.line, nextToken)
