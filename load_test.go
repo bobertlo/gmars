@@ -18,7 +18,7 @@ type instructionParseTestCase struct {
 func TestLoadImp88(t *testing.T) {
 	config := ConfigKOTH88
 
-	reader := bytes.NewReader(imp_88_red)
+	reader := bytes.NewReader(Imp_88_red)
 	data, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 	require.Equal(t, "Imp", data.Name)
@@ -32,7 +32,7 @@ func TestLoadImp88(t *testing.T) {
 func TestLoadImp94(t *testing.T) {
 	config := ConfigNOP94
 
-	reader := bytes.NewReader(imp_94_red)
+	reader := bytes.NewReader(Imp_94_red)
 	data, err := ParseLoadFile(reader, config)
 	require.NoError(t, err)
 	require.Equal(t, "Imp", data.Name)
