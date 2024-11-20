@@ -115,9 +115,14 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 }
 
 func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
+	opLower := strings.ToLower(in.op)
 	var aMode, bMode AddressMode
 	if in.amode == "" {
-		aMode = DIRECT
+		if c.config.Mode == ICWS88 && opLower == "dat" {
+			aMode = IMMEDIATE
+		} else {
+			aMode = DIRECT
+		}
 	} else {
 		mode, err := getAddressMode(in.amode)
 		if err != nil {
@@ -126,7 +131,11 @@ func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 		aMode = mode
 	}
 	if in.bmode == "" {
-		bMode = DIRECT
+		if c.config.Mode == ICWS88 && opLower == "dat" {
+			bMode = IMMEDIATE
+		} else {
+			bMode = DIRECT
+		}
 	} else {
 		mode, err := getAddressMode(in.bmode)
 		if err != nil {
