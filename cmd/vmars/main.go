@@ -92,24 +92,38 @@ func main() {
 	if len(args) > 2 {
 		fmt.Fprintf(os.Stderr, "only 2 warrior battles supported")
 		os.Exit(1)
+	} else if len(args) == 0 {
+		fmt.Fprintf(os.Stderr, "loading demo warriors")
 	}
 
 	warriors := make([]gmars.WarriorData, 0)
-	for _, arg := range args {
-		in, err := os.Open(arg)
-		if err != nil {
-			fmt.Printf("error opening warrior file '%s': %s\n", arg, err)
-			os.Exit(1)
-		}
-		defer in.Close()
+	if len(args) == 0 {
+		for _, data := range [][]byte{gmars.BombSpiral_94_red, gmars.SimpleShot_94_red} {
+			warrior, err := gmars.CompileWarrior(bytes.NewReader(data), config)
+			if err != nil {
+				fmt.Printf("error compiling build-in warrior file: %s\n", err)
+				os.Exit(1)
+			}
 
-		warrior, err := gmars.CompileWarrior(in, config)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error parsing warrior file '%s': %s\n", arg, err)
-			os.Exit(1)
+			warriors = append(warriors, warrior)
 		}
+	} else {
+		for _, arg := range args {
+			in, err := os.Open(arg)
+			if err != nil {
+				fmt.Printf("error opening warrior file '%s': %s\n", arg, err)
+				os.Exit(1)
+			}
+			defer in.Close()
 
-		warriors = append(warriors, warrior)
+			warrior, err := gmars.CompileWarrior(in, config)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error parsing warrior file '%s': %s\n", arg, err)
+				os.Exit(1)
+			}
+
+			warriors = append(warriors, warrior)
+		}
 	}
 
 	sim, err := gmars.NewReportingSimulator(config)

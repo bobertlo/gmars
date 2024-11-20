@@ -6,11 +6,14 @@ import (
 
 var (
 	//go:embed warriors/88/imp.red
-	imp_88_red []byte
+	Imp_88_red []byte
 
 	//go:embed warriors/94/imp.red
-	imp_94_red []byte
+	Imp_94_red []byte
 
 	//go:embed warriors/94/simpleshot.red
-	simpleshot_94_red []byte
+	SimpleShot_94_red []byte
+
+	//go:embed warriors/94/bombspiral.red
+	BombSpiral_94_red []byte
 )
