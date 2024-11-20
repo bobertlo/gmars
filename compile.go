@@ -35,6 +35,7 @@ func (c *compiler) loadConstants() {
 	c.values["CORESIZE"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.CoreSize)}}
 	c.values["MAXLENGTH"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Length)}}
 	c.values["MAXPROCESSES"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Processes)}}
+	c.values["MINDISTANCE"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Distance)}}
 	// c.values["CURLINE"] = []token{{tokNumber, "0"}}
 }
 

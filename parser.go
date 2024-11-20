@@ -90,6 +90,7 @@ func (p *parser) loadPredefinedSymbols() {
 	p.symbols["CORESIZE"] = -1
 	p.symbols["MAXLENGTH"] = -1
 	p.symbols["MAXPROCESSES"] = -1
+	p.symbols["MINDISTANCE"] = -1
 	// p.symbols["CURLINE"] = -1
 }
 
