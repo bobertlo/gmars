@@ -24,7 +24,9 @@ func runParserTests(t *testing.T, setName string, tests []parserTestCase) {
 			assert.Error(t, err, fmt.Sprintf("%s test %d: error should be present", setName, i))
 		} else {
 			assert.NoError(t, err)
-			assert.Equal(t, test.output, source)
+			if test.output != nil {
+				assert.Equal(t, test.output, source)
+			}
 		}
 	}
 }
@@ -184,6 +186,18 @@ func TestParserPositive(t *testing.T) {
 	}
 
 	runParserTests(t, "parser positive", testCases)
+}
+
+func TestParserNoError(t *testing.T) {
+	testCases := []string{
+		"dat 0\n",
+		"label: label2: dat 0",
+		"label: : dat 0",
+	}
+
+	for _, val := range testCases {
+		runParserTests(t, "parser non negative", []parserTestCase{{input: val}})
+	}
 }
 
 func TestParserNegative(t *testing.T) {
