@@ -105,13 +105,19 @@ func main() {
 			continue
 		}
 
+		instructionsMatch := true
 		for i, inst := range in.Code {
 			if expected.Code[i] != inst {
 				fmt.Printf("%s: instruction mismatch: '%s' != '%s'\n", inPath, inst, expected.Code[i])
+				instructionsMatch = false
 			}
 		}
 
-		matches++
+		if instructionsMatch {
+			matches++
+		} else {
+			mismatches++
+		}
 	}
 
 	fmt.Println(compileErrors, "errors")

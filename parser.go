@@ -259,10 +259,14 @@ func parseLabels(p *parser) parseStateFn {
 
 // from: parseLabels
 // newline or comments: parseColon
-// op: parseOp
+// op text: parseOp
+// psudo op text: parsePseudoOp
+// text: parseLabels
 // anything else: nil
 func parseColon(p *parser) parseStateFn {
-	p.next()
+	for p.nextToken.typ == tokColon {
+		p.next()
+	}
 
 	// just consume newlines and comments for now
 	if p.nextToken.typ == tokNewline || p.nextToken.typ == tokComment {
@@ -275,6 +279,10 @@ func parseColon(p *parser) parseStateFn {
 			return parsePseudoOp
 		}
 		return parseOp
+	}
+
+	if p.nextToken.typ == tokText {
+		return parseLabels
 	}
 
 	p.err = fmt.Errorf("line %d: op expected after colon, got '%s'", p.line, p.nextToken)
