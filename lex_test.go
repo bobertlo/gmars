@@ -111,6 +111,17 @@ func TestLexer(t *testing.T) {
 				{tokError, "unexpected character: '~'"},
 			},
 		},
+		{
+			input: "label   ;\ndat 0",
+			expected: []token{
+				{tokText, "label"},
+				{tokComment, ";"},
+				{tokNewline, ""},
+				{tokText, "dat"},
+				{tokNumber, "0"},
+				{tokEOF, ""},
+			},
+		},
 	}
 
 	runLexTests(t, "TestLexer", testCases)
