@@ -93,7 +93,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "only 2 warrior battles supported")
 		os.Exit(1)
 	} else if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "loading demo warriors")
+		fmt.Fprintf(os.Stderr, "usage: vmars <warrior1.red> [warrior2]\nloading demo warriors...\n")
 	}
 
 	warriors := make([]gmars.WarriorData, 0)
@@ -161,6 +161,7 @@ func main() {
 		rec:        *rec,
 		speedStep:  defaultSpeedStep,
 		fixedStart: *fixedFlag,
+		running:    true,
 	}
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
