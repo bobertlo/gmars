@@ -79,10 +79,19 @@ func newParser(lex *lexer) *parser {
 		line:       1,
 	}
 	p.next()
+
+	p.loadPredefinedSymbols()
 	return p
 }
 
 type parseStateFn func(p *parser) parseStateFn
+
+func (p *parser) loadPredefinedSymbols() {
+	p.symbols["CORESIZE"] = -1
+	p.symbols["MAXLENGTH"] = -1
+	p.symbols["MAXPROCESSES"] = -1
+	// p.symbols["CURLINE"] = -1
+}
 
 // parse runs the state machine. the main flows are:
 //

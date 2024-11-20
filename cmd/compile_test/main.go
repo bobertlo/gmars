@@ -100,7 +100,7 @@ func main() {
 		compileSuccess++
 
 		if len(in.Code) != len(expected.Code) {
-			fmt.Printf("%s: length mismatch: %d != %d", inPath, len(in.Code), len(expected.Code))
+			fmt.Printf("%s: length mismatch: %d != %d\n", inPath, len(in.Code), len(expected.Code))
 			mismatches++
 			continue
 		}
