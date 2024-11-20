@@ -193,6 +193,7 @@ func TestParserNoError(t *testing.T) {
 		"dat 0\n",
 		"label: label2: dat 0",
 		"label: : dat 0",
+		"end\n\n--",
 	}
 
 	for _, val := range testCases {
