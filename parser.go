@@ -60,6 +60,7 @@ type parser struct {
 	err         error
 	currentLine sourceLine
 	metadata    WarriorData
+	endSeen     bool
 
 	// collected lines
 	lines []sourceLine
@@ -172,6 +173,10 @@ func (p *parser) consumeEmitLine(nextState parseStateFn) parseStateFn {
 // eof: nil
 // anything else: error
 func parseLine(p *parser) parseStateFn {
+	if p.endSeen {
+		return nil
+	}
+
 	p.currentLine = sourceLine{line: p.line}
 
 	switch p.nextToken.typ {
@@ -297,6 +302,10 @@ func parseColon(p *parser) parseStateFn {
 func parsePseudoOp(p *parser) parseStateFn {
 	p.currentLine.op = p.nextToken.val
 	p.currentLine.typ = linePseudoOp
+
+	if strings.ToLower(p.nextToken.val) == "end" {
+		p.endSeen = true
+	}
 
 	lastToken := p.nextToken
 	p.next()
