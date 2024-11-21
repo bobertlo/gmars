@@ -145,3 +145,16 @@ func TestLexEnd(t *testing.T) {
 	assert.True(t, eof)
 	assert.Equal(t, r, '\x00')
 }
+
+func TestBufTokenReader(t *testing.T) {
+	in := strings.NewReader("dat 0, 0\n")
+	lexer := newLexer(in)
+	tokens, err := lexer.Tokens()
+	require.NoError(t, err)
+
+	bReader := newBufTokenReader(tokens)
+	bTokens, err := bReader.Tokens()
+	require.NoError(t, err)
+
+	require.Equal(t, tokens, bTokens)
+}

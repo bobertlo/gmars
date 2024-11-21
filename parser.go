@@ -50,7 +50,7 @@ func (line sourceLine) subSymbol(label string, value []token) sourceLine {
 }
 
 type parser struct {
-	lex *lexer
+	lex tokenReader
 
 	// state for the running parser
 	nextToken   token
@@ -71,7 +71,7 @@ type parser struct {
 	references map[string]int
 }
 
-func newParser(lex *lexer) *parser {
+func newParser(lex tokenReader) *parser {
 	p := &parser{
 		lex:        lex,
 		symbols:    make(map[string]int),
