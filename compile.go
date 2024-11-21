@@ -31,11 +31,21 @@ func newCompiler(src []sourceLine, metadata WarriorData, config SimulatorConfig)
 	}, nil
 }
 
+func (c *compiler) loadConstants() {
+	c.values["CORESIZE"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.CoreSize)}}
+	c.values["MAXLENGTH"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Length)}}
+	c.values["MAXPROCESSES"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Processes)}}
+	c.values["MINDISTANCE"] = []token{{tokNumber, fmt.Sprintf("%d", c.config.Distance)}}
+	// c.values["CURLINE"] = []token{{tokNumber, "0"}}
+}
+
 // load symbol []token values into value map and code line numbers of
 // instruction labels into the label map
 func (c *compiler) loadSymbols() {
 	c.values = make(map[string][]token)
 	c.labels = make(map[string]int)
+
+	c.loadConstants()
 
 	curPseudoLine := 0
 	for _, line := range c.lines {
@@ -372,6 +382,7 @@ func (c *compiler) compile() (WarriorData, error) {
 			return WarriorData{}, fmt.Errorf("line %d: %s", line.line, err)
 		}
 		code = append(code, instruction)
+		// c.values["CURLINE"] = []token{{tokNumber, fmt.Sprintf("%d", len(code))}}
 	}
 
 	startExpr, err := c.expandExpression(c.startExpr, 0)
