@@ -227,6 +227,17 @@ func lexText(l *lexer) lexStateFn {
 
 func lexNumber(l *lexer) lexStateFn {
 	numberBuf := make([]rune, 0, 10)
+
+	// // remove leading zeros
+	for l.nextRune == '0' {
+		_, eof := l.next()
+		if eof {
+			l.tokens <- token{tokNumber, "0"}
+			l.tokens <- token{typ: tokEOF}
+			return nil
+		}
+	}
+
 	for unicode.IsDigit(l.nextRune) {
 		r, eof := l.next()
 		numberBuf = append(numberBuf, r)
@@ -235,6 +246,11 @@ func lexNumber(l *lexer) lexStateFn {
 			l.tokens <- token{typ: tokEOF}
 			return nil
 		}
+	}
+
+	if len(numberBuf) == 0 {
+		l.tokens <- token{tokNumber, "0"}
+		return lexInput
 	}
 
 	if len(numberBuf) > 0 {
