@@ -65,6 +65,8 @@ func (o OpCode) String() string {
 		return "DJN"
 	case SPL:
 		return "SPL"
+	case NOP:
+		return "NOP"
 	default:
 		return "???"
 	}

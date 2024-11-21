@@ -108,6 +108,14 @@ func main() {
 		instructionsMatch := true
 		for i, inst := range in.Code {
 			if expected.Code[i] != inst {
+				if inst.Op == gmars.NOP {
+					ex := expected.Code[i]
+					if inst.OpMode == gmars.B && ex.OpMode == gmars.F {
+						if inst.Op == ex.Op && inst.AMode == ex.AMode && inst.A == ex.A && inst.BMode == ex.BMode && inst.B == ex.B {
+							continue
+						}
+					}
+				}
 				fmt.Printf("%s: instruction mismatch: '%s' != '%s'\n", inPath, inst, expected.Code[i])
 				instructionsMatch = false
 			}

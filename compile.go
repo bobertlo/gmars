@@ -78,7 +78,7 @@ func (c *compiler) loadSymbols() {
 func (c *compiler) reloadReferences() error {
 	c.labels = make(map[string]int)
 
-	curPseudoLine := 1
+	var curPseudoLine int
 	for _, line := range c.lines {
 		if line.typ == lineInstruction {
 			for _, label := range line.labels {
@@ -87,7 +87,7 @@ func (c *compiler) reloadReferences() error {
 					return fmt.Errorf("line %d: label '%s' redefined", line.line, label)
 				}
 				c.labels[label] = line.codeLine
-				curPseudoLine++
+				curPseudoLine = line.codeLine + 1
 			}
 		} else if line.typ == linePseudoOp {
 			for _, label := range line.labels {
