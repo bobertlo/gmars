@@ -199,7 +199,9 @@ func parseLine(p *parser) parseStateFn {
 		} else if strings.HasPrefix(p.nextToken.val, ";author") {
 			p.metadata.Author = strings.TrimSpace(p.nextToken.val[7:])
 		} else if strings.HasPrefix(p.nextToken.val, ";strategy") {
-			p.metadata.Strategy += p.nextToken.val[10:] + "\n"
+			if len(p.nextToken.val) > 10 {
+				p.metadata.Strategy += p.nextToken.val[10:] + "\n"
+			}
 		}
 		p.currentLine.typ = lineComment
 		return parseComment

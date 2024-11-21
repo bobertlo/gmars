@@ -81,6 +81,20 @@ func TestValidInput(t *testing.T) {
 	}
 }
 
+func TestValidInput94(t *testing.T) {
+	// random inputs that are valid but not worth validating output
+	cases := []string{
+		"ADD.BA $ 1, $ 1\n",
+	}
+
+	config := ConfigNOP94
+	for i, testCase := range cases {
+		reader := strings.NewReader(testCase)
+		_, err := ParseLoadFile(reader, config)
+		assert.NoError(t, err, "test: %d' '%s'", i, testCase)
+	}
+}
+
 func TestInvalidInput(t *testing.T) {
 	// random inputs that will throw an error
 	cases := []string{
