@@ -396,13 +396,14 @@ func parseOp(p *parser) parseStateFn {
 
 	p.next()
 
+	if p.nextToken.typ == tokAddressMode {
+		return parseModeA
+	}
 	if p.nextToken.IsExpressionTerm() && p.nextToken.val != "*" {
 		return parseExprA
 	}
 
 	switch p.nextToken.typ {
-	case tokAddressMode:
-		return parseModeA
 	case tokExprOp:
 		if p.nextToken.val == "*" {
 			return parseModeA

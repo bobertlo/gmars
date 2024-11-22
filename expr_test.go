@@ -103,12 +103,32 @@ func TestEvaluateExpressionPositive(t *testing.T) {
 
 		// handle signs
 		"1 - -1": 2,
+
+		// logic
+		"1 > 2":        0,
+		"2 > 1":        1,
+		"1 < 2":        1,
+		"2 < 1":        0,
+		"1 >= 1":       1,
+		"2 <= 2":       1,
+		"8000 == 8000": 1,
+		"8000 == 800":  0,
+		// hmmm, these need to be fixed
+		// "1 && 1":           1,
+		// "1 && 0":           0,
+		// "1 || 1":           1,
+		// "1 || 0":           0,
+		"2 == 1 || 2 == 2": 1,
+		"2 == 1 || 2 == 3": 0,
 	}
 
 	for input, expected := range testCases {
 		lexer := newLexer(strings.NewReader(input))
 		tokens, err := lexer.Tokens()
 		require.NoError(t, err)
+
+		// trim EOF from input
+		tokens = tokens[:len(tokens)-1]
 
 		val, err := evaluateExpression(tokens)
 		require.NoError(t, err)

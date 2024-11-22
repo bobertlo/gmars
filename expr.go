@@ -75,7 +75,7 @@ func expandExpressions(values map[string][]token, graph map[string][]string) (ma
 
 func combineSigns(expr []token) []token {
 	out := make([]token, 0, len(expr))
-	lastOut := token{tokEOF, ""}
+	lastOut := token{typ: tokEOF}
 
 	// please forgive me for this lol
 	for i := 0; i < len(expr); i++ {
@@ -122,6 +122,12 @@ func flipDoubleNegatives(expr []token) []token {
 }
 
 func evaluateExpression(expr []token) (int, error) {
+	for _, tok := range expr {
+		if tok.typ == tokText || !tok.IsExpressionTerm() {
+			return 0, fmt.Errorf("unexpected token in expressoin: '%s'", tok)
+		}
+	}
+
 	combinedExpr := combineSigns(expr)
 	flippedExpr := flipDoubleNegatives(combinedExpr)
 

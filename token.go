@@ -76,5 +76,10 @@ func (t token) IsExpressionTerm() bool {
 	if t.typ == tokExprOp || t.typ == tokNumber || t.typ == tokText || t.typ == tokParenL || t.typ == tokParenR {
 		return true
 	}
+	if t.typ == tokAddressMode {
+		if t.val == ">" || t.val == "<" {
+			return true
+		}
+	}
 	return false
 }

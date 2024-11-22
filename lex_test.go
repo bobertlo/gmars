@@ -12,14 +12,20 @@ import (
 type lexTestCase struct {
 	input    string
 	expected []token
+	err      bool
 }
 
 func runLexTests(t *testing.T, setName string, testCases []lexTestCase) {
 	for i, test := range testCases {
 		l := newLexer(strings.NewReader(test.input))
 		out, err := l.Tokens()
-		require.NoError(t, err, fmt.Errorf("%s test %d: error: %s", setName, i, err))
-		assert.Equal(t, test.expected, out, fmt.Sprintf("%s test %d", setName, i))
+		if test.err {
+			require.Error(t, err, fmt.Sprintf("%s test %d", setName, i))
+			require.Equal(t, out, test.expected, fmt.Sprintf("%s test %d", setName, i))
+		} else {
+			require.NoError(t, err, fmt.Errorf("%s test %d: error: %s", setName, i, err))
+			assert.Equal(t, test.expected, out, fmt.Sprintf("%s test %d", setName, i))
+		}
 	}
 }
 
@@ -122,9 +128,56 @@ func TestLexer(t *testing.T) {
 				{tokEOF, ""},
 			},
 		},
+		{
+			input: "for CORESIZE==1\n",
+			expected: []token{
+				{tokText, "for"},
+				{tokText, "CORESIZE"},
+				{tokExprOp, "=="},
+				{tokNumber, "1"},
+				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "CORESIZE==8000||CORESIZE==800\n",
+			expected: []token{
+				{tokText, "CORESIZE"},
+				{tokExprOp, "=="},
+				{tokNumber, "8000"},
+				{tokExprOp, "||"},
+				{tokText, "CORESIZE"},
+				{tokExprOp, "=="},
+				{tokNumber, "800"},
+				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
+		{
+			input: "1&&2\n",
+			expected: []token{
+				{tokNumber, "1"},
+				{tokExprOp, "&&"},
+				{tokNumber, "2"},
+				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
 	}
 
 	runLexTests(t, "TestLexer", testCases)
+}
+
+func TestLexNegative(t *testing.T) {
+	inputs := []string{
+		"1 =! 0",
+	}
+
+	for _, input := range inputs {
+		tokens, err := LexInput(strings.NewReader(input))
+		require.NoError(t, err)
+		require.Equal(t, tokError, tokens[len(tokens)-1].typ)
+	}
 }
 
 func TestLexEnd(t *testing.T) {
