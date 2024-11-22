@@ -125,7 +125,7 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 				if labelOk {
 					val := (label - line) % int(c.m)
 					if val < 0 {
-						output = append(output, token{tokExprOp, "-"}, token{tokNumber, fmt.Sprintf("%d", -val)})
+						output = append(output, token{tokSymbol, "-"}, token{tokNumber, fmt.Sprintf("%d", -val)})
 					} else {
 						output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
 					}
@@ -289,7 +289,7 @@ func (c *compiler) expandFor(start, end int) error {
 						if j == 1 {
 							newValue = []token{{tokNumber, "0"}}
 						} else {
-							newValue = []token{{tokExprOp, "-"}, {tokNumber, fmt.Sprintf("%d", -(1 - j))}}
+							newValue = []token{{tokSymbol, "-"}, {tokNumber, fmt.Sprintf("%d", -(1 - j))}}
 						}
 					}
 					thisLine = thisLine.subSymbol(label, newValue)

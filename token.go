@@ -5,11 +5,10 @@ import "strings"
 type tokenType uint8
 
 const (
-	tokError       tokenType = iota // returned when an error is encountered
-	tokText                         // used for labels, symbols, and opcodes
-	tokAddressMode                  // $ # { } < >
-	tokNumber                       // (optionally) signed integer
-	tokExprOp                       // + - * / % ==
+	tokError  tokenType = iota // returned when an error is encountered
+	tokText                    // used for labels, symbols, and opcodes
+	tokNumber                  // (optionally) signed integer
+	tokSymbol                  // address modes and symbols for aritmetic, comparison, ang logic
 	tokComma
 	tokColon
 	tokParenL
@@ -50,6 +49,16 @@ func (t token) IsOp() bool {
 	return t.IsPseudoOp()
 }
 
+func (t token) IsAddressMode() bool {
+	if t.typ != tokSymbol {
+		return false
+	}
+	if t.val == "$" || t.val == "#" || t.val == "@" || t.val == "*" || t.val == "{" || t.val == "<" || t.val == "}" || t.val == ">" {
+		return true
+	}
+	return false
+}
+
 func (t token) NoOperandsOk() bool {
 	lower := strings.ToLower(t.val)
 	return lower == "end" || lower == "rof"
@@ -73,13 +82,14 @@ func (t token) IsPseudoOp() bool {
 }
 
 func (t token) IsExpressionTerm() bool {
-	if t.typ == tokExprOp || t.typ == tokNumber || t.typ == tokText || t.typ == tokParenL || t.typ == tokParenR {
+	if t.typ == tokSymbol || t.typ == tokNumber || t.typ == tokText || t.typ == tokParenL || t.typ == tokParenR {
 		return true
 	}
-	if t.typ == tokAddressMode {
-		if t.val == ">" || t.val == "<" {
-			return true
+	if t.typ == tokSymbol {
+		if t.val == "}" || t.val == "{" || t.val == "#" || t.val == "$" || t.val == "@" {
+			return false
 		}
+		return true
 	}
 	return false
 }

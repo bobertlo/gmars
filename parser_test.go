@@ -101,13 +101,13 @@ func TestParserPositive(t *testing.T) {
 				op:    "mov",
 				amode: "$",
 				a: []token{
-					{typ: tokExprOp, val: "-"},
+					{typ: tokSymbol, val: "-"},
 					{typ: tokNumber, val: "1"},
 				},
 				bmode: "$",
 				b: []token{
 					{typ: tokNumber, val: "2"},
-					{typ: tokExprOp, val: "+"},
+					{typ: tokSymbol, val: "+"},
 					{typ: tokNumber, val: "2"},
 				},
 				comment:  "",
@@ -122,12 +122,12 @@ func TestParserPositive(t *testing.T) {
 				op:    "mov",
 				amode: "*",
 				a: []token{
-					{typ: tokExprOp, val: "-"},
+					{typ: tokSymbol, val: "-"},
 					{typ: tokNumber, val: "1"},
 				},
 				bmode: "*",
 				b: []token{
-					{typ: tokExprOp, val: "-"},
+					{typ: tokSymbol, val: "-"},
 					{typ: tokNumber, val: "1"},
 				},
 				comment:  "",

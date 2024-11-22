@@ -11,8 +11,8 @@ import (
 func TestExpandExpressions(t *testing.T) {
 	values := map[string][]token{
 		"a": {{tokNumber, "1"}},
-		"c": {{tokText, "a"}, {tokExprOp, "*"}, {tokText, "b"}},
-		"b": {{tokText, "a"}, {tokExprOp, "+"}, {tokNumber, "2"}},
+		"c": {{tokText, "a"}, {tokSymbol, "*"}, {tokText, "b"}},
+		"b": {{tokText, "a"}, {tokSymbol, "+"}, {tokNumber, "2"}},
 	}
 	graph := map[string][]string{
 		"b": {"a"},
@@ -23,8 +23,8 @@ func TestExpandExpressions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string][]token{
 		"a": {{tokNumber, "1"}},
-		"b": {{tokNumber, "1"}, {tokExprOp, "+"}, {tokNumber, "2"}},
-		"c": {{tokNumber, "1"}, {tokExprOp, "*"}, {tokNumber, "1"}, {tokExprOp, "+"}, {tokNumber, "2"}},
+		"b": {{tokNumber, "1"}, {tokSymbol, "+"}, {tokNumber, "2"}},
+		"c": {{tokNumber, "1"}, {tokSymbol, "*"}, {tokNumber, "1"}, {tokSymbol, "+"}, {tokNumber, "2"}},
 	}, output)
 }
 
@@ -37,8 +37,8 @@ func TestCombineSigns(t *testing.T) {
 			input: "1++-2",
 			output: []token{
 				{tokNumber, "1"},
-				{tokExprOp, "+"},
-				{tokExprOp, "-"},
+				{tokSymbol, "+"},
+				{tokSymbol, "-"},
 				{tokNumber, "2"},
 			},
 		},
@@ -46,8 +46,8 @@ func TestCombineSigns(t *testing.T) {
 			input: "1-+-2",
 			output: []token{
 				{tokNumber, "1"},
-				{tokExprOp, "-"},
-				{tokExprOp, "-"},
+				{tokSymbol, "-"},
+				{tokSymbol, "-"},
 				{tokNumber, "2"},
 			},
 		},
@@ -73,7 +73,7 @@ func TestFlipDoubleNegatives(t *testing.T) {
 			input: "1--1",
 			output: []token{
 				{tokNumber, "1"},
-				{tokExprOp, "+"},
+				{tokSymbol, "+"},
 				{tokNumber, "1"},
 			},
 		},

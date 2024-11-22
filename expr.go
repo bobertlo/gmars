@@ -79,7 +79,7 @@ func combineSigns(expr []token) []token {
 
 	// please forgive me for this lol
 	for i := 0; i < len(expr); i++ {
-		if lastOut.typ == tokExprOp {
+		if lastOut.typ == tokSymbol {
 			negativeFound := false
 			for ; i < len(expr); i++ {
 				if !(expr[i].val == "-" || expr[i].val == "+") {
@@ -90,7 +90,7 @@ func combineSigns(expr []token) []token {
 				}
 			}
 			if negativeFound {
-				out = append(out, token{tokExprOp, "-"})
+				out = append(out, token{tokSymbol, "-"})
 			}
 			if i < len(expr) {
 				out = append(out, expr[i])
@@ -111,7 +111,7 @@ func flipDoubleNegatives(expr []token) []token {
 	for i := 0; i < len(expr); i++ {
 		if expr[i].val == "-" {
 			if i+1 < len(expr) && expr[i+1].val == "-" {
-				out = append(out, token{tokExprOp, "+"})
+				out = append(out, token{tokSymbol, "+"})
 				i += 1
 				continue
 			}

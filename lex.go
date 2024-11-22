@@ -181,7 +181,7 @@ func lexInput(l *lexer) lexStateFn {
 	case '/':
 		fallthrough
 	case '%':
-		return l.emitConsume(token{tokExprOp, string(l.nextRune)}, lexInput)
+		return l.emitConsume(token{tokSymbol, string(l.nextRune)}, lexInput)
 	case '$':
 		fallthrough
 	case '#':
@@ -191,7 +191,7 @@ func lexInput(l *lexer) lexStateFn {
 	case '{':
 		fallthrough
 	case '}':
-		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
+		return l.emitConsume(token{tokSymbol, string(l.nextRune)}, lexInput)
 	case '<':
 		return l.consume(lexLt)
 	case '>':
@@ -286,7 +286,7 @@ func lexComment(l *lexer) lexStateFn {
 
 func lexEquals(l *lexer) lexStateFn {
 	if l.nextRune == '=' {
-		return l.emitConsume(token{tokExprOp, "=="}, lexInput)
+		return l.emitConsume(token{tokSymbol, "=="}, lexInput)
 	} else {
 		l.tokens <- token{tokError, fmt.Sprintf("expected '=' after '=', got '%s'", string(l.nextRune))}
 		return nil
@@ -295,7 +295,7 @@ func lexEquals(l *lexer) lexStateFn {
 
 func lexPipe(l *lexer) lexStateFn {
 	if l.nextRune == '|' {
-		return l.emitConsume(token{tokExprOp, "||"}, lexInput)
+		return l.emitConsume(token{tokSymbol, "||"}, lexInput)
 	} else {
 		l.tokens <- token{tokError, fmt.Sprintf("expected '|' after '|', got '%s'", string(l.nextRune))}
 		return nil
@@ -304,7 +304,7 @@ func lexPipe(l *lexer) lexStateFn {
 
 func lexAnd(l *lexer) lexStateFn {
 	if l.nextRune == '&' {
-		return l.emitConsume(token{tokExprOp, "&&"}, lexInput)
+		return l.emitConsume(token{tokSymbol, "&&"}, lexInput)
 	} else {
 		l.tokens <- token{tokError, fmt.Sprintf("expected '&' after '&', got '%s'", string(l.nextRune))}
 		return nil
@@ -313,18 +313,18 @@ func lexAnd(l *lexer) lexStateFn {
 
 func lexGt(l *lexer) lexStateFn {
 	if l.nextRune == '=' {
-		return l.emitConsume(token{tokExprOp, ">="}, lexInput)
+		return l.emitConsume(token{tokSymbol, ">="}, lexInput)
 	} else {
-		l.tokens <- token{tokAddressMode, ">"}
+		l.tokens <- token{tokSymbol, ">"}
 		return lexInput
 	}
 }
 
 func lexLt(l *lexer) lexStateFn {
 	if l.nextRune == '=' {
-		return l.emitConsume(token{tokExprOp, "<="}, lexInput)
+		return l.emitConsume(token{tokSymbol, "<="}, lexInput)
 	} else {
-		l.tokens <- token{tokAddressMode, "<"}
+		l.tokens <- token{tokSymbol, "<"}
 		return lexInput
 	}
 }
