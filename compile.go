@@ -125,7 +125,7 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 				if labelOk {
 					val := (label - line) % int(c.m)
 					if val < 0 {
-						output = append(output, token{tokExprOp, "-"}, token{tokNumber, fmt.Sprintf("%d", -val)})
+						output = append(output, token{tokSymbol, "-"}, token{tokNumber, fmt.Sprintf("%d", -val)})
 					} else {
 						output = append(output, token{tokNumber, fmt.Sprintf("%d", val)})
 					}
@@ -138,6 +138,43 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 		}
 	}
 	return output, nil
+}
+
+func (c *compiler) evaluateAssertion(assertText string) error {
+
+	assertTokens, err := LexInput(strings.NewReader(assertText))
+	if err != nil {
+		return err
+	}
+	assertTokens = assertTokens[:len(assertTokens)-1]
+	exprTokens, err := c.expandExpression(assertTokens, 0)
+	if err != nil {
+		return err
+	}
+	exprVal, err := evaluateExpression(exprTokens)
+	if err != nil {
+		return err
+	}
+	if exprVal == 0 {
+		return fmt.Errorf("assertion '%s' failed", assertText)
+	}
+	return nil
+}
+
+func (c *compiler) evaluateAssertions() error {
+	for _, line := range c.lines {
+		if line.typ != lineComment {
+			continue
+		}
+		if strings.HasPrefix(line.comment, ";assert") {
+			assertText := line.comment[7:]
+			err := c.evaluateAssertion(assertText)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
@@ -289,7 +326,7 @@ func (c *compiler) expandFor(start, end int) error {
 						if j == 1 {
 							newValue = []token{{tokNumber, "0"}}
 						} else {
-							newValue = []token{{tokExprOp, "-"}, {tokNumber, fmt.Sprintf("%d", -(1 - j))}}
+							newValue = []token{{tokSymbol, "-"}, {tokNumber, fmt.Sprintf("%d", -(1 - j))}}
 						}
 					}
 					thisLine = thisLine.subSymbol(label, newValue)
@@ -351,8 +388,12 @@ func (c *compiler) expandForLoops() error {
 }
 
 func (c *compiler) compile() (WarriorData, error) {
-
 	c.loadSymbols()
+
+	err := c.evaluateAssertions()
+	if err != nil {
+		return WarriorData{}, err
+	}
 
 	graph := buildReferenceGraph(c.values)
 	cyclic, cyclicKey := graphContainsCycle(graph)

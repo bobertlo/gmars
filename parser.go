@@ -396,14 +396,15 @@ func parseOp(p *parser) parseStateFn {
 
 	p.next()
 
+	if p.nextToken.IsAddressMode() {
+		return parseModeA
+	}
 	if p.nextToken.IsExpressionTerm() && p.nextToken.val != "*" {
 		return parseExprA
 	}
 
 	switch p.nextToken.typ {
-	case tokAddressMode:
-		return parseModeA
-	case tokExprOp:
+	case tokSymbol:
 		if p.nextToken.val == "*" {
 			return parseModeA
 		}
@@ -471,7 +472,7 @@ func parseExprA(p *parser) parseStateFn {
 func parseComma(p *parser) parseStateFn {
 	p.next()
 
-	if p.nextToken.typ == tokAddressMode || (p.nextToken.typ == tokExprOp && p.nextToken.val == "*") {
+	if p.nextToken.IsAddressMode() {
 		return parseModeB
 	} else if p.nextToken.IsExpressionTerm() {
 		return parseExprB

@@ -65,6 +65,11 @@ func newLexer(r io.Reader) *lexer {
 	return lex
 }
 
+func LexInput(r io.Reader) ([]token, error) {
+	lexer := newLexer(r)
+	return lexer.Tokens()
+}
+
 func (l *lexer) next() (rune, bool) {
 	if l.atEOF {
 		return '\x00', true
@@ -155,15 +160,12 @@ func lexInput(l *lexer) lexStateFn {
 		return lexNumber
 	}
 
-	// handle comments
-	if l.nextRune == ';' {
-		return lexComment
-	}
-
 	// dispatch based on next rune, or error
 	switch l.nextRune {
 	case '\x00':
 		l.tokens <- token{tokEOF, ""}
+	case ';':
+		return lexComment
 	case ',':
 		return l.emitConsume(token{tokComma, ","}, lexInput)
 	case '(':
@@ -179,7 +181,7 @@ func lexInput(l *lexer) lexStateFn {
 	case '/':
 		fallthrough
 	case '%':
-		return l.emitConsume(token{tokExprOp, string(l.nextRune)}, lexInput)
+		return l.emitConsume(token{tokSymbol, string(l.nextRune)}, lexInput)
 	case '$':
 		fallthrough
 	case '#':
@@ -189,13 +191,19 @@ func lexInput(l *lexer) lexStateFn {
 	case '{':
 		fallthrough
 	case '}':
-		fallthrough
+		return l.emitConsume(token{tokSymbol, string(l.nextRune)}, lexInput)
 	case '<':
-		fallthrough
+		return l.consume(lexLt)
 	case '>':
-		return l.emitConsume(token{tokAddressMode, string(l.nextRune)}, lexInput)
+		return l.consume(lexGt)
 	case ':':
 		return l.emitConsume(token{tokColon, ":"}, lexInput)
+	case '=':
+		return l.consume(lexEquals)
+	case '|':
+		return l.consume(lexPipe)
+	case '&':
+		return l.consume(lexAnd)
 	case '\x1a':
 		return l.consume(lexInput)
 	default:
@@ -276,7 +284,47 @@ func lexComment(l *lexer) lexStateFn {
 	return lexInput
 }
 
-func LexInput(r io.Reader) ([]token, error) {
-	lexer := newLexer(r)
-	return lexer.Tokens()
+func lexEquals(l *lexer) lexStateFn {
+	if l.nextRune == '=' {
+		return l.emitConsume(token{tokSymbol, "=="}, lexInput)
+	} else {
+		l.tokens <- token{tokError, fmt.Sprintf("expected '=' after '=', got '%s'", string(l.nextRune))}
+		return nil
+	}
+}
+
+func lexPipe(l *lexer) lexStateFn {
+	if l.nextRune == '|' {
+		return l.emitConsume(token{tokSymbol, "||"}, lexInput)
+	} else {
+		l.tokens <- token{tokError, fmt.Sprintf("expected '|' after '|', got '%s'", string(l.nextRune))}
+		return nil
+	}
+}
+
+func lexAnd(l *lexer) lexStateFn {
+	if l.nextRune == '&' {
+		return l.emitConsume(token{tokSymbol, "&&"}, lexInput)
+	} else {
+		l.tokens <- token{tokError, fmt.Sprintf("expected '&' after '&', got '%s'", string(l.nextRune))}
+		return nil
+	}
+}
+
+func lexGt(l *lexer) lexStateFn {
+	if l.nextRune == '=' {
+		return l.emitConsume(token{tokSymbol, ">="}, lexInput)
+	} else {
+		l.tokens <- token{tokSymbol, ">"}
+		return lexInput
+	}
+}
+
+func lexLt(l *lexer) lexStateFn {
+	if l.nextRune == '=' {
+		return l.emitConsume(token{tokSymbol, "<="}, lexInput)
+	} else {
+		l.tokens <- token{tokSymbol, "<"}
+		return lexInput
+	}
 }
