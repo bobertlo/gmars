@@ -140,6 +140,7 @@ func TestEvaluateExpressionNegative(t *testing.T) {
 	cases := []string{
 		")21",
 		"2^3",
+		"2{2",
 	}
 
 	for _, input := range cases {

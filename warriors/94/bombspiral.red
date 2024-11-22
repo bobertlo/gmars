@@ -2,6 +2,7 @@
 ;name bomb spiral
 ;author Robert Lowry
 ;strategy stone and imp launcher
+;assert CORESIZE == 8000
 
         spl istart
         jmp bstart

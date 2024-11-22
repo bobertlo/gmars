@@ -140,6 +140,43 @@ func (c *compiler) expandExpression(expr []token, line int) ([]token, error) {
 	return output, nil
 }
 
+func (c *compiler) evaluateAssertion(assertText string) error {
+
+	assertTokens, err := LexInput(strings.NewReader(assertText))
+	if err != nil {
+		return err
+	}
+	assertTokens = assertTokens[:len(assertTokens)-1]
+	exprTokens, err := c.expandExpression(assertTokens, 0)
+	if err != nil {
+		return err
+	}
+	exprVal, err := evaluateExpression(exprTokens)
+	if err != nil {
+		return err
+	}
+	if exprVal == 0 {
+		return fmt.Errorf("assertion '%s' failed", assertText)
+	}
+	return nil
+}
+
+func (c *compiler) evaluateAssertions() error {
+	for _, line := range c.lines {
+		if line.typ != lineComment {
+			continue
+		}
+		if strings.HasPrefix(line.comment, ";assert") {
+			assertText := line.comment[7:]
+			err := c.evaluateAssertion(assertText)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (c *compiler) assembleLine(in sourceLine) (Instruction, error) {
 	opLower := strings.ToLower(in.op)
 	var aMode, bMode AddressMode
@@ -351,8 +388,12 @@ func (c *compiler) expandForLoops() error {
 }
 
 func (c *compiler) compile() (WarriorData, error) {
-
 	c.loadSymbols()
+
+	err := c.evaluateAssertions()
+	if err != nil {
+		return WarriorData{}, err
+	}
 
 	graph := buildReferenceGraph(c.values)
 	cyclic, cyclicKey := graphContainsCycle(graph)

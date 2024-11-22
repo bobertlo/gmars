@@ -173,3 +173,31 @@ func TestCompileDoubleForLoop(t *testing.T) {
 	}, w.Code)
 	assert.Equal(t, 7, w.Start)
 }
+
+func TestAssertPositive(t *testing.T) {
+	config := ConfigNOP94
+
+	input := `
+;assert CORESIZE == 8000
+dat.f $123, $123	
+`
+
+	w, err := CompileWarrior(strings.NewReader(input), config)
+	require.NoError(t, err)
+	assert.Equal(t, []Instruction{
+		{Op: DAT, OpMode: F, AMode: DIRECT, A: 123, BMode: DIRECT, B: 123},
+	}, w.Code)
+}
+
+func TestAssertNegative(t *testing.T) {
+	config := ConfigNOP94
+
+	input := `
+;assert CORESIZE == 8192
+dat.f $123, $123	
+`
+
+	w, err := CompileWarrior(strings.NewReader(input), config)
+	require.Error(t, err)
+	require.Equal(t, WarriorData{}, w)
+}
