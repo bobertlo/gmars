@@ -176,7 +176,8 @@ func lexInput(l *lexer) lexStateFn {
 	case '\x1a':
 		return l.consume(lexInput)
 	default:
-		l.tokens <- token{tokError, fmt.Sprintf("unexpected character: '%s'", string(l.nextRune))}
+		l.tokens <- token{tokInvalid, string(l.nextRune)}
+		return l.consume(lexInput)
 	}
 
 	return nil

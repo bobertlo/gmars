@@ -114,7 +114,8 @@ func TestLexer(t *testing.T) {
 		{
 			input: "~",
 			expected: []token{
-				{tokError, "unexpected character: '~'"},
+				{tokInvalid, "~"},
+				{tokEOF, ""},
 			},
 		},
 		{

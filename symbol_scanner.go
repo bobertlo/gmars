@@ -14,6 +14,7 @@ type symbolScanner struct {
 
 	nextToken token
 	atEOF     bool
+	endSeen   bool
 	valBuf    []token
 	labelBuf  []string
 	forLevel  int
@@ -80,7 +81,7 @@ func scanLine(p *symbolScanner) scanStateFn {
 		p.labelBuf = make([]string, 0)
 		return scanLabels
 	default:
-		return preConsumeLine
+		return scanConsumeLine
 	}
 }
 
@@ -97,21 +98,35 @@ func scanLabels(p *symbolScanner) scanStateFn {
 			case "equ":
 				if p.forLevel == 0 {
 					p.valBuf = make([]token, 0)
-					return p.consume(preScanValue)
+					return p.consume(scanEquValue)
 				}
 			case "for":
 				p.forLevel++
-				return preConsumeLine
+				return scanConsumeLine
 			case "rof":
 				if p.forLevel > 0 {
 					p.forLevel--
 				}
-				return preConsumeLine
+				return scanConsumeLine
+			case "end":
+				p.endSeen = true
+				if p.forLevel > 1 {
+					return scanConsumeLine
+				} else {
+					return nil
+				}
 			default:
-				return preConsumeLine
+				return scanConsumeLine
 			}
 		} else if p.nextToken.IsOp() {
-			return preConsumeLine
+			return scanConsumeLine
+		} else if p.nextToken.typ == tokError {
+			if p.endSeen {
+				return nil
+			} else {
+
+				return nil
+			}
 		}
 		p.labelBuf = append(p.labelBuf, p.nextToken.val)
 		return p.consume(scanLabels)
@@ -122,11 +137,11 @@ func scanLabels(p *symbolScanner) scanStateFn {
 	case tokEOF:
 		return nil
 	default:
-		return preConsumeLine
+		return scanConsumeLine
 	}
 }
 
-func preConsumeLine(p *symbolScanner) scanStateFn {
+func scanConsumeLine(p *symbolScanner) scanStateFn {
 	switch p.nextToken.typ {
 	case tokNewline:
 		return p.consume(scanLine)
@@ -135,11 +150,11 @@ func preConsumeLine(p *symbolScanner) scanStateFn {
 	case tokEOF:
 		return nil
 	default:
-		return p.consume(preConsumeLine)
+		return p.consume(scanConsumeLine)
 	}
 }
 
-func preScanValue(p *symbolScanner) scanStateFn {
+func scanEquValue(p *symbolScanner) scanStateFn {
 	for p.nextToken.typ != tokNewline && p.nextToken.typ != tokEOF && p.nextToken.typ != tokError {
 		p.valBuf = append(p.valBuf, p.nextToken)
 		p.next()
