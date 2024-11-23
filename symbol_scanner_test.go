@@ -54,6 +54,10 @@ func TestSymbolScanner(t *testing.T) {
 				"test": {{tokNumber, "2"}},
 			},
 		},
+		{
+			input:  "for 1\nend\nrof\n ~",
+			output: map[string][]token{},
+		},
 	}
 	runSymbolScannerTests(t, tests)
 }

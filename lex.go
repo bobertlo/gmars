@@ -176,8 +176,13 @@ func lexInput(l *lexer) lexStateFn {
 	case '\x1a':
 		return l.consume(lexInput)
 	default:
+		// we will put this in the stream. if a file is formatted
+		// properly, and invalid input should be after an 'end'
+		// pseudo-op which will cause the parser to stop before
+		// processing this token, otherwise it is an error
 		l.tokens <- token{tokInvalid, string(l.nextRune)}
-		return l.consume(lexInput)
+		l.tokens <- token{typ: tokEOF}
+		return nil
 	}
 
 	return nil

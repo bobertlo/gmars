@@ -14,7 +14,6 @@ type symbolScanner struct {
 
 	nextToken token
 	atEOF     bool
-	endSeen   bool
 	valBuf    []token
 	labelBuf  []string
 	forLevel  int
@@ -109,7 +108,6 @@ func scanLabels(p *symbolScanner) scanStateFn {
 				}
 				return scanConsumeLine
 			case "end":
-				p.endSeen = true
 				if p.forLevel > 1 {
 					return scanConsumeLine
 				} else {
@@ -120,13 +118,8 @@ func scanLabels(p *symbolScanner) scanStateFn {
 			}
 		} else if p.nextToken.IsOp() {
 			return scanConsumeLine
-		} else if p.nextToken.typ == tokError {
-			if p.endSeen {
-				return nil
-			} else {
-
-				return nil
-			}
+		} else if p.nextToken.typ == tokInvalid {
+			return nil
 		}
 		p.labelBuf = append(p.labelBuf, p.nextToken.val)
 		return p.consume(scanLabels)
