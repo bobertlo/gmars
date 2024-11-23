@@ -451,11 +451,11 @@ func CompileWarrior(r io.Reader, config SimulatorConfig) (WarriorData, error) {
 		return WarriorData{}, err
 	}
 
-	scanner := newSymbolScanner(newBufTokenReader(tokens))
-	_, err = scanner.ScanInput()
-	if err != nil {
-		return WarriorData{}, fmt.Errorf("symbol scanner: %s", err)
-	}
+	// scanner := newSymbolScanner(newBufTokenReader(tokens))
+	// _, err = scanner.ScanInput()
+	// if err != nil {
+	// 	return WarriorData{}, fmt.Errorf("symbol scanner: %s", err)
+	// }
 
 	parser := newParser(newBufTokenReader(tokens))
 	sourceLines, metadata, err := parser.parse()
