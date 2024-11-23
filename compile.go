@@ -446,7 +446,19 @@ func (c *compiler) compile() (WarriorData, error) {
 
 func CompileWarrior(r io.Reader, config SimulatorConfig) (WarriorData, error) {
 	lexer := newLexer(r)
-	parser := newParser(lexer)
+	tokens, err := lexer.Tokens()
+	if err != nil {
+		return WarriorData{}, err
+	}
+
+	scanner := newSymbolScanner(newBufTokenReader(tokens))
+	symbols, err := scanner.ScanInput()
+	if err != nil {
+		return WarriorData{}, err
+	}
+	fmt.Println(symbols)
+
+	parser := newParser(newBufTokenReader(tokens))
 	sourceLines, metadata, err := parser.parse()
 	if err != nil {
 		return WarriorData{}, err
