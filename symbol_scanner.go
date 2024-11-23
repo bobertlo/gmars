@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+// symbol scanner accepts a tokenReader and scans for any
+// equ symbols contained. Symbols defined inside for loops
+// are ignored, allowing us to run the same code both before
+// and after for loops have been expanded.
 type symbolScanner struct {
 	lex tokenReader
 
@@ -12,6 +16,7 @@ type symbolScanner struct {
 	atEOF     bool
 	valBuf    []token
 	labelBuf  []string
+	forLevel  int
 	err       error
 
 	symbols map[string][]token
@@ -49,7 +54,7 @@ func (p *symbolScanner) next() token {
 
 // run the preprocessor
 func (p *symbolScanner) ScanInput() (map[string][]token, error) {
-	for state := preLine; state != nil; {
+	for state := scanLine; state != nil; {
 		state = state(p)
 	}
 	if p.err != nil {
@@ -69,11 +74,11 @@ func (p *symbolScanner) consume(nextState scanStateFn) scanStateFn {
 // run at start of each line
 // on text: preLabels
 // on other: preConsumeLine
-func preLine(p *symbolScanner) scanStateFn {
+func scanLine(p *symbolScanner) scanStateFn {
 	switch p.nextToken.typ {
 	case tokText:
 		p.labelBuf = make([]string, 0)
-		return preLabels
+		return scanLabels
 	default:
 		return preConsumeLine
 	}
@@ -81,27 +86,39 @@ func preLine(p *symbolScanner) scanStateFn {
 
 // text equ: consumeValue
 // text op: consumLine
-// text default: preLabels
+// text default: scanLabels
 // anything else: consumeLine
-func preLabels(p *symbolScanner) scanStateFn {
+func scanLabels(p *symbolScanner) scanStateFn {
 	switch p.nextToken.typ {
 	case tokText:
 		if p.nextToken.IsPseudoOp() {
-			if strings.ToLower(p.nextToken.val) == "equ" {
-				p.valBuf = make([]token, 0)
-				return p.consume(preScanValue)
-			} else {
+			opLower := strings.ToLower(p.nextToken.val)
+			switch opLower {
+			case "equ":
+				if p.forLevel == 0 {
+					p.valBuf = make([]token, 0)
+					return p.consume(preScanValue)
+				}
+			case "for":
+				p.forLevel++
+				return preConsumeLine
+			case "rof":
+				if p.forLevel > 0 {
+					p.forLevel--
+				}
+				return preConsumeLine
+			default:
 				return preConsumeLine
 			}
 		} else if p.nextToken.IsOp() {
 			return preConsumeLine
 		}
 		p.labelBuf = append(p.labelBuf, p.nextToken.val)
-		return p.consume(preLabels)
+		return p.consume(scanLabels)
 	case tokComment:
 		fallthrough
 	case tokNewline:
-		return p.consume(preLabels)
+		return p.consume(scanLabels)
 	case tokEOF:
 		return nil
 	default:
@@ -112,7 +129,7 @@ func preLabels(p *symbolScanner) scanStateFn {
 func preConsumeLine(p *symbolScanner) scanStateFn {
 	switch p.nextToken.typ {
 	case tokNewline:
-		return p.consume(preLine)
+		return p.consume(scanLine)
 	case tokError:
 		return nil
 	case tokEOF:
@@ -123,7 +140,7 @@ func preConsumeLine(p *symbolScanner) scanStateFn {
 }
 
 func preScanValue(p *symbolScanner) scanStateFn {
-	for p.nextToken.typ != tokNewline && p.nextToken.typ != tokEOF {
+	for p.nextToken.typ != tokNewline && p.nextToken.typ != tokEOF && p.nextToken.typ != tokError {
 		p.valBuf = append(p.valBuf, p.nextToken)
 		p.next()
 	}
@@ -137,5 +154,5 @@ func preScanValue(p *symbolScanner) scanStateFn {
 	}
 	p.valBuf = make([]token, 0)
 	p.labelBuf = make([]string, 0)
-	return p.consume(preLine)
+	return p.consume(scanLine)
 }

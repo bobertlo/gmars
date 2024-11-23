@@ -452,11 +452,10 @@ func CompileWarrior(r io.Reader, config SimulatorConfig) (WarriorData, error) {
 	}
 
 	scanner := newSymbolScanner(newBufTokenReader(tokens))
-	symbols, err := scanner.ScanInput()
+	_, err = scanner.ScanInput()
 	if err != nil {
-		return WarriorData{}, err
+		return WarriorData{}, fmt.Errorf("symbol scanner: %s", err)
 	}
-	fmt.Println(symbols)
 
 	parser := newParser(newBufTokenReader(tokens))
 	sourceLines, metadata, err := parser.parse()
