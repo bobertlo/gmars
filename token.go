@@ -15,6 +15,7 @@ const (
 	tokParenR
 	tokComment // includes semi-colon, no newline char
 	tokNewline
+	tokInvalid // pass invalid Runes through individually
 	tokEOF
 )
 

@@ -22,37 +22,6 @@ type lexer struct {
 	tokens   chan token
 }
 
-// butTokenReader implements the same interface as a streaming parser to let
-// us cache and reuse the token stream instead of making multiple passes with
-// the lexer
-type bufTokenReader struct {
-	tokens []token
-	i      int
-}
-
-func newBufTokenReader(tokens []token) *bufTokenReader {
-	return &bufTokenReader{tokens: tokens}
-}
-
-func (r *bufTokenReader) NextToken() (token, error) {
-	if r.i >= len(r.tokens) {
-		return token{}, fmt.Errorf("no more tokens")
-	}
-	next := r.tokens[r.i]
-	r.i++
-	return next, nil
-}
-
-func (r *bufTokenReader) Tokens() ([]token, error) {
-	if r.i >= len(r.tokens) {
-		return nil, fmt.Errorf("no more tokens")
-	}
-	subslice := r.tokens[r.i:]
-	ret := make([]token, len(subslice))
-	copy(subslice, ret)
-	return ret, nil
-}
-
 type lexStateFn func(l *lexer) lexStateFn
 
 func newLexer(r io.Reader) *lexer {
@@ -207,7 +176,13 @@ func lexInput(l *lexer) lexStateFn {
 	case '\x1a':
 		return l.consume(lexInput)
 	default:
-		l.tokens <- token{tokError, fmt.Sprintf("unexpected character: '%s'", string(l.nextRune))}
+		// we will put this in the stream. if a file is formatted
+		// properly, and invalid input should be after an 'end'
+		// pseudo-op which will cause the parser to stop before
+		// processing this token, otherwise it is an error
+		l.tokens <- token{tokInvalid, string(l.nextRune)}
+		l.tokens <- token{typ: tokEOF}
+		return nil
 	}
 
 	return nil
