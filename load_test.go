@@ -193,6 +193,12 @@ func TestValidOpModeCombos88(t *testing.T) {
 		{"SLT < 1, @ 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: B_INDIRECT, B: 2}},
 		{"SLT < 1, < 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: B_DECREMENT, B: 2}},
 
+		// these are not listed as legal instructions but do run in pMARS
+		{"SLT # 1, # 2\n", Instruction{Op: SLT, OpMode: AB, AMode: IMMEDIATE, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT $ 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: DIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT @ 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_INDIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT < 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: IMMEDIATE, B: 2}},
+
 		// JMP, JMN, JMZ, DJN, SPL
 		{"JMP $ 1, # 2\n", Instruction{Op: JMP, OpMode: B, AMode: DIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
 		{"JMP $ 1, $ 2\n", Instruction{Op: JMP, OpMode: B, AMode: DIRECT, A: 1, BMode: DIRECT, B: 2}},
