@@ -66,11 +66,12 @@ func TestLoadDwarf(t *testing.T) {
 	}, data.Code)
 }
 
-func TestValidInput(t *testing.T) {
+func TestValidInput88(t *testing.T) {
 	// random inputs that are valid but not worth validating output
 	cases := []string{
 		"END\n",
 		"\n\n",
+		"SLT $ 0, # 0\n", // not in 88 spec, pMARS supports this though
 	}
 
 	config := ConfigKOTH88
@@ -112,7 +113,7 @@ func TestInvalidInput(t *testing.T) {
 		"DAT # 0, $ 0\n",
 		"DAT # 0, @ 0\n",
 		"CMP $ 0, # 0\n",
-		"SLT $ 0, # 0\n",
+		// "SLT $ 0, # 0\n", // pMARS supports this
 		"ADD $ 0, # 0\n",
 		"SUB $ 0, # 0\n",
 		"JMP # 0, $ 0\n",
