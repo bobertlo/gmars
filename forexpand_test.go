@@ -22,13 +22,28 @@ func runForExpanderTests(t *testing.T, cases []forTestCase) {
 		expander := newForExpander(newBufTokenReader(tokens))
 		outTokens, err := expander.Tokens()
 		require.NoError(t, err)
-
 		require.Equal(t, test.output, outTokens)
 	}
 }
 
 func TestForExpander(t *testing.T) {
 	tests := []forTestCase{
+		{
+			input: "i for 2\ndat 0, i\nrof\n",
+			output: []token{
+				{tokText, "dat"},
+				{tokNumber, "0"},
+				{tokComma, ","},
+				{tokText, "1"},
+				{tokNewline, ""},
+				{tokText, "dat"},
+				{tokNumber, "0"},
+				{tokComma, ","},
+				{tokText, "2"},
+				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
 		{
 			input: "test equ 2\ndat 0, test\n",
 			output: []token{

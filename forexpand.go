@@ -10,8 +10,8 @@ type forExpander struct {
 
 	nextToken token
 	labelBuf  []string
-	// valueBuf  []token
-	atEOF bool
+	exprBuf   []token
+	atEOF     bool
 
 	tokens chan token
 	closed bool
@@ -52,6 +52,9 @@ func (f *forExpander) run() {
 	for state := forLine; state != nil; {
 		state = state(f)
 	}
+	// add an extra EOF in case we end without one
+	// we don't want to block on reading from the channel
+	f.tokens <- token{tokEOF, ""}
 	f.closed = true
 }
 
@@ -92,7 +95,7 @@ func forLine(f *forExpander) forStateFn {
 		f.labelBuf = make([]string, 0)
 		return forConsumeLabels
 	default:
-		return f.emitConsume(forConsumeLine)
+		return f.emitConsume(forConsumeEmitLine)
 	}
 }
 
@@ -108,7 +111,9 @@ func forConsumeLabels(f *forExpander) forStateFn {
 		if f.nextToken.IsPseudoOp() {
 			opLower := strings.ToLower(f.nextToken.val)
 			if opLower == "for" {
-				return forFor
+				f.next()
+				f.exprBuf = make([]token, 0)
+				return forConsumeExpression
 			} else {
 				return forWriteLabelsConsumeLine
 			}
@@ -128,15 +133,19 @@ func forConsumeLabels(f *forExpander) forStateFn {
 	}
 }
 
+// forWriteLabelsConsumeLine writes all the stored labels to the token channel,
+// emits the current nextToken and returns forConsumeLine
 func forWriteLabelsConsumeLine(f *forExpander) forStateFn {
 	for _, label := range f.labelBuf {
 		f.tokens <- token{tokText, label}
 	}
 	f.labelBuf = make([]string, 0)
-	return f.emitConsume(forConsumeLine)
+	return f.emitConsume(forConsumeEmitLine)
 }
 
-func forConsumeLine(f *forExpander) forStateFn {
+// forConsumeEmitLine consumes and emits tokens until a newline is reached
+// the newline is consumed and emitted before calling forLine
+func forConsumeEmitLine(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokNewline:
 		return f.emitConsume(forLine)
@@ -145,17 +154,40 @@ func forConsumeLine(f *forExpander) forStateFn {
 	case tokEOF:
 		return f.emitConsume(nil)
 	default:
-		return f.emitConsume(forConsumeLine)
+		return f.emitConsume(forConsumeEmitLine)
+	}
+}
+
+// forConsumeExpressions consumes tokens into the exprBuf until
+// a newline is reached then returns forInnerLine after consuming
+// the newline to
+// newline: forInnerLine
+// error: emit, nil
+// eof: nil
+// otherwise: forConsumeExpression
+func forConsumeExpression(f *forExpander) forStateFn {
+	switch f.nextToken.typ {
+	case tokNewline:
+		f.next()
+		return forInnerLine
+	case tokError:
+		return f.emitConsume(nil)
+	case tokEOF:
+		return nil
+	default:
+		// f.tokens <- f.nextToken
+		f.exprBuf = append(f.exprBuf, f.nextToken)
+		f.next()
+		return forConsumeExpression
 	}
 }
 
 func forFor(f *forExpander) forStateFn {
-	// if len(f.labelBuf) == 0 {
-
-	// }
+	f.tokens <- token{tokError, ""}
 	return nil
 }
 
 func forInnerLine(f *forExpander) forStateFn {
+	f.tokens <- token{tokError, ""}
 	return nil
 }
