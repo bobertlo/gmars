@@ -8,8 +8,9 @@ import (
 )
 
 type forTestCase struct {
-	input  string
-	output []token
+	input   string
+	symbols map[string][]token
+	output  []token
 }
 
 func runForExpanderTests(t *testing.T, cases []forTestCase) {
@@ -19,7 +20,7 @@ func runForExpanderTests(t *testing.T, cases []forTestCase) {
 		require.NotNil(t, tokens)
 
 		// scanner := newSymbolScanner(newBufTokenReader(tokens))
-		expander := newForExpander(newBufTokenReader(tokens))
+		expander := newForExpander(newBufTokenReader(tokens), test.symbols)
 		outTokens, err := expander.Tokens()
 		require.NoError(t, err)
 		require.Equal(t, test.output, outTokens)

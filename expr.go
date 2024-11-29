@@ -7,6 +7,34 @@ import (
 	"strconv"
 )
 
+func ExpandAndEvaluate(expr []token, symbols map[string][]token) (int, error) {
+	graph := buildReferenceGraph(symbols)
+
+	cyclic, key := graphContainsCycle(graph)
+	if cyclic {
+		return 0, fmt.Errorf("symbol graph contains cycles: %s", key)
+	}
+
+	resolved, err := expandExpressions(symbols, graph)
+	if err != nil {
+		return 0, err
+	}
+
+	expanded := make([]token, 0)
+	for _, tok := range expr {
+		if tok.typ == tokText {
+			symVal, ok := resolved[tok.val]
+			if ok {
+				expanded = append(expanded, symVal...)
+				continue
+			}
+		}
+		expanded = append(expanded, tok)
+	}
+
+	return evaluateExpression(expanded)
+}
+
 func expandValue(key string, values, resolved map[string][]token, graph map[string][]string) ([]token, error) {
 	// load key value or error
 	value, valOk := values[key]

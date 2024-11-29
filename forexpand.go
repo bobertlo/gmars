@@ -8,11 +8,20 @@ import (
 type forExpander struct {
 	lex tokenReader
 
+	// lexing state fields
 	nextToken token
 	labelBuf  []string
 	exprBuf   []token
 	atEOF     bool
 
+	// for state fields
+	forCount   int
+	forIndex   int
+	forContent []token
+
+	symbols map[string][]token
+
+	// output fields
 	tokens chan token
 	closed bool
 	err    error
@@ -20,8 +29,8 @@ type forExpander struct {
 
 type forStateFn func(f *forExpander) forStateFn
 
-func newForExpander(lex tokenReader) *forExpander {
-	f := &forExpander{lex: lex}
+func newForExpander(lex tokenReader, symbols map[string][]token) *forExpander {
+	f := &forExpander{lex: lex, symbols: symbols}
 	f.next()
 	f.tokens = make(chan token)
 	go f.run()
@@ -161,7 +170,7 @@ func forConsumeEmitLine(f *forExpander) forStateFn {
 // forConsumeExpressions consumes tokens into the exprBuf until
 // a newline is reached then returns forInnerLine after consuming
 // the newline to
-// newline: forInnerLine
+// newline: forFor
 // error: emit, nil
 // eof: nil
 // otherwise: forConsumeExpression
@@ -169,7 +178,7 @@ func forConsumeExpression(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokNewline:
 		f.next()
-		return forInnerLine
+		return forFor
 	case tokError:
 		return f.emitConsume(nil)
 	case tokEOF:
@@ -182,12 +191,41 @@ func forConsumeExpression(f *forExpander) forStateFn {
 	}
 }
 
+// input: exprBuf from forConsumeExpression
+// evaluates count expression and
 func forFor(f *forExpander) forStateFn {
-	f.tokens <- token{tokError, ""}
-	return nil
+	expr := make([]token, 0, len(f.exprBuf))
+	for _, token := range f.exprBuf {
+		if token.typ == tokEOF || token.typ == tokError {
+			f.err = fmt.Errorf("unexpected expression term: %s", token)
+		}
+		expr = append(expr, token)
+	}
+	f.exprBuf = expr
+
+	val, err := ExpandAndEvaluate(f.exprBuf, f.symbols)
+	if err != nil {
+		f.tokens <- token{tokError, fmt.Sprintf("%s", err)}
+		return nil
+	}
+
+	f.forCount = val
+	f.forIndex = 0 // should not be necessary
+	f.forContent = make([]token, 0)
+
+	return forInnerLine
 }
 
 func forInnerLine(f *forExpander) forStateFn {
-	f.tokens <- token{tokError, ""}
+	switch f.nextToken.typ {
+	case tokText:
+		return forInnerLabels
+	default:
+		return nil
+	}
+}
+
+// this is really just to drop labels before 'rof'
+func forInnerLabels(f *forExpander) forStateFn {
 	return nil
 }
