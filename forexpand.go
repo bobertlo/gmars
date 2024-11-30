@@ -39,6 +39,15 @@ func newForExpander(lex tokenReader, symbols map[string][]token) *forExpander {
 	return f
 }
 
+func ForExpand(lex tokenReader, symbols map[string][]token) ([]token, error) {
+	expander := newForExpander(lex, symbols)
+	tokens, err := expander.Tokens()
+	if err != nil {
+		return nil, err
+	}
+	return tokens, nil
+}
+
 func (p *forExpander) next() token {
 	if p.atEOF {
 		return token{typ: tokEOF}

@@ -451,19 +451,23 @@ func CompileWarrior(r io.Reader, config SimulatorConfig) (WarriorData, error) {
 		return WarriorData{}, err
 	}
 
-	for {
-		_, forSeen, err := ScanInput(newBufTokenReader(tokens))
-		if err != nil {
-			return WarriorData{}, fmt.Errorf("symbol scanner: %s", err)
-		}
-		if forSeen {
-			// tokens := ForExpand(newBufTokenReader(tokens), symbols)
-			// we will just break here for now or else it is an infinite loop
-			break
-		} else {
-			break
-		}
-	}
+	// for {
+	// 	symbols, forSeen, err := ScanInput(newBufTokenReader(tokens))
+	// 	if err != nil {
+	// 		return WarriorData{}, fmt.Errorf("symbol scanner: %s", err)
+	// 	}
+	// 	if forSeen {
+	// 		expandedTokens, err := ForExpand(newBufTokenReader(tokens), symbols)
+	// 		if err != nil {
+	// 			return WarriorData{}, fmt.Errorf("for: %s", err)
+	// 		}
+	// 		tokens = expandedTokens
+	// 		// oops the embedded for loops are not implemented
+	// 		break
+	// 	} else {
+	// 		break
+	// 	}
+	// }
 
 	parser := newParser(newBufTokenReader(tokens))
 	sourceLines, metadata, err := parser.parse()
