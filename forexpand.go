@@ -15,9 +15,11 @@ type forExpander struct {
 	atEOF     bool
 
 	// for state fields
-	forCount   int
-	forIndex   int
-	forContent []token
+	forCountLabel string
+	forLineLabels []string
+	forCount      int
+	forIndex      int
+	forContent    []token
 
 	symbols map[string][]token
 
@@ -124,10 +126,10 @@ func forConsumeLabels(f *forExpander) forStateFn {
 				f.exprBuf = make([]token, 0)
 				return forConsumeExpression
 			} else {
-				return forWriteLabelsConsumeLine
+				return forWriteLabelsEmitConsumeLine
 			}
 		} else if f.nextToken.IsOp() {
-			return forWriteLabelsConsumeLine
+			return forWriteLabelsEmitConsumeLine
 		} else {
 			f.labelBuf = append(f.labelBuf, f.nextToken.val)
 			f.next()
@@ -142,9 +144,9 @@ func forConsumeLabels(f *forExpander) forStateFn {
 	}
 }
 
-// forWriteLabelsConsumeLine writes all the stored labels to the token channel,
+// forWriteLabelsEmitConsumeLine writes all the stored labels to the token channel,
 // emits the current nextToken and returns forConsumeLine
-func forWriteLabelsConsumeLine(f *forExpander) forStateFn {
+func forWriteLabelsEmitConsumeLine(f *forExpander) forStateFn {
 	for _, label := range f.labelBuf {
 		f.tokens <- token{tokText, label}
 	}
@@ -192,7 +194,8 @@ func forConsumeExpression(f *forExpander) forStateFn {
 }
 
 // input: exprBuf from forConsumeExpression
-// evaluates count expression and
+// evaluates count expression and sets up for state
+// always returns forInnerLine or Error
 func forFor(f *forExpander) forStateFn {
 	expr := make([]token, 0, len(f.exprBuf))
 	for _, token := range f.exprBuf {
@@ -209,23 +212,116 @@ func forFor(f *forExpander) forStateFn {
 		return nil
 	}
 
+	if len(f.labelBuf) > 0 {
+		f.forCountLabel = f.labelBuf[len(f.labelBuf)-1]
+		if len(f.labelBuf) > 1 {
+			f.forLineLabels = f.labelBuf[:len(f.labelBuf)-1]
+		} else {
+			f.forLineLabels = []string{}
+		}
+	} else {
+		f.forCountLabel = ""
+		f.forLineLabels = []string{}
+	}
+
 	f.forCount = val
 	f.forIndex = 0 // should not be necessary
 	f.forContent = make([]token, 0)
+	f.labelBuf = make([]string, 0)
 
 	return forInnerLine
 }
 
+// text: forInnerConsumeLabels
+// other: forInnerConsumeLine
 func forInnerLine(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokText:
 		return forInnerLabels
 	default:
-		return nil
+		// emitconsume line into for buffer
+		return forInnerEmitConsumeLine
 	}
 }
 
 // this is really just to drop labels before 'rof'
 func forInnerLabels(f *forExpander) forStateFn {
+	switch f.nextToken.typ {
+	case tokText:
+		if f.nextToken.IsPseudoOp() && strings.ToLower(f.nextToken.val) == "rof" {
+			// just call to emit the buffer
+
+			return forRof
+		} else if f.nextToken.IsOp() {
+			// write labels and op into emit buffer then emitcomsume line
+			return forInnerEmitLabels
+		} else {
+			f.labelBuf = append(f.labelBuf, f.nextToken.val)
+			f.next()
+			return forInnerLabels
+		}
+	default:
+		return forInnerEmitLabels
+		// emit labels and emitconsume line into for buffer
+	}
+}
+
+func forInnerEmitLabels(f *forExpander) forStateFn {
+	for _, label := range f.labelBuf {
+		f.tokens <- token{tokText, label}
+	}
+	return forInnerEmitConsumeLine
+}
+
+func forInnerEmitConsumeLine(f *forExpander) forStateFn {
+	switch f.nextToken.typ {
+	case tokError:
+		// TODO
+		return nil
+	case tokEOF:
+		return nil
+	case tokNewline:
+		// f.tokens <- f.nextToken
+		f.forContent = append(f.forContent, f.nextToken)
+		f.next()
+		return forInnerLine
+	default:
+		f.forContent = append(f.forContent, f.nextToken)
+		f.next()
+		return forInnerEmitConsumeLine
+	}
+}
+
+func forRof(f *forExpander) forStateFn {
+	for f.nextToken.typ != tokNewline {
+		if f.nextToken.typ == tokEOF || f.nextToken.typ == tokError {
+			return nil
+		}
+		f.next()
+	}
+	f.next()
+
+	for i := 1; i <= f.forCount; i++ {
+		for _, tok := range f.forContent {
+			if tok.typ == tokText {
+				if tok.val == f.forCountLabel {
+					f.tokens <- token{tokNumber, fmt.Sprintf("%d", i)}
+				} else {
+					f.tokens <- tok
+				}
+			} else {
+				f.tokens <- tok
+			}
+		}
+	}
+
+	return forEmitConsumeStream
+}
+
+func forEmitConsumeStream(f *forExpander) forStateFn {
+	for f.nextToken.typ != tokEOF {
+		f.tokens <- f.nextToken
+		f.next()
+	}
 	return nil
 }
