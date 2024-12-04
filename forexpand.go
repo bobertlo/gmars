@@ -20,6 +20,7 @@ type forExpander struct {
 	forCount      int
 	forIndex      int
 	forContent    []token
+	forDepth      int
 
 	symbols map[string][]token
 
@@ -223,6 +224,7 @@ func forFor(f *forExpander) forStateFn {
 
 	if len(f.labelBuf) > 0 {
 		f.forCountLabel = f.labelBuf[len(f.labelBuf)-1]
+
 		if len(f.labelBuf) > 1 {
 			f.forLineLabels = f.labelBuf[:len(f.labelBuf)-1]
 		} else {
@@ -246,6 +248,7 @@ func forFor(f *forExpander) forStateFn {
 func forInnerLine(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokText:
+		f.labelBuf = make([]string, 0)
 		return forInnerLabels
 	default:
 		// emitconsume line into for buffer
@@ -257,10 +260,22 @@ func forInnerLine(f *forExpander) forStateFn {
 func forInnerLabels(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokText:
-		if f.nextToken.IsPseudoOp() && strings.ToLower(f.nextToken.val) == "rof" {
-			// just call to emit the buffer
-
-			return forRof
+		if f.nextToken.IsPseudoOp() {
+			opLower := strings.ToLower(f.nextToken.val)
+			if opLower == "for" {
+				fmt.Println("inner:", f.labelBuf, "for")
+				f.forDepth += 1
+				return forInnerEmitLabels
+			} else if opLower == "rof" {
+				if f.forDepth > 0 {
+					f.forDepth -= 1
+					return forInnerEmitConsumeLine
+				} else {
+					return forRof
+				}
+			} else {
+				return forInnerEmitLabels
+			}
 		} else if f.nextToken.IsOp() {
 			// write labels and op into emit buffer then emitcomsume line
 			return forInnerEmitLabels
@@ -270,14 +285,14 @@ func forInnerLabels(f *forExpander) forStateFn {
 			return forInnerLabels
 		}
 	default:
+		// not expecting legal input here, but we will let the parser deal with it
 		return forInnerEmitLabels
-		// emit labels and emitconsume line into for buffer
 	}
 }
 
 func forInnerEmitLabels(f *forExpander) forStateFn {
 	for _, label := range f.labelBuf {
-		f.tokens <- token{tokText, label}
+		f.forContent = append(f.forContent, token{tokText, label})
 	}
 	return forInnerEmitConsumeLine
 }
@@ -309,6 +324,8 @@ func forRof(f *forExpander) forStateFn {
 		f.next()
 	}
 	f.next()
+
+	fmt.Println(f.forContent)
 
 	for i := 1; i <= f.forCount; i++ {
 		for _, tok := range f.forContent {

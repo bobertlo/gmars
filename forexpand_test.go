@@ -30,6 +30,34 @@ func runForExpanderTests(t *testing.T, cases []forTestCase) {
 func TestForExpander(t *testing.T) {
 	tests := []forTestCase{
 		{
+			input: "i for 2\nj for 2\ndat i, j\nrof\nrof\n",
+			output: []token{
+				{tokText, "j"},
+				{tokText, "for"},
+				{tokNumber, "2"},
+				{tokNewline, ""},
+				{tokText, "dat"},
+				{tokNumber, "1"},
+				{tokComma, ","},
+				{tokText, "j"},
+				{tokNewline, ""},
+				{tokText, "rof"},
+				{tokNewline, ""},
+				{tokText, "j"},
+				{tokText, "for"},
+				{tokNumber, "2"},
+				{tokNewline, ""},
+				{tokText, "dat"},
+				{tokNumber, "2"},
+				{tokComma, ","},
+				{tokText, "j"},
+				{tokNewline, ""},
+				{tokText, "rof"},
+				{tokNewline, ""},
+				{tokEOF, ""},
+			},
+		},
+		{
 			input: "i for 2\ndat 0, i\nrof\n",
 			output: []token{
 				{tokText, "dat"},
