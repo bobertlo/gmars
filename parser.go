@@ -321,7 +321,7 @@ func parsePseudoOp(p *parser) parseStateFn {
 			p.lines = append(p.lines, p.currentLine)
 			return parseLine
 		}
-		p.err = fmt.Errorf("line %d: expected operand expression after psuedo-op '%s', got newline", p.line, lastToken.val)
+		p.err = fmt.Errorf("line %d: expected operand expression after pseudo-op '%s', got newline", p.line, lastToken.val)
 		return nil
 	}
 

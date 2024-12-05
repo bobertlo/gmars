@@ -152,7 +152,7 @@ func flipDoubleNegatives(expr []token) []token {
 func evaluateExpression(expr []token) (int, error) {
 	for _, tok := range expr {
 		if tok.typ == tokText || !tok.IsExpressionTerm() {
-			return 0, fmt.Errorf("unexpected token in expressoin: '%s'", tok)
+			return 0, fmt.Errorf("unexpected token in expression: '%s'", tok)
 		}
 	}
 

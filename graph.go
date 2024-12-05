@@ -2,9 +2,8 @@ package gmars
 
 import "slices"
 
-// buildReferenceGraph takes a map of expresions and builds a map representing
-// a graph of references where each key has a slice of symbols referenced by
-// that symbol's tokens
+// buildReferenceGraph takes a map of expressions and builds a graph of
+// symbol references as a map[string][]token
 func buildReferenceGraph(values map[string][]token) map[string][]string {
 	graph := make(map[string][]string)
 	for key, tokens := range values {
