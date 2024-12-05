@@ -74,6 +74,7 @@ func (f *forExpander) run() {
 	for state := forLine; state != nil; {
 		state = state(f)
 	}
+
 	// add an extra EOF in case we end without one
 	// we don't want to block on reading from the channel
 	f.tokens <- token{tokEOF, ""}
@@ -145,7 +146,7 @@ func forConsumeLabels(f *forExpander) forStateFn {
 			f.next()
 			return forConsumeLabels
 		}
-	} else if f.nextToken.typ == tokNewline || f.nextToken.typ == tokComment {
+	} else if f.nextToken.typ == tokNewline || f.nextToken.typ == tokComment || f.nextToken.typ == tokColon {
 		f.next()
 		return forConsumeLabels
 	} else {
