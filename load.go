@@ -223,10 +223,12 @@ func getOpModeAndValidate88(Op OpCode, AMode AddressMode, BMode AddressMode) (Op
 
 	case SLT:
 		// SLT;
-		// AB if #A, B otherwise, no #B allowed
-		if BMode == IMMEDIATE {
-			return 0, fmt.Errorf("invalid b mode '#' for op 'slt'")
-		}
+		// AB if #A, B otherwise
+
+		// #B is not allowed by the 88 standard but is allowed on hills
+		// if BMode == IMMEDIATE {
+		// 	return 0, fmt.Errorf("invalid b mode '#' for op 'slt'")
+		// }
 		if AMode == IMMEDIATE {
 			return AB, nil
 		} else {

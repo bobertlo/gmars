@@ -19,7 +19,7 @@ func runSymbolScannerTests(t *testing.T, cases []symbolScannerTestCase) {
 		require.NotNil(t, tokens)
 
 		scanner := newSymbolScanner(newBufTokenReader(tokens))
-		symbols, err := scanner.ScanInput()
+		symbols, _, err := scanner.ScanInput()
 		require.NoError(t, err)
 		require.NotNil(t, symbols)
 

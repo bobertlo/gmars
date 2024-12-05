@@ -16,7 +16,7 @@ type symbolScanner struct {
 	atEOF     bool
 	valBuf    []token
 	labelBuf  []string
-	forLevel  int
+	forSeen   bool
 	err       error
 
 	symbols map[string][]token
@@ -52,17 +52,22 @@ func (p *symbolScanner) next() token {
 	return retTok
 }
 
-// run the preprocessor
-func (p *symbolScanner) ScanInput() (map[string][]token, error) {
+func ScanInput(lex tokenReader) (map[string][]token, bool, error) {
+	scanner := newSymbolScanner(lex)
+	return scanner.ScanInput()
+}
+
+func (p *symbolScanner) ScanInput() (map[string][]token, bool, error) {
 	for state := scanLine; state != nil; {
 		state = state(p)
 	}
 	if p.err != nil {
-		return nil, p.err
+		return nil, false, p.err
 	}
-	return p.symbols, nil
+	return p.symbols, p.forSeen, nil
 }
 
+// consume the current nextToken and go to nextState unless EOF
 func (p *symbolScanner) consume(nextState scanStateFn) scanStateFn {
 	p.next()
 	if p.nextToken.typ == tokEOF {
@@ -95,24 +100,13 @@ func scanLabels(p *symbolScanner) scanStateFn {
 			opLower := strings.ToLower(p.nextToken.val)
 			switch opLower {
 			case "equ":
-				if p.forLevel == 0 {
-					p.valBuf = make([]token, 0)
-					return p.consume(scanEquValue)
-				}
+				p.valBuf = make([]token, 0)
+				return p.consume(scanEquValue)
 			case "for":
-				p.forLevel++
-				return scanConsumeLine
-			case "rof":
-				if p.forLevel > 0 {
-					p.forLevel--
-				}
-				return scanConsumeLine
+				p.forSeen = true
+				return nil
 			case "end":
-				if p.forLevel > 1 {
-					return scanConsumeLine
-				} else {
-					return nil
-				}
+				return nil
 			default:
 				return scanConsumeLine
 			}

@@ -30,25 +30,6 @@ type sourceLine struct {
 	newlines int
 }
 
-func subExprSymbol(expr []token, label string, value []token) []token {
-	output := make([]token, 0, len(expr))
-	for _, tok := range expr {
-		if tok.typ == tokText && tok.val == label {
-			output = append(output, value...)
-		} else {
-			output = append(output, tok)
-		}
-	}
-	return output
-}
-
-func (line sourceLine) subSymbol(label string, value []token) sourceLine {
-	// output := make()
-	line.a = subExprSymbol(line.a, label, value)
-	line.b = subExprSymbol(line.b, label, value)
-	return line
-}
-
 type parser struct {
 	lex tokenReader
 

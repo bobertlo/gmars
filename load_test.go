@@ -66,11 +66,12 @@ func TestLoadDwarf(t *testing.T) {
 	}, data.Code)
 }
 
-func TestValidInput(t *testing.T) {
+func TestValidInput88(t *testing.T) {
 	// random inputs that are valid but not worth validating output
 	cases := []string{
 		"END\n",
 		"\n\n",
+		"SLT $ 0, # 0\n", // not in 88 spec, pMARS supports this though
 	}
 
 	config := ConfigKOTH88
@@ -112,7 +113,7 @@ func TestInvalidInput(t *testing.T) {
 		"DAT # 0, $ 0\n",
 		"DAT # 0, @ 0\n",
 		"CMP $ 0, # 0\n",
-		"SLT $ 0, # 0\n",
+		// "SLT $ 0, # 0\n", // pMARS supports this
 		"ADD $ 0, # 0\n",
 		"SUB $ 0, # 0\n",
 		"JMP # 0, $ 0\n",
@@ -191,6 +192,12 @@ func TestValidOpModeCombos88(t *testing.T) {
 		{"SLT < 1, $ 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: DIRECT, B: 2}},
 		{"SLT < 1, @ 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: B_INDIRECT, B: 2}},
 		{"SLT < 1, < 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: B_DECREMENT, B: 2}},
+
+		// these are not listed as legal instructions but do run in pMARS
+		{"SLT # 1, # 2\n", Instruction{Op: SLT, OpMode: AB, AMode: IMMEDIATE, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT $ 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: DIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT @ 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_INDIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
+		{"SLT < 1, # 2\n", Instruction{Op: SLT, OpMode: B, AMode: B_DECREMENT, A: 1, BMode: IMMEDIATE, B: 2}},
 
 		// JMP, JMN, JMZ, DJN, SPL
 		{"JMP $ 1, # 2\n", Instruction{Op: JMP, OpMode: B, AMode: DIRECT, A: 1, BMode: IMMEDIATE, B: 2}},
