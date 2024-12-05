@@ -110,7 +110,6 @@ func (p *parser) validateSymbols() error {
 	for symbol, i := range p.references {
 		_, ok := p.symbols[symbol]
 		if !ok {
-			fmt.Println(p.lines)
 			return fmt.Errorf("line %d: symbol '%s' undefined", i, symbol)
 		}
 	}

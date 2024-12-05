@@ -28,7 +28,6 @@ type forExpander struct {
 	// output fields
 	tokens chan token
 	closed bool
-	err    error
 }
 
 type forStateFn func(f *forExpander) forStateFn
@@ -150,7 +149,7 @@ func forConsumeLabels(f *forExpander) forStateFn {
 		f.next()
 		return forConsumeLabels
 	} else {
-		f.err = fmt.Errorf("expected label, op, newlines, or comment, got '%s'", f.nextToken)
+		f.tokens <- token{tokError, fmt.Sprintf("expected label, op, newlines, or comment, got '%s'", f.nextToken)}
 		return nil
 	}
 }
@@ -212,11 +211,11 @@ func forConsumeExpression(f *forExpander) forStateFn {
 // always returns forInnerLine or Error
 func forFor(f *forExpander) forStateFn {
 	expr := make([]token, 0, len(f.exprBuf))
-	for _, token := range f.exprBuf {
-		if token.typ == tokEOF || token.typ == tokError {
-			f.err = fmt.Errorf("unexpected expression term: %s", token)
+	for _, tok := range f.exprBuf {
+		if tok.typ == tokEOF || tok.typ == tokError {
+			f.tokens <- token{tokError, fmt.Sprintf("unexpected expression term: %s", tok)}
 		}
-		expr = append(expr, token)
+		expr = append(expr, tok)
 	}
 	f.exprBuf = expr
 
