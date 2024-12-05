@@ -15,12 +15,13 @@ type forExpander struct {
 	atEOF     bool
 
 	// for state fields
-	forCountLabel string
-	forLineLabels []string
-	forCount      int
-	forIndex      int
-	forContent    []token
-	forDepth      int
+	forCountLabel        string
+	forLineLabels        []string
+	forLineLabelsToWrite []string
+	forCount             int
+	forIndex             int
+	forContent           []token
+	forDepth             int
 
 	symbols map[string][]token
 
@@ -116,7 +117,7 @@ func forLine(f *forExpander) forStateFn {
 		f.labelBuf = make([]string, 0)
 		return forConsumeLabels
 	default:
-		return f.emitConsume(forConsumeEmitLine)
+		return forConsumeEmitLine
 	}
 }
 
@@ -128,7 +129,6 @@ func forLine(f *forExpander) forStateFn {
 // other: nil
 func forConsumeLabels(f *forExpander) forStateFn {
 	if f.nextToken.typ == tokText {
-
 		if f.nextToken.IsPseudoOp() {
 			opLower := strings.ToLower(f.nextToken.val)
 			if opLower == "for" {
@@ -191,6 +191,9 @@ func forConsumeExpression(f *forExpander) forStateFn {
 	case tokNewline:
 		f.next()
 		return forFor
+	case tokComment:
+		f.next()
+		return forConsumeExpression
 	case tokError:
 		return f.emitConsume(nil)
 	case tokEOF:
@@ -235,6 +238,11 @@ func forFor(f *forExpander) forStateFn {
 		f.forLineLabels = []string{}
 	}
 
+	f.forLineLabelsToWrite = make([]string, len(f.forLineLabels))
+	for i, label := range f.forLineLabels {
+		f.forLineLabelsToWrite[i] = fmt.Sprintf("__for_%s_%s", f.forCountLabel, label)
+	}
+
 	f.forCount = val
 	f.forIndex = 0 // should not be necessary
 	f.forContent = make([]token, 0)
@@ -263,7 +271,6 @@ func forInnerLabels(f *forExpander) forStateFn {
 		if f.nextToken.IsPseudoOp() {
 			opLower := strings.ToLower(f.nextToken.val)
 			if opLower == "for" {
-				fmt.Println("inner:", f.labelBuf, "for")
 				f.forDepth += 1
 				return forInnerEmitLabels
 			} else if opLower == "rof" {
@@ -277,7 +284,12 @@ func forInnerLabels(f *forExpander) forStateFn {
 				return forInnerEmitLabels
 			}
 		} else if f.nextToken.IsOp() {
-			// write labels and op into emit buffer then emitcomsume line
+			if f.forLineLabelsToWrite != nil {
+				for _, label := range f.forLineLabelsToWrite {
+					f.tokens <- token{tokText, label}
+				}
+				f.forLineLabelsToWrite = nil
+			}
 			return forInnerEmitLabels
 		} else {
 			f.labelBuf = append(f.labelBuf, f.nextToken.val)
@@ -300,12 +312,11 @@ func forInnerEmitLabels(f *forExpander) forStateFn {
 func forInnerEmitConsumeLine(f *forExpander) forStateFn {
 	switch f.nextToken.typ {
 	case tokError:
-		// TODO
+		f.tokens <- f.nextToken
 		return nil
 	case tokEOF:
 		return nil
 	case tokNewline:
-		// f.tokens <- f.nextToken
 		f.forContent = append(f.forContent, f.nextToken)
 		f.next()
 		return forInnerLine
@@ -319,13 +330,12 @@ func forInnerEmitConsumeLine(f *forExpander) forStateFn {
 func forRof(f *forExpander) forStateFn {
 	for f.nextToken.typ != tokNewline {
 		if f.nextToken.typ == tokEOF || f.nextToken.typ == tokError {
+			f.tokens <- f.nextToken
 			return nil
 		}
 		f.next()
 	}
 	f.next()
-
-	fmt.Println(f.forContent)
 
 	for i := 1; i <= f.forCount; i++ {
 		for _, tok := range f.forContent {
@@ -333,7 +343,18 @@ func forRof(f *forExpander) forStateFn {
 				if tok.val == f.forCountLabel {
 					f.tokens <- token{tokNumber, fmt.Sprintf("%d", i)}
 				} else {
-					f.tokens <- tok
+					found := false
+					for _, label := range f.forLineLabels {
+						forLabel := fmt.Sprintf("__for_%s_%s", f.forCountLabel, label)
+						if tok.val == label {
+							f.tokens <- token{tokText, forLabel}
+							found = true
+							break
+						}
+					}
+					if !found {
+						f.tokens <- tok
+					}
 				}
 			} else {
 				f.tokens <- tok

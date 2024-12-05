@@ -43,12 +43,12 @@ func runWarriorLoadFileTests(t *testing.T, tests []warriorTestCase) {
 		if test.err {
 			assert.Error(t, err, fmt.Sprintf("%s: error should be present", test.filename))
 		} else {
-			require.NoError(t, err)
+			require.NoError(t, err, test.loadFilename)
 			loadInput, err := os.Open(test.loadFilename)
-			require.NoError(t, err)
+			require.NoError(t, err, test.loadFilename)
 			defer loadInput.Close()
 			expectedData, err := ParseLoadFile(loadInput, test.config)
-			require.NoError(t, err)
+			require.NoError(t, err, test.loadFilename)
 			assert.Equal(t, expectedData.Code, warriorData.Code)
 		}
 	}
