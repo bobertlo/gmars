@@ -26,6 +26,13 @@ const (
 	defaultSpeedStep = 6
 )
 
+const (
+	usage = `vMARS %s
+
+Usage: vmars [options] [warrior1.red] [warrior2.red]
+`
+)
+
 var (
 	mplusFaceSource *text.GoTextFaceSource
 
@@ -53,6 +60,13 @@ func init() {
 }
 
 func main() {
+
+	flag.Usage = func() {
+		// fmt.
+		fmt.Fprintf(flag.CommandLine.Output(), usage, "v0.1.14")
+		flag.PrintDefaults()
+	}
+
 	use88Flag := flag.Bool("8", false, "Enforce ICWS'88 rules")
 	sizeFlag := flag.Int("s", 8000, "Size of core")
 	procFlag := flag.Int("p", 8000, "Max. Processes")
@@ -63,7 +77,13 @@ func main() {
 	showReadFlag := flag.Bool("showread", false, "display reads in the visualizer")
 	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
 	presetFlag := flag.String("preset", "", "Load named preset config (and ignore other flags)")
+	versionFlag := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("vMARS %s\n", "v0.1.14")
+		os.Exit(0)
+	}
 
 	var config gmars.SimulatorConfig
 	if *presetFlag != "" {
