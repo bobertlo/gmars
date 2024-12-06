@@ -9,7 +9,19 @@ import (
 	"github.com/bobertlo/gmars"
 )
 
+const (
+	usage = `gMARS %s
+
+Usage: gmars [options] [warrior1.red] [warrior2.red]
+`
+)
+
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), usage, "v0.1.14")
+		flag.PrintDefaults()
+	}
+
 	use88Flag := flag.Bool("8", false, "Enforce ICWS'88 rules")
 	sizeFlag := flag.Int("s", 8000, "Size of core")
 	procFlag := flag.Int("p", 8000, "Max. Processes")
@@ -20,7 +32,13 @@ func main() {
 	debugFlag := flag.Bool("debug", false, "Dump verbose reporting of simulator state")
 	assembleFlag := flag.Bool("A", false, "Assemble and output warriors only")
 	presetFlag := flag.String("preset", "", "Load named preset config (and ignore other flags)")
+	versionFlag := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("gMARS %s\n", "v0.1.14")
+		os.Exit(0)
+	}
 
 	var config gmars.SimulatorConfig
 	if *presetFlag != "" {
