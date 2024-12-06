@@ -7,7 +7,7 @@ func (g *Game) runCycle() {
 
 	count := g.sim.WarriorCount()
 	living := g.sim.WarriorLivingCount()
-	if ((count > 1 && living > 1) || living > 0) && g.sim.CycleCount() < g.sim.MaxCycles() {
+	if ((count > 1 && living > 1) || (count < 2 && living > 0)) && g.sim.CycleCount() < g.sim.MaxCycles() {
 		g.sim.RunCycle()
 	} else {
 		g.finished = true
