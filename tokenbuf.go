@@ -29,6 +29,6 @@ func (r *bufTokenReader) Tokens() ([]token, error) {
 	}
 	subslice := r.tokens[r.i:]
 	ret := make([]token, len(subslice))
-	copy(subslice, ret)
+	copy(ret, subslice)
 	return ret, nil
 }
