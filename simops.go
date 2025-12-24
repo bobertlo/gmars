@@ -129,27 +129,19 @@ func (s *reportSim) div(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	case F:
 		fallthrough
 	case I:
-		if IRA.A != 0 {
-			s.mem[WAB].A = IRB.A / IRA.A
-		}
-		if IRA.B != 0 {
-			s.mem[WAB].B = IRB.B / IRA.B
-		}
 		if IRA.A == 0 || IRA.B == 0 {
 			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
+		s.mem[WAB].A = IRB.A / IRA.A
+		s.mem[WAB].B = IRB.B / IRA.B
 	case X:
-		if IRA.A != 0 {
-			s.mem[WAB].B = IRB.B / IRA.A
-		}
-		if IRA.B != 0 {
-			s.mem[WAB].A = IRB.A / IRA.B
-		}
 		if IRA.A == 0 || IRA.B == 0 {
 			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
+		s.mem[WAB].B = IRB.B / IRA.A
+		s.mem[WAB].A = IRB.A / IRA.B
 	}
 	nextPC := (PC + 1) % s.m
 	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
@@ -189,27 +181,19 @@ func (s *reportSim) mod(IR, IRA, IRB Instruction, WAB, PC Address, w *warrior) {
 	case F:
 		fallthrough
 	case I:
-		if IRA.A != 0 {
-			s.mem[WAB].A = IRB.A % IRA.A
-		}
-		if IRA.B != 0 {
-			s.mem[WAB].B = IRB.B % IRA.B
-		}
 		if IRA.A == 0 || IRA.B == 0 {
 			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
+		s.mem[WAB].A = IRB.A % IRA.A
+		s.mem[WAB].B = IRB.B % IRA.B
 	case X:
-		if IRA.A != 0 {
-			s.mem[WAB].B = IRB.B % IRA.A
-		}
-		if IRA.B != 0 {
-			s.mem[WAB].A = IRB.A % IRA.B
-		}
 		if IRA.A == 0 || IRA.B == 0 {
 			s.Report(Report{Type: WarriorTaskTerminate, WarriorIndex: w.index, Address: PC})
 			return
 		}
+		s.mem[WAB].B = IRB.B % IRA.A
+		s.mem[WAB].A = IRB.A % IRA.B
 	}
 	nextPC := (PC + 1) % s.m
 	s.Report(Report{Type: WarriorTaskPush, WarriorIndex: w.index, Address: nextPC})
